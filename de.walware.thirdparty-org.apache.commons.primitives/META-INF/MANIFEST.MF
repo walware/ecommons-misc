@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Vendor: WalWare.de
+Bundle-Name: Apache Commons Collections Primitives
+Bundle-SymbolicName: de.walware.thirdparty-org.apache.commons.primitives
+Bundle-Version: 1.0.0.qualifier
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Export-Package: org.apache.commons.collections.primitives;version="1.0.0"

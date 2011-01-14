@@ -16,6 +16,7 @@ import org.eclipse.core.databinding.DataBindingContext;
 import org.eclipse.core.databinding.observable.ChangeEvent;
 import org.eclipse.core.databinding.observable.IChangeListener;
 import org.eclipse.core.databinding.observable.IObservable;
+import org.eclipse.core.databinding.observable.ObservableEvent;
 import org.eclipse.core.databinding.observable.list.IListChangeListener;
 import org.eclipse.core.databinding.observable.list.ListChangeEvent;
 import org.eclipse.core.databinding.observable.list.ListDiffEntry;
@@ -70,14 +71,19 @@ public class DirtyTracker implements IValueChangeListener, IChangeListener {
 	}
 	
 	public void handleValueChange(final ValueChangeEvent event) {
-		handleChange();
+		handleChange((ObservableEvent) event);
 	}
 	
 	public void handleChange(final ChangeEvent event) {
-		handleChange();
+		handleChange((ObservableEvent) event);
 	}
 	
-	public void handleChange() {
+	/**
+	 * Called if a change is detected
+	 * 
+	 * @param event the source event, if available
+	 */
+	public void handleChange(final ObservableEvent event) {
 		fDirty = true;
 	}
 	

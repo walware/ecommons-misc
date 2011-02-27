@@ -134,25 +134,58 @@ public abstract class BaseFragmentsBuilder implements FragmentsBuilder {
 					}
 				}
 				final String value = values[valuesIndex].stringValue();
-				append(buffer, value, valueCharIndex, to.startOffset - valueOffset);
+				appendIntro(buffer, value, valueCharIndex, to.startOffset - valueOffset);
 				buffer.append(getPreTag(subInfo.seqnum));
 				valueCharIndex = Math.min(to.endOffset - valueOffset, value.length());
-				append(buffer, value, to.startOffset - valueOffset, valueCharIndex);
+				buffer.append(value, to.startOffset - valueOffset, valueCharIndex);
 				buffer.append(getPostTag(subInfo.seqnum));
 			}
 		}
 		if (buffer.length() > 0) {
 			final String value = values[valuesIndex].stringValue();
-			append(buffer, value, valueCharIndex,
+			buffer.append(value, valueCharIndex,
 					Math.min(fragInfo.endOffset - valueOffset, value.length()) );
 			fragments.add(buffer.toString());
 			buffer.setLength(0);
 		}
 	}
 	
-	protected void append(final StringBuilder buffer, final String value, final int begin, final int end)
+	protected void appendIntro(final StringBuilder buffer, final String value, final int begin, final int end)
 			throws IOException {
-		buffer.append( value.substring( begin, end) );
+		if (begin == end) {
+			return;
+		}
+		if (buffer.length() == 0) {
+			final int l;
+			if (begin == 0 || (begin+1 < end
+					&& Character.isUpperCase(value.charAt(begin))
+					&& Character.isLowerCase(value.charAt(begin+1)) )) {
+				// new word
+				l = 0;
+			}
+			else {
+				l = Math.min(end, begin+10);
+			}
+			char c;
+			for (int i = begin; i < l; i++) {
+				c = value.charAt(i);
+				if (c <= 0x20) {
+					int j = i+1;
+					for (; j < end; j++) {
+						c = value.charAt(j);
+						if (c > 0x20) {
+							break;
+						}
+					}
+					if (i == begin || j < end) {
+						buffer.append(value, j, end);
+						return;
+					}
+					break;
+				}
+			}
+		}
+		buffer.append(value, begin, end);
 	}
 	
   protected String makeFragment( StringBuilder buffer, int[] index, Field[] values, WeightedFragInfo fragInfo ){

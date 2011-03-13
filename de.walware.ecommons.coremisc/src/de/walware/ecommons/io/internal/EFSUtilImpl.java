@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.URI;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
@@ -49,13 +50,17 @@ public class EFSUtilImpl extends FileUtil {
 	
 	
 	@Override
-	public String getFileLabel() {
+	public String getLabel() {
 		final IFileSystem system = fFile.getFileSystem();
 		if (system.equals(EFS.getLocalFileSystem())) {
 			return "'"+fFile.toString()+LABEL_2_LOCALFILE; //$NON-NLS-1$
 		}
 		return "'"+fFile.toURI().toString()+"'"; //$NON-NLS-1$ //$NON-NLS-2$
+	}
 	
+	@Override
+	public URI getURI() {
+		return fFile.toURI();
 	}
 	
 	@Override
@@ -98,7 +103,7 @@ public class EFSUtilImpl extends FileUtil {
 					final boolean exists = fFile.fetchInfo(EFS.NONE, new SubProgressMonitor(monitor, 5)).exists();
 					if (exists && (fMode & (EFS.OVERWRITE | EFS.APPEND)) == 0) {
 						throw new CoreException(new Status(IStatus.ERROR, ECommons.PLUGIN_ID, ICommonStatusConstants.IO_ERROR,
-								NLS.bind(Messages.Resource_error_AlreadyExists_message, " "+getFileLabel()+" "), null)); //$NON-NLS-1$ //$NON-NLS-2$
+								NLS.bind(Messages.Resource_error_AlreadyExists_message, " "+getLabel()+" "), null)); //$NON-NLS-1$ //$NON-NLS-2$
 					}
 					if (exists && (fMode & EFS.APPEND) != 0 && !fForceCharset) {
 						try {

@@ -375,7 +375,7 @@ public abstract class FileUtil {
 		@Override
 		protected void runInEnv(final IProgressMonitor monitor) throws CoreException, OperationCanceledException {
 			try {
-				monitor.beginTask("Writing to "+getFileLabel(), 100);
+				monitor.beginTask("Writing to "+getLabel(), 100);
 				if (monitor.isCanceled()) {
 					throw new OperationCanceledException();
 				}
@@ -506,7 +506,7 @@ public abstract class FileUtil {
 			BufferedReader reader = null;
 			try {
 				monitor.beginTask(null, 100);
-				final String fileLabel = getFileLabel();
+				final String fileLabel = getLabel();
 				monitor.subTask("Opening "+fileLabel+"...");
 				if (monitor.isCanceled()) {
 					throw new OperationCanceledException();
@@ -552,11 +552,6 @@ public abstract class FileUtil {
 	}
 	
 	
-	public abstract long getTimeStamp(IProgressMonitor monitor) throws CoreException;
-	public abstract String getFileLabel();
-	public abstract ReadTextFileOperation createReadTextFileOp(ReaderAction action);
-	public abstract WriteTextFileOperation createWriteTextFileOp(String content);
-	
 	protected static void saveClose(final Closeable stream) {
 		if (stream != null) {
 			try {
@@ -564,5 +559,37 @@ public abstract class FileUtil {
 			} catch (final IOException e) {}
 		}
 	}
+	
+	
+	/**
+	 * Return the time stamp of the file
+	 * 
+	 * @param monitor a progress monitor for progress and cancellation report
+	 * @return the time stamp
+	 * @throws CoreException
+	 */
+	public abstract long getTimeStamp(IProgressMonitor monitor) throws CoreException;
+	
+	/**
+	 * Return a label for the file. It can be used to show it in the UI, but not to access or
+	 * identify the file programatically.
+	 * 
+	 * @param monitor a progress monitor for progress and cancellation report
+	 * @return the label
+	 * @throws CoreException
+	 */
+	public abstract String getLabel();
+	
+	/**
+	 * Return the URI of the file.
+	 * 
+	 * @return the URI or <code>null</code> if the file doesn't have an URI
+	 * @throws CoreException
+	 */
+	public abstract URI getURI();
+	
+	
+	public abstract ReadTextFileOperation createReadTextFileOp(ReaderAction action);
+	public abstract WriteTextFileOperation createWriteTextFileOp(String content);
 	
 }

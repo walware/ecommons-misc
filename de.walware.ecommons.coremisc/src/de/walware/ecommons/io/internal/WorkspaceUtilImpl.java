@@ -15,6 +15,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.resources.IFile;
@@ -46,8 +47,13 @@ public class WorkspaceUtilImpl extends FileUtil {
 	
 	
 	@Override
-	public String getFileLabel() {
+	public String getLabel() {
 		return "'"+fFile.getFullPath().makeAbsolute().toString()+LABEL_2_WORKSPACE;  //$NON-NLS-1$
+	}
+	
+	@Override
+	public URI getURI() {
+		return fFile.getLocationURI();
 	}
 	
 	@Override

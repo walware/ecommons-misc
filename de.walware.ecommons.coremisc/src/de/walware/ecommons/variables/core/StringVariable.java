@@ -24,16 +24,28 @@ public class StringVariable implements IStringVariable {
 	private final String fDescription;
 	
 	
+	/**
+	 * Create a new variable.
+	 * 
+	 * @param name the name of the variable within <code>${}</code>
+	 * @param description
+	 */
 	public StringVariable(final String name, final String description) {
 		fName = name;
 		fDescription = description;
 	}
 	
 	
+	/**
+	 * {@inheritDoc}
+	 */
 	public String getName() {
 		return fName;
 	}
 	
+	/**
+	 * {@inheritDoc}
+	 */
 	public String getDescription() {
 		return fDescription;
 	}

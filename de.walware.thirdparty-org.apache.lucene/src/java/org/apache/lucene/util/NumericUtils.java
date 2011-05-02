@@ -55,8 +55,7 @@ import org.apache.lucene.search.NumericRangeFilter; // for javadocs
  * {@link String#compareTo(String)}) representations of numeric data types for other
  * usages (e.g. sorting).
  *
- * <p><font color="red"><b>NOTE:</b> This API is experimental and
- * might change in incompatible ways in the next release.</font>
+ * @lucene.internal
  *
  * @since 2.9
  */
@@ -122,7 +121,7 @@ public final class NumericUtils {
     return len;
   }
 
-  /**
+  /*
    * Expert: Returns prefix coded bits after reducing the precision by <code>shift</code> bits.
    * This is method is used by {@link LongRangeBuilder}.
    * @param val the numeric value
@@ -134,7 +133,7 @@ public final class NumericUtils {
     return new String(buffer, 0, len);
   }
 
-  /**
+  /*
    * This is a convenience method, that returns prefix coded bits of a long without
    * reducing the precision. It can be used to store the full precision value as a
    * stored field in index.
@@ -170,7 +169,7 @@ public final class NumericUtils {
     return len;
   }
 
-  /**
+  /*
    * Expert: Returns prefix coded bits after reducing the precision by <code>shift</code> bits.
    * This is method is used by {@link IntRangeBuilder}.
    * @param val the numeric value
@@ -182,7 +181,7 @@ public final class NumericUtils {
     return new String(buffer, 0, len);
   }
 
-  /**
+  /*
    * This is a convenience method, that returns prefix coded bits of an int without
    * reducing the precision. It can be used to store the full precision value as a
    * stored field in index.
@@ -192,7 +191,7 @@ public final class NumericUtils {
     return intToPrefixCoded(val, 0);
   }
 
-  /**
+  /*
    * Returns a long from prefixCoded characters.
    * Rightmost bits will be zero for lower precision codes.
    * This method can be used to decode e.g. a stored field.
@@ -211,15 +210,15 @@ public final class NumericUtils {
       if (ch>0x7f) {
         throw new NumberFormatException(
           "Invalid prefixCoded numerical value representation (char "+
-          Integer.toHexString((int)ch)+" at position "+i+" is invalid)"
+          Integer.toHexString(ch)+" at position "+i+" is invalid)"
         );
       }
-      sortableBits |= (long)ch;
+      sortableBits |= ch;
     }
     return (sortableBits << shift) ^ 0x8000000000000000L;
   }
 
-  /**
+  /*
    * Returns an int from prefixCoded characters.
    * Rightmost bits will be zero for lower precision codes.
    * This method can be used to decode e.g. a stored field.
@@ -238,10 +237,10 @@ public final class NumericUtils {
       if (ch>0x7f) {
         throw new NumberFormatException(
           "Invalid prefixCoded numerical value representation (char "+
-          Integer.toHexString((int)ch)+" at position "+i+" is invalid)"
+          Integer.toHexString(ch)+" at position "+i+" is invalid)"
         );
       }
-      sortableBits |= (int)ch;
+      sortableBits |= ch;
     }
     return (sortableBits << shift) ^ 0x80000000;
   }
@@ -259,7 +258,7 @@ public final class NumericUtils {
     return f;
   }
 
-  /**
+  /*
    * Convenience method: this just returns:
    *   longToPrefixCoded(doubleToSortableLong(val))
    */
@@ -276,7 +275,7 @@ public final class NumericUtils {
     return Double.longBitsToDouble(val);
   }
 
-  /**
+  /*
    * Convenience method: this just returns:
    *    sortableLongToDouble(prefixCodedToLong(val))
    */
@@ -297,7 +296,7 @@ public final class NumericUtils {
     return f;
   }
 
-  /**
+  /*
    * Convenience method: this just returns:
    *   intToPrefixCoded(floatToSortableInt(val))
    */
@@ -314,7 +313,7 @@ public final class NumericUtils {
     return Float.intBitsToFloat(val);
   }
 
-  /**
+  /*
    * Convenience method: this just returns:
    *    sortableIntToFloat(prefixCodedToInt(val))
    */
@@ -347,7 +346,7 @@ public final class NumericUtils {
   public static void splitIntRange(final IntRangeBuilder builder,
     final int precisionStep,  final int minBound, final int maxBound
   ) {
-    splitRange(builder, 32, precisionStep, (long)minBound, (long)maxBound);
+    splitRange(builder, 32, precisionStep, minBound, maxBound);
   }
   
   /** This helper does the splitting for both 32 and 64 bit. */

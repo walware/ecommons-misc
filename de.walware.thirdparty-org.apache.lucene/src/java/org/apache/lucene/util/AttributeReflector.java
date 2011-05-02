@@ -1,4 +1,4 @@
-package org.apache.lucene.index;
+package org.apache.lucene.util;
 
 /**
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -17,33 +17,18 @@ package org.apache.lucene.index;
  * limitations under the License.
  */
 
-import java.io.IOException;
-import org.apache.lucene.document.Fieldable;
+/**
+ * This interface is used to reflect contents of {@link AttributeSource} or {@link AttributeImpl}.
+ */
+public interface AttributeReflector {
 
-final class DocFieldConsumersPerField extends DocFieldConsumerPerField {
-
-  final DocFieldConsumerPerField one;
-  final DocFieldConsumerPerField two;
-  final DocFieldConsumersPerThread perThread;
-
-  public DocFieldConsumersPerField(DocFieldConsumersPerThread perThread, DocFieldConsumerPerField one, DocFieldConsumerPerField two) {
-    this.perThread = perThread;
-    this.one = one;
-    this.two = two;
-  }
-
-  @Override
-  public void processFields(Fieldable[] fields, int count) throws IOException {
-    one.processFields(fields, count);
-    two.processFields(fields, count);
-  }
-
-  @Override
-  public void abort() {
-    try {
-      one.abort();
-    } finally {
-      two.abort();
-    }
-  }
+  /**
+   * This method gets called for every property in an {@link AttributeImpl}/{@link AttributeSource}
+   * passing the class name of the {@link Attribute}, a key and the actual value.
+   * E.g., an invocation of {@link org.apache.lucene.analysis.tokenattributes.CharTermAttributeImpl#reflectWith}
+   * would call this method once using {@code org.apache.lucene.analysis.tokenattributes.CharTermAttribute.class}
+   * as attribute class, {@code "term"} as key and the actual value as a String.
+   */
+  public void reflect(Class<? extends Attribute> attClass, String key, Object value);
+  
 }

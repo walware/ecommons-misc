@@ -28,14 +28,15 @@ public class LogDocMergePolicy extends LogMergePolicy {
   /** Default minimum segment size.  @see setMinMergeDocs */
   public static final int DEFAULT_MIN_MERGE_DOCS = 1000;
 
-  public LogDocMergePolicy(IndexWriter writer) {
-    super(writer);
+  public LogDocMergePolicy() {
     minMergeSize = DEFAULT_MIN_MERGE_DOCS;
-
-    // maxMergeSize is never used by LogDocMergePolicy; set
+    
+    // maxMergeSize(ForOptimize) are never used by LogDocMergePolicy; set
     // it to Long.MAX_VALUE to disable it
     maxMergeSize = Long.MAX_VALUE;
+    maxMergeSizeForOptimize = Long.MAX_VALUE;
   }
+
   @Override
   protected long size(SegmentInfo info) throws IOException {
     return sizeDocs(info);

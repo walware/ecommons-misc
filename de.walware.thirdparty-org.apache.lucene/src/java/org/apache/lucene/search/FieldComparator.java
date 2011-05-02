@@ -79,8 +79,7 @@ import org.apache.lucene.search.FieldCache.StringIndex;
  *       FieldDoc#fields} when returning the top results.
  * </ul>
  *
- * <b>NOTE:</b> This API is experimental and might change in
- * incompatible ways in the next release.
+ * @lucene.experimental
  */
 public abstract class FieldComparator {
 
@@ -161,7 +160,7 @@ public abstract class FieldComparator {
    * @param slot the value
    * @return value in this slot upgraded to Comparable
    */
-  public abstract Comparable value(int slot);
+  public abstract Comparable<?> value(int slot);
 
   /** Parses field's values as byte (using {@link
    *  FieldCache#getBytes} and sorts by ascending value */
@@ -204,7 +203,7 @@ public abstract class FieldComparator {
     }
 
     @Override
-    public Comparable value(int slot) {
+    public Comparable<?> value(int slot) {
       return Byte.valueOf(values[slot]);
     }
   }
@@ -250,7 +249,7 @@ public abstract class FieldComparator {
     }
 
     @Override
-    public Comparable value(int slot) {
+    public Comparable<?> value(int slot) {
       return Integer.valueOf(docIDs[slot]);
     }
   }
@@ -311,7 +310,7 @@ public abstract class FieldComparator {
     }
 
     @Override
-    public Comparable value(int slot) {
+    public Comparable<?> value(int slot) {
       return Double.valueOf(values[slot]);
     }
   }
@@ -376,7 +375,7 @@ public abstract class FieldComparator {
     }
 
     @Override
-    public Comparable value(int slot) {
+    public Comparable<?> value(int slot) {
       return Float.valueOf(values[slot]);
     }
   }
@@ -445,7 +444,7 @@ public abstract class FieldComparator {
     }
 
     @Override
-    public Comparable value(int slot) {
+    public Comparable<?> value(int slot) {
       return Integer.valueOf(values[slot]);
     }
   }
@@ -510,7 +509,7 @@ public abstract class FieldComparator {
     }
 
     @Override
-    public Comparable value(int slot) {
+    public Comparable<?> value(int slot) {
       return Long.valueOf(values[slot]);
     }
   }
@@ -565,7 +564,7 @@ public abstract class FieldComparator {
     }
     
     @Override
-    public Comparable value(int slot) {
+    public Comparable<?> value(int slot) {
       return Float.valueOf(scores[slot]);
     }
   }
@@ -611,7 +610,7 @@ public abstract class FieldComparator {
     }
 
     @Override
-    public Comparable value(int slot) {
+    public Comparable<?> value(int slot) {
       return Short.valueOf(values[slot]);
     }
   }
@@ -677,7 +676,7 @@ public abstract class FieldComparator {
     }
 
     @Override
-    public Comparable value(int slot) {
+    public Comparable<?> value(int slot) {
       return values[slot];
     }
   }
@@ -704,26 +703,20 @@ public abstract class FieldComparator {
 
     private int bottomSlot = -1;
     private int bottomOrd;
+    private boolean bottomSameReader;
     private String bottomValue;
-    private final boolean reversed;
-    private final int sortPos;
 
     public StringOrdValComparator(int numHits, String field, int sortPos, boolean reversed) {
       ords = new int[numHits];
       values = new String[numHits];
       readerGen = new int[numHits];
-      this.sortPos = sortPos;
-      this.reversed = reversed;
       this.field = field;
     }
 
     @Override
     public int compare(int slot1, int slot2) {
       if (readerGen[slot1] == readerGen[slot2]) {
-        int cmp = ords[slot1] - ords[slot2];
-        if (cmp != 0) {
-          return cmp;
-        }
+        return ords[slot1] - ords[slot2];
       }
 
       final String val1 = values[slot1];
@@ -742,53 +735,32 @@ public abstract class FieldComparator {
     @Override
     public int compareBottom(int doc) {
       assert bottomSlot != -1;
-      int order = this.order[doc];
-      final int cmp = bottomOrd - order;
-      if (cmp != 0) {
-        return cmp;
-      }
-
-      final String val2 = lookup[order];
-      if (bottomValue == null) {
-        if (val2 == null) {
-          return 0;
-        }
-        // bottom wins
-        return -1;
-      } else if (val2 == null) {
-        // doc wins
-        return 1;
-      }
-      return bottomValue.compareTo(val2);
-    }
-
-    private void convert(int slot) {
-      readerGen[slot] = currentReaderGen;
-      int index = 0;
-      String value = values[slot];
-      if (value == null) {
-        ords[slot] = 0;
-        return;
-      }
-
-      if (sortPos == 0 && bottomSlot != -1 && bottomSlot != slot) {
-        // Since we are the primary sort, the entries in the
-        // queue are bounded by bottomOrd:
-        assert bottomOrd < lookup.length;
-        if (reversed) {
-          index = binarySearch(lookup, value, bottomOrd, lookup.length-1);
-        } else {
-          index = binarySearch(lookup, value, 0, bottomOrd);
-        }
+      if (bottomSameReader) {
+        // ord is precisely comparable, even in the equal case
+        return bottomOrd - this.order[doc];
       } else {
-        // Full binary search
-        index = binarySearch(lookup, value);
-      }
+        // ord is only approx comparable: if they are not
+        // equal, we can use that; if they are equal, we
+        // must fallback to compare by value
+        final int order = this.order[doc];
+        final int cmp = bottomOrd - order;
+        if (cmp != 0) {
+          return cmp;
+        }
 
-      if (index < 0) {
-        index = -index - 2;
+        final String val2 = lookup[order];
+        if (bottomValue == null) {
+          if (val2 == null) {
+            return 0;
+          }
+          // bottom wins
+          return -1;
+        } else if (val2 == null) {
+          // doc wins
+          return 1;
+        }
+        return bottomValue.compareTo(val2);
       }
-      ords[slot] = index;
     }
 
     @Override
@@ -808,25 +780,42 @@ public abstract class FieldComparator {
       lookup = currentReaderValues.lookup;
       assert lookup.length > 0;
       if (bottomSlot != -1) {
-        convert(bottomSlot);
-        bottomOrd = ords[bottomSlot];
+        setBottom(bottomSlot);
       }
     }
     
     @Override
     public void setBottom(final int bottom) {
       bottomSlot = bottom;
-      if (readerGen[bottom] != currentReaderGen) {
-        convert(bottomSlot);
+
+      bottomValue = values[bottomSlot];
+      if (currentReaderGen == readerGen[bottomSlot]) {
+        bottomOrd = ords[bottomSlot];
+        bottomSameReader = true;
+      } else {
+        if (bottomValue == null) {
+          ords[bottomSlot] = 0;
+          bottomOrd = 0;
+          bottomSameReader = true;
+          readerGen[bottomSlot] = currentReaderGen;
+        } else {
+          final int index = binarySearch(lookup, bottomValue);
+          if (index < 0) {
+            bottomOrd = -index - 2;
+            bottomSameReader = false;
+          } else {
+            bottomOrd = index;
+            // exact value match
+            bottomSameReader = true;
+            readerGen[bottomSlot] = currentReaderGen;            
+            ords[bottomSlot] = bottomOrd;
+          }
+        }
       }
-      bottomOrd = ords[bottom];
-      assert bottomOrd >= 0;
-      assert bottomOrd < lookup.length;
-      bottomValue = values[bottom];
     }
 
     @Override
-    public Comparable value(int slot) {
+    public Comparable<?> value(int slot) {
       return values[slot];
     }
 
@@ -905,7 +894,7 @@ public abstract class FieldComparator {
     }
 
     @Override
-    public Comparable value(int slot) {
+    public Comparable<?> value(int slot) {
       return values[slot];
     }
   }

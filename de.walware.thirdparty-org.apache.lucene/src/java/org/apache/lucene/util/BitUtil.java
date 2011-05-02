@@ -18,10 +18,11 @@
 package org.apache.lucene.util; // from org.apache.solr.util rev 555343
 
 /**  A variety of high efficiency bit twiddling routines.
- *
- * @version $Id$
+ * @lucene.internal
  */
-public class BitUtil {
+public final class BitUtil {
+
+  private BitUtil() {} // no instance
 
   /** Returns the number of bits set in the long */
   public static int pop(long x) {

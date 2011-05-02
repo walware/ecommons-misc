@@ -17,50 +17,61 @@ package org.apache.lucene.analysis.standard;
  * limitations under the License.
  */
 
+import java.io.IOException;
+
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.tokenattributes.TermAttribute;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.TypeAttribute;
+import org.apache.lucene.util.Version;
 
-/** Normalizes tokens extracted with {@link StandardTokenizer}. */
-
-public final class StandardFilter extends TokenFilter {
-
-
-  /** Construct filtering <i>in</i>. */
+/**
+ * Normalizes tokens extracted with {@link StandardTokenizer}.
+ */
+public class StandardFilter extends TokenFilter {
+  private final Version matchVersion;
+  
+  /** @deprecated Use {@link #StandardFilter(Version, TokenStream)} instead. */
+  @Deprecated
   public StandardFilter(TokenStream in) {
-    super(in);
-    termAtt = addAttribute(TermAttribute.class);
-    typeAtt = addAttribute(TypeAttribute.class);
+    this(Version.LUCENE_30, in);
   }
-
-  private static final String APOSTROPHE_TYPE = StandardTokenizerImpl.TOKEN_TYPES[StandardTokenizerImpl.APOSTROPHE];
-  private static final String ACRONYM_TYPE = StandardTokenizerImpl.TOKEN_TYPES[StandardTokenizerImpl.ACRONYM];
+  
+  public StandardFilter(Version matchVersion, TokenStream in) {
+    super(in);
+    this.matchVersion = matchVersion;
+  }
+  
+  private static final String APOSTROPHE_TYPE = ClassicTokenizer.TOKEN_TYPES[ClassicTokenizer.APOSTROPHE];
+  private static final String ACRONYM_TYPE = ClassicTokenizer.TOKEN_TYPES[ClassicTokenizer.ACRONYM];
 
   // this filters uses attribute type
-  private TypeAttribute typeAtt;
-  private TermAttribute termAtt;
+  private final TypeAttribute typeAtt = addAttribute(TypeAttribute.class);
+  private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
   
-  /** Returns the next token in the stream, or null at EOS.
-   * <p>Removes <tt>'s</tt> from the end of words.
-   * <p>Removes dots from acronyms.
-   */
   @Override
-  public final boolean incrementToken() throws java.io.IOException {
+  public final boolean incrementToken() throws IOException {
+    if (matchVersion.onOrAfter(Version.LUCENE_31))
+      return input.incrementToken(); // TODO: add some niceties for the new grammar
+    else
+      return incrementTokenClassic();
+  }
+  
+  public final boolean incrementTokenClassic() throws IOException {
     if (!input.incrementToken()) {
       return false;
     }
 
-    char[] buffer = termAtt.termBuffer();
-    final int bufferLength = termAtt.termLength();
+    final char[] buffer = termAtt.buffer();
+    final int bufferLength = termAtt.length();
     final String type = typeAtt.type();
 
     if (type == APOSTROPHE_TYPE &&      // remove 's
-  bufferLength >= 2 &&
+        bufferLength >= 2 &&
         buffer[bufferLength-2] == '\'' &&
         (buffer[bufferLength-1] == 's' || buffer[bufferLength-1] == 'S')) {
       // Strip last 2 characters off
-      termAtt.setTermLength(bufferLength - 2);
+      termAtt.setLength(bufferLength - 2);
     } else if (type == ACRONYM_TYPE) {      // remove dots
       int upto = 0;
       for(int i=0;i<bufferLength;i++) {
@@ -68,7 +79,7 @@ public final class StandardFilter extends TokenFilter {
         if (c != '.')
           buffer[upto++] = c;
       }
-      termAtt.setTermLength(upto);
+      termAtt.setLength(upto);
     }
 
     return true;

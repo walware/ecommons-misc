@@ -17,10 +17,13 @@ package org.apache.lucene.store;
  * limitations under the License.
  */
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Closeable;
+import java.util.Collection;
 
 import org.apache.lucene.index.IndexFileNameFilter;
+import org.apache.lucene.util.IOUtils;
 
 /** A Directory is a flat list of files.  Files may be written once, when they
  * are created.  Once a file is created it may only be opened for read, or
@@ -46,9 +49,12 @@ public abstract class Directory implements Closeable {
    * this Directory instance). */
   protected LockFactory lockFactory;
 
-  /** Returns an array of strings, one for each file in the
-   *  directory.
-   * @throws IOException
+  /**
+   * Returns an array of strings, one for each file in the directory.
+   * 
+   * @throws NoSuchDirectoryException if the directory is not prepared for any
+   *         write operations (such as {@link #createOutput(String)}).
+   * @throws IOException in case of other IO errors
    */
   public abstract String[] listAll() throws IOException;
 
@@ -68,9 +74,20 @@ public abstract class Directory implements Closeable {
   public abstract void deleteFile(String name)
        throws IOException;
 
-  /** Returns the length of a file in the directory. */
-  public abstract long fileLength(String name)
-       throws IOException;
+  /**
+   * Returns the length of a file in the directory. This method follows the
+   * following contract:
+   * <ul>
+   * <li>Throws {@link FileNotFoundException} if the file does not exist
+   * <li>Returns a value &ge;0 if the file exists, which specifies its length.
+   * </ul>
+   * 
+   * @param name the name of the file for which to return the length.
+   * @throws FileNotFoundException if the file does not exist.
+   * @throws IOException if there was an IO error while retrieving the file's
+   *         length.
+   */
+  public abstract long fileLength(String name) throws IOException;
 
 
   /** Creates a new, empty file in the directory with the given name.
@@ -78,11 +95,34 @@ public abstract class Directory implements Closeable {
   public abstract IndexOutput createOutput(String name)
        throws IOException;
 
-  /** Ensure that any writes to this file are moved to
-   *  stable storage.  Lucene uses this to properly commit
-   *  changes to the index, to prevent a machine/OS crash
-   *  from corrupting the index. */
-  public void sync(String name) throws IOException {}
+  /**
+   * Ensure that any writes to this file are moved to
+   * stable storage.  Lucene uses this to properly commit
+   * changes to the index, to prevent a machine/OS crash
+   * from corrupting the index.
+   * @deprecated use {@link #sync(Collection)} instead.
+   * For easy migration you can change your code to call
+   * sync(Collections.singleton(name))
+   */
+  @Deprecated
+  public void sync(String name) throws IOException { // TODO 4.0 kill me
+  }
+
+  /**
+   * Ensure that any writes to these files are moved to
+   * stable storage.  Lucene uses this to properly commit
+   * changes to the index, to prevent a machine/OS crash
+   * from corrupting the index.<br/>
+   * <br/>
+   * NOTE: Clients may call this method for same files over
+   * and over again, so some impls might optimize for that.
+   * For other impls the operation can be a noop, for various
+   * reasons.
+   */
+  public void sync(Collection<String> names) throws IOException { // TODO 4.0 make me abstract
+    for (String name : names)
+      sync(name);
+  }
 
   /** Returns a stream reading an existing file. */
   public abstract IndexInput openInput(String name)
@@ -130,7 +170,7 @@ public abstract class Directory implements Closeable {
    *
    * @param lockFactory instance of {@link LockFactory}.
    */
-  public void setLockFactory(LockFactory lockFactory) {
+  public void setLockFactory(LockFactory lockFactory) throws IOException {
     assert lockFactory != null;
     this.lockFactory = lockFactory;
     lockFactory.setLockPrefix(this.getLockID());
@@ -164,64 +204,74 @@ public abstract class Directory implements Closeable {
   }
 
   /**
-   * Copy contents of a directory src to a directory dest.
-   * If a file in src already exists in dest then the
-   * one in dest will be blindly overwritten.
-   *
-   * <p><b>NOTE:</b> the source directory cannot change
-   * while this method is running.  Otherwise the results
-   * are undefined and you could easily hit a
+   * Copies the file <i>src</i> to {@link Directory} <i>to</i> under the new
+   * file name <i>dest</i>.
+   * <p>
+   * If you want to copy the entire source directory to the destination one, you
+   * can do so like this:
+   * 
+   * <pre>
+   * Directory to; // the directory to copy to
+   * for (String file : dir.listAll()) {
+   *   dir.copy(to, file, newFile); // newFile can be either file, or a new name
+   * }
+   * </pre>
+   * <p>
+   * <b>NOTE:</b> this method does not check whether <i>dest<i> exist and will
+   * overwrite it if it does.
+   */
+  public void copy(Directory to, String src, String dest) throws IOException {
+    IndexOutput os = to.createOutput(dest);
+    IndexInput is = openInput(src);
+    IOException priorException = null;
+    try {
+      is.copyBytes(os, is.length());
+    } catch (IOException ioe) {
+      priorException = ioe;
+    } finally {
+      IOUtils.closeSafely(priorException, os, is);
+    }
+  }
+
+  /**
+   * Copy contents of a directory src to a directory dest. If a file in src
+   * already exists in dest then the one in dest will be blindly overwritten.
+   * <p>
+   * <b>NOTE:</b> the source directory cannot change while this method is
+   * running. Otherwise the results are undefined and you could easily hit a
    * FileNotFoundException.
-   *
-   * <p><b>NOTE:</b> this method only copies files that look
-   * like index files (ie, have extensions matching the
-   * known extensions of index files).
-   *
+   * <p>
+   * <b>NOTE:</b> this method only copies files that look like index files (ie,
+   * have extensions matching the known extensions of index files).
+   * 
    * @param src source directory
    * @param dest destination directory
-   * @param closeDirSrc if <code>true</code>, call {@link #close()} method on source directory
-   * @throws IOException
+   * @param closeDirSrc if <code>true</code>, call {@link #close()} method on 
+   *        source directory
+   * @deprecated should be replaced with calls to
+   *             {@link #copy(Directory, String, String)} for every file that
+   *             needs copying. You can use the following code:
+   * 
+   * <pre>
+   * IndexFileNameFilter filter = IndexFileNameFilter.getFilter();
+   * for (String file : src.listAll()) {
+   *   if (filter.accept(null, file)) {
+   *     src.copy(dest, file, file);
+   *   }
+   * }
+   * </pre>
    */
+  @Deprecated
   public static void copy(Directory src, Directory dest, boolean closeDirSrc) throws IOException {
-    final String[] files = src.listAll();
-
     IndexFileNameFilter filter = IndexFileNameFilter.getFilter();
-
-    byte[] buf = new byte[BufferedIndexOutput.BUFFER_SIZE];
-    for (int i = 0; i < files.length; i++) {
-
-      if (!filter.accept(null, files[i]))
-        continue;
-
-      IndexOutput os = null;
-      IndexInput is = null;
-      try {
-        // create file in dest directory
-        os = dest.createOutput(files[i]);
-        // read current file
-        is = src.openInput(files[i]);
-        // and copy to dest directory
-        long len = is.length();
-        long readCount = 0;
-        while (readCount < len) {
-          int toRead = readCount + BufferedIndexOutput.BUFFER_SIZE > len ? (int)(len - readCount) : BufferedIndexOutput.BUFFER_SIZE;
-          is.readBytes(buf, 0, toRead);
-          os.writeBytes(buf, toRead);
-          readCount += toRead;
-        }
-      } finally {
-        // graceful cleanup
-        try {
-          if (os != null)
-            os.close();
-        } finally {
-          if (is != null)
-            is.close();
-        }
+    for (String file : src.listAll()) {
+      if (filter.accept(null, file)) {
+        src.copy(dest, file, file);
       }
     }
-    if(closeDirSrc)
+    if (closeDirSrc) {
       src.close();
+    }
   }
 
   /**

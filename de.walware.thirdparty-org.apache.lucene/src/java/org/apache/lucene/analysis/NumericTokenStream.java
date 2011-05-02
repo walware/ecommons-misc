@@ -22,9 +22,7 @@ import org.apache.lucene.util.NumericUtils;
 import org.apache.lucene.document.NumericField; // for javadocs
 import org.apache.lucene.search.NumericRangeQuery; // for javadocs
 import org.apache.lucene.search.NumericRangeFilter; // for javadocs
-import org.apache.lucene.search.SortField; // for javadocs
-import org.apache.lucene.search.FieldCache; // javadocs
-import org.apache.lucene.analysis.tokenattributes.TermAttribute;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.TypeAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 
@@ -81,9 +79,6 @@ import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
  * <a
  * href="../search/NumericRangeQuery.html#precisionStepDesc"><code>precisionStep</code></a>
  * parameter as well as how numeric fields work under the hood.</p>
- *
- * <p><font color="red"><b>NOTE:</b> This API is experimental and
- * might change in incompatible ways in the next release.</font>
  *
  * @since 2.9
  */
@@ -163,7 +158,7 @@ public final class NumericTokenStream extends TokenStream {
    * <code>new Field(name, new NumericTokenStream(precisionStep).setIntValue(value))</code>
    */
   public NumericTokenStream setIntValue(final int value) {
-    this.value = (long) value;
+    this.value = value;
     valSize = 32;
     shift = 0;
     return this;
@@ -189,7 +184,7 @@ public final class NumericTokenStream extends TokenStream {
    * <code>new Field(name, new NumericTokenStream(precisionStep).setFloatValue(value))</code>
    */
   public NumericTokenStream setFloatValue(final float value) {
-    this.value = (long) NumericUtils.floatToSortableInt(value);
+    this.value = NumericUtils.floatToSortableInt(value);
     valSize = 32;
     shift = 0;
     return this;
@@ -213,13 +208,13 @@ public final class NumericTokenStream extends TokenStream {
     final char[] buffer;
     switch (valSize) {
       case 64:
-        buffer = termAtt.resizeTermBuffer(NumericUtils.BUF_SIZE_LONG);
-        termAtt.setTermLength(NumericUtils.longToPrefixCoded(value, shift, buffer));
+        buffer = termAtt.resizeBuffer(NumericUtils.BUF_SIZE_LONG);
+        termAtt.setLength(NumericUtils.longToPrefixCoded(value, shift, buffer));
         break;
       
       case 32:
-        buffer = termAtt.resizeTermBuffer(NumericUtils.BUF_SIZE_INT);
-        termAtt.setTermLength(NumericUtils.intToPrefixCoded((int) value, shift, buffer));
+        buffer = termAtt.resizeBuffer(NumericUtils.BUF_SIZE_INT);
+        termAtt.setLength(NumericUtils.intToPrefixCoded((int) value, shift, buffer));
         break;
       
       default:
@@ -240,8 +235,13 @@ public final class NumericTokenStream extends TokenStream {
     return sb.toString();
   }
 
+  /** Returns the precision step. */
+  public int getPrecisionStep() {
+    return precisionStep;
+  }
+  
   // members
-  private final TermAttribute termAtt = addAttribute(TermAttribute.class);
+  private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
   private final TypeAttribute typeAtt = addAttribute(TypeAttribute.class);
   private final PositionIncrementAttribute posIncrAtt = addAttribute(PositionIncrementAttribute.class);
   

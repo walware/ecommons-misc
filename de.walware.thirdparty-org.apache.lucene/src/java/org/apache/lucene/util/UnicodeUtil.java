@@ -49,16 +49,53 @@ package org.apache.lucene.util;
  * remains attached.
  */
 
+/*
+ * Additional code came from the IBM ICU library.
+ *
+ *  http://www.icu-project.org
+ *
+ * Full Copyright for that code follows.
+ */
+
+/*
+ * Copyright (C) 1999-2010, International Business Machines
+ * Corporation and others.  All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, and/or sell copies of the
+ * Software, and to permit persons to whom the Software is furnished to do so,
+ * provided that the above copyright notice(s) and this permission notice appear
+ * in all copies of the Software and that both the above copyright notice(s) and
+ * this permission notice appear in supporting documentation.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS.
+ * IN NO EVENT SHALL THE COPYRIGHT HOLDER OR HOLDERS INCLUDED IN THIS NOTICE BE
+ * LIABLE FOR ANY CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR
+ * ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
+ * IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
+ * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Except as contained in this notice, the name of a copyright holder shall not
+ * be used in advertising or otherwise to promote the sale, use or other
+ * dealings in this Software without prior written authorization of the
+ * copyright holder.
+ */
+
 /**
  * Class to encode java's UTF16 char[] into UTF8 byte[]
  * without always allocating a new byte[] as
  * String.getBytes("UTF-8") does.
  *
- * <p><b>WARNING</b>: This API is a new and experimental and
- * may suddenly change. </p>
+ * @lucene.internal
  */
 
-final public class UnicodeUtil {
+public final class UnicodeUtil {
+
+  private UnicodeUtil() {} // no instance
 
   public static final int UNI_SUR_HIGH_START = 0xD800;
   public static final int UNI_SUR_HIGH_END = 0xDBFF;
@@ -72,20 +109,24 @@ final public class UnicodeUtil {
   private static final long HALF_SHIFT = 10;
   private static final long HALF_MASK = 0x3FFL;
 
+  /**
+   * @lucene.internal
+   */
   public static final class UTF8Result {
     public byte[] result = new byte[10];
     public int length;
 
     public void setLength(int newLength) {
       if (result.length < newLength) {
-        byte[] newArray = new byte[(int) (1.5*newLength)];
-        System.arraycopy(result, 0, newArray, 0, length);
-        result = newArray;
+        result = ArrayUtil.grow(result, newLength);
       }
       length = newLength;
     }
   }
 
+  /**
+   * @lucene.internal
+   */
   public static final class UTF16Result {
     public char[] result = new char[10];
     public int[] offsets = new int[10];
@@ -93,9 +134,7 @@ final public class UnicodeUtil {
 
     public void setLength(int newLength) {
       if (result.length < newLength) {
-        char[] newArray = new char[(int) (1.5*newLength)];
-        System.arraycopy(result, 0, newArray, 0, length);
-        result = newArray;
+        result = ArrayUtil.grow(result, newLength);
       }
       length = newLength;
     }
@@ -120,10 +159,7 @@ final public class UnicodeUtil {
       final int code = (int) source[i++];
 
       if (upto+4 > out.length) {
-        byte[] newOut = new byte[2*out.length];
-        assert newOut.length >= upto+4;
-        System.arraycopy(out, 0, newOut, 0, upto);
-        result.result = out = newOut;
+        out = result.result = ArrayUtil.grow(out, upto+4);
       }
       if (code < 0x80)
         out[upto++] = (byte) code;
@@ -179,10 +215,7 @@ final public class UnicodeUtil {
       final int code = (int) source[i++];
 
       if (upto+4 > out.length) {
-        byte[] newOut = new byte[2*out.length];
-        assert newOut.length >= upto+4;
-        System.arraycopy(out, 0, newOut, 0, upto);
-        result.result = out = newOut;
+        out = result.result = ArrayUtil.grow(out, upto+4);
       }
       if (code < 0x80)
         out[upto++] = (byte) code;
@@ -233,10 +266,7 @@ final public class UnicodeUtil {
       final int code = (int) s.charAt(i);
 
       if (upto+4 > out.length) {
-        byte[] newOut = new byte[2*out.length];
-        assert newOut.length >= upto+4;
-        System.arraycopy(out, 0, newOut, 0, upto);
-        result.result = out = newOut;
+        out = result.result = ArrayUtil.grow(out, upto+4);
       }
       if (code < 0x80)
         out[upto++] = (byte) code;
@@ -283,9 +313,7 @@ final public class UnicodeUtil {
     final int end = offset + length;
     char[] out = result.result;
     if (result.offsets.length <= end) {
-      int[] newOffsets = new int[2*end];
-      System.arraycopy(result.offsets, 0, newOffsets, 0, result.offsets.length);
-      result.offsets  = newOffsets;
+      result.offsets = ArrayUtil.grow(result.offsets, end+1);
     }
     final int[] offsets = result.offsets;
 
@@ -299,9 +327,7 @@ final public class UnicodeUtil {
 
     // Pre-allocate for worst case 1-for-1
     if (outUpto+length >= out.length) {
-      char[] newOut = new char[2*(outUpto+length)];
-      System.arraycopy(out, 0, newOut, 0, outUpto);
-      result.result = out = newOut;
+      out = result.result = ArrayUtil.grow(out, outUpto+length+1);
     }
 
     while (upto < end) {
@@ -444,4 +470,62 @@ final public class UnicodeUtil {
     return true;
   }
   */
+
+  /** Shift value for lead surrogate to form a supplementary character. */
+  private static final int LEAD_SURROGATE_SHIFT_ = 10;
+  /** Mask to retrieve the significant value from a trail surrogate.*/
+  private static final int TRAIL_SURROGATE_MASK_ = 0x3FF;
+  /** Trail surrogate minimum value */
+  private static final int TRAIL_SURROGATE_MIN_VALUE = 0xDC00;
+  /** Lead surrogate minimum value */
+  private static final int LEAD_SURROGATE_MIN_VALUE = 0xD800;
+  /** The minimum value for Supplementary code points */
+  private static final int SUPPLEMENTARY_MIN_VALUE = 0x10000;
+  /** Value that all lead surrogate starts with */
+  private static final int LEAD_SURROGATE_OFFSET_ = LEAD_SURROGATE_MIN_VALUE
+          - (SUPPLEMENTARY_MIN_VALUE >> LEAD_SURROGATE_SHIFT_);
+
+  /**
+   * Cover JDK 1.5 API. Create a String from an array of codePoints.
+   *
+   * @param codePoints The code array
+   * @param offset The start of the text in the code point array
+   * @param count The number of code points
+   * @return a String representing the code points between offset and count
+   * @throws IllegalArgumentException If an invalid code point is encountered
+   * @throws IndexOutOfBoundsException If the offset or count are out of bounds.
+   */
+  public static String newString(int[] codePoints, int offset, int count) {
+      if (count < 0) {
+          throw new IllegalArgumentException();
+      }
+      char[] chars = new char[count];
+      int w = 0;
+      for (int r = offset, e = offset + count; r < e; ++r) {
+          int cp = codePoints[r];
+          if (cp < 0 || cp > 0x10ffff) {
+              throw new IllegalArgumentException();
+          }
+          while (true) {
+              try {
+                  if (cp < 0x010000) {
+                      chars[w] = (char) cp;
+                      w++;
+                  } else {
+                      chars[w] = (char) (LEAD_SURROGATE_OFFSET_ + (cp >> LEAD_SURROGATE_SHIFT_));
+                      chars[w + 1] = (char) (TRAIL_SURROGATE_MIN_VALUE + (cp & TRAIL_SURROGATE_MASK_));
+                      w += 2;
+                  }
+                  break;
+              } catch (IndexOutOfBoundsException ex) {
+                  int newlen = (int) (Math.ceil((double) codePoints.length * (w + 2)
+                          / (r - offset + 1)));
+                  char[] temp = new char[newlen];
+                  System.arraycopy(chars, 0, temp, 0, w);
+                  chars = temp;
+              }
+          }
+      }
+      return new String(chars, 0, w);
+  }
 }

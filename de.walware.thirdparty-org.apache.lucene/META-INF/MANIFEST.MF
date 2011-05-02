@@ -3,13 +3,14 @@ Bundle-ManifestVersion: 2
 Bundle-Vendor: WalWare.de
 Bundle-Name: Apache Lucene
 Bundle-SymbolicName: de.walware.thirdparty-org.apache.lucene
-Bundle-Version: 3.0.3.qualifier
+Bundle-Version: 3.1.0.qualifier
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Export-Package: org.apache.lucene,
  org.apache.lucene.analysis,
  org.apache.lucene.analysis.standard,
  org.apache.lucene.analysis.tokenattributes,
+ org.apache.lucene.collation,
  org.apache.lucene.document,
  org.apache.lucene.extra.analysis,
  org.apache.lucene.extra.queryParser,
@@ -22,5 +23,4 @@ Export-Package: org.apache.lucene,
  org.apache.lucene.search.spans,
  org.apache.lucene.search.vectorhighlight,
  org.apache.lucene.store,
- org.apache.lucene.util,
- org.apache.lucene.util.cache
+ org.apache.lucene.util

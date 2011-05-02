@@ -30,11 +30,24 @@ import java.util.*;
  * Internally uses a Map to temporally hold a reference to every
  * object seen. 
  * 
- * If checkIntered, all Strings checked will be interned, but those
+ * If checkInterned, all Strings checked will be interned, but those
  * that were not already interned will be released for GC when the
  * estimate is complete.
+ * 
+ * @lucene.internal
  */
 public final class RamUsageEstimator {
+
+  public final static int NUM_BYTES_SHORT = 2;
+  public final static int NUM_BYTES_INT = 4;
+  public final static int NUM_BYTES_LONG = 8;
+  public final static int NUM_BYTES_FLOAT = 4;
+  public final static int NUM_BYTES_DOUBLE = 8;
+  public final static int NUM_BYTES_CHAR = 2;
+  public final static int NUM_BYTES_OBJECT_HEADER = 8;
+  public final static int NUM_BYTES_OBJECT_REF = Constants.JRE_IS_64BIT ? 8 : 4;
+  public final static int NUM_BYTES_ARRAY_HEADER = NUM_BYTES_OBJECT_HEADER + NUM_BYTES_INT + NUM_BYTES_OBJECT_REF;
+
   private MemoryModel memoryModel;
 
   private final Map<Object,Object> seen;
@@ -114,7 +127,7 @@ public final class RamUsageEstimator {
     // add to seen
     seen.put(obj, null);
 
-    Class clazz = obj.getClass();
+    Class<?> clazz = obj.getClass();
     if (clazz.isArray()) {
       return sizeOfArray(obj);
     }
@@ -157,7 +170,7 @@ public final class RamUsageEstimator {
       return 0;
     }
     long size = arraySize;
-    Class arrayElementClazz = obj.getClass().getComponentType();
+    Class<?> arrayElementClazz = obj.getClass().getComponentType();
     if (arrayElementClazz.isPrimitive()) {
       size += len * memoryModel.getPrimitiveSize(arrayElementClazz);
     } else {

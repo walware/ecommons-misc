@@ -20,7 +20,7 @@ package org.apache.lucene.store;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.ClosedChannelException; // javadoc @link
+import java.nio.channels.ClosedChannelException; // javadoc
 import java.nio.channels.FileChannel;
 import java.util.concurrent.Future; // javadoc
 
@@ -30,7 +30,7 @@ import java.util.concurrent.Future; // javadoc
  * without synchronizing.
  * <p>
  * This class only uses FileChannel when reading; writing is achieved with
- * {@link SimpleFSDirectory.SimpleFSIndexOutput}.
+ * {@link FSDirectory.FSIndexOutput}.
  * <p>
  * <b>NOTE</b>: NIOFSDirectory is not recommended on Windows because of a bug in
  * how FileChannel.read is implemented in Sun's JRE. Inside of the
@@ -75,14 +75,7 @@ public class NIOFSDirectory extends FSDirectory {
   @Override
   public IndexInput openInput(String name, int bufferSize) throws IOException {
     ensureOpen();
-    return new NIOFSIndexInput(new File(getFile(), name), bufferSize, getReadChunkSize());
-  }
-
-  /** Creates an IndexOutput for the file with the given name. */
-  @Override
-  public IndexOutput createOutput(String name) throws IOException {
-    initOutput(name);
-    return new SimpleFSDirectory.SimpleFSIndexOutput(new File(directory, name));
+    return new NIOFSIndexInput(new File(getDirectory(), name), bufferSize, getReadChunkSize());
   }
 
   protected static class NIOFSIndexInput extends SimpleFSDirectory.SimpleFSIndexInput {

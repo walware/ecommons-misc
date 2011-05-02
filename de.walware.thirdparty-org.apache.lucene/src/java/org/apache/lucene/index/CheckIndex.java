@@ -17,6 +17,8 @@ package org.apache.lucene.index;
  * limitations under the License.
  */
 
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IndexInput;
@@ -41,9 +43,7 @@ import java.util.Map;
  * <p>As this tool checks every byte in the index, on a large
  * index it can take quite a long time to run.
  *
- * <p><b>WARNING</b>: this tool and API is new and
- * experimental and is subject to suddenly change in the
- * next release.  Please make a complete backup of your
+ * @lucene.experimental Please make a complete backup of your
  * index before using this to fix your index!
  */
 public class CheckIndex {
@@ -54,8 +54,7 @@ public class CheckIndex {
   /**
    * Returned from {@link #checkIndex()} detailing the health and status of the index.
    *
-   * <p><b>WARNING</b>: this API is new and experimental and is
-   * subject to suddenly change in the next release.
+   * @lucene.experimental
    **/
 
   public static class Status {
@@ -374,6 +373,12 @@ public class CheckIndex {
         sFormat = "FORMAT_USER_DATA [Lucene 2.9]";
       else if (format == SegmentInfos.FORMAT_DIAGNOSTICS)
         sFormat = "FORMAT_DIAGNOSTICS [Lucene 2.9]";
+      else if (format == SegmentInfos.FORMAT_HAS_VECTORS)
+        sFormat = "FORMAT_HAS_VECTORS [Lucene 3.1]";
+      else if (format == SegmentInfos.FORMAT_3_1)
+        sFormat = "FORMAT_3_1 [Lucene 3.1]";
+      else if (format == SegmentInfos.CURRENT_FORMAT)
+        throw new RuntimeException("BUG: You should update this tool!");
       else if (format < SegmentInfos.CURRENT_FORMAT) {
         sFormat = "int=" + format + " [newer version of Lucene than this tool]";
         skip = true;
@@ -438,8 +443,8 @@ public class CheckIndex {
         segInfoStat.hasProx = info.getHasProx();
         msg("    numFiles=" + info.files().size());
         segInfoStat.numFiles = info.files().size();
-        msg("    size (MB)=" + nf.format(info.sizeInBytes()/(1024.*1024.)));
-        segInfoStat.sizeMB = info.sizeInBytes()/(1024.*1024.);
+        segInfoStat.sizeMB = info.sizeInBytes(true)/(1024.*1024.);
+        msg("    size (MB)=" + nf.format(segInfoStat.sizeMB));
         Map<String,String> diagnostics = info.getDiagnostics();
         segInfoStat.diagnostics = diagnostics;
         if (diagnostics.size() > 0) {
@@ -594,6 +599,8 @@ public class CheckIndex {
   private Status.TermIndexStatus testTermIndex(SegmentInfo info, SegmentReader reader) {
     final Status.TermIndexStatus status = new Status.TermIndexStatus();
 
+    final IndexSearcher is = new IndexSearcher(reader);
+
     try {
       if (infoStream != null) {
         infoStream.print("    test: terms, freq, prox...");
@@ -606,10 +613,12 @@ public class CheckIndex {
       final MySegmentTermDocs myTermDocs = new MySegmentTermDocs(reader);
 
       final int maxDoc = reader.maxDoc();
-
+      Term lastTerm = null;
       while (termEnum.next()) {
         status.termCount++;
         final Term term = termEnum.term();
+        lastTerm = term;
+
         final int docFreq = termEnum.docFreq();
         termPositions.seek(term);
         int lastDoc = -1;
@@ -654,6 +663,11 @@ public class CheckIndex {
         if (freq0 + delCount != docFreq) {
           throw new RuntimeException("term " + term + " docFreq=" + 
                                      docFreq + " != num docs seen " + freq0 + " + num docs deleted " + delCount);
+        }
+
+        // Test search on last term:
+        if (lastTerm != null) {
+          is.search(new TermQuery(lastTerm), 1);
         }
       }
 
@@ -758,6 +772,7 @@ public class CheckIndex {
   public void fixIndex(Status result) throws IOException {
     if (result.partial)
       throw new IllegalArgumentException("can only fix an index that was fully checked (this status checked a subset of segments)");
+    result.newSegments.changed();
     result.newSegments.commit(result.dir);
   }
 
@@ -904,7 +919,7 @@ public class CheckIndex {
     System.out.println("");
 
     final int exitCode;
-    if (result != null && result.clean == true)
+    if (result.clean == true)
       exitCode = 0;
     else
       exitCode = 1;

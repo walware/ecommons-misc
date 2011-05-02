@@ -25,10 +25,7 @@ import org.apache.lucene.search.Explanation;
  * {@link org.apache.lucene.search.function.ValueSource ValueSuorce} 
  * for a particular field and reader.
  *
- * <p><font color="#FF0000">
- * WARNING: The status of the <b>search.function</b> package is experimental. 
- * The APIs introduced here might change in the future and will not be 
- * supported anymore in such a case.</font>
+ * @lucene.experimental
  * 
  *
  */
@@ -73,7 +70,7 @@ public abstract class DocValues {
    * @param doc document whose double value is requested.
    */
   public double doubleVal(int doc) {
-    return (double) floatVal(doc);
+    return floatVal(doc);
   }
   
   /**

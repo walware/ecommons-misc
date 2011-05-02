@@ -17,6 +17,7 @@ package org.apache.lucene.index;
  * limitations under the License.
  */
 
+import java.util.Comparator;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Fieldable;
 import org.apache.lucene.util.ArrayUtil;
+import org.apache.lucene.util.RamUsageEstimator;
 
 /**
  * Gathers all Fieldables for a document under the same
@@ -112,8 +114,8 @@ final class DocFieldProcessorPerThread extends DocConsumerPerThread {
           else
             lastPerField.next = perField.next;
 
-          if (state.docWriter.infoStream != null)
-            state.docWriter.infoStream.println("  purge field=" + perField.fieldInfo.name);
+          if (state.infoStream != null)
+            state.infoStream.println("  purge field=" + perField.fieldInfo.name);
 
           totalFieldCount--;
 
@@ -240,7 +242,7 @@ final class DocFieldProcessorPerThread extends DocConsumerPerThread {
     // sort the subset of fields that have vectors
     // enabled; we could save [small amount of] CPU
     // here.
-    quickSort(fields, 0, fieldCount-1);
+    ArrayUtil.quickSort(fields, 0, fieldCount, fieldsComp);
 
     for(int i=0;i<fieldCount;i++)
       fields[i].consumer.processFields(fields[i].fields, fields[i].fieldCount);
@@ -266,67 +268,12 @@ final class DocFieldProcessorPerThread extends DocConsumerPerThread {
       return both;
     }
   }
-
-  void quickSort(DocFieldProcessorPerField[] array, int lo, int hi) {
-    if (lo >= hi)
-      return;
-    else if (hi == 1+lo) {
-      if (array[lo].fieldInfo.name.compareTo(array[hi].fieldInfo.name) > 0) {
-        final DocFieldProcessorPerField tmp = array[lo];
-        array[lo] = array[hi];
-        array[hi] = tmp;
-      }
-      return;
+  
+  private static final Comparator<DocFieldProcessorPerField> fieldsComp = new Comparator<DocFieldProcessorPerField>() {
+    public int compare(DocFieldProcessorPerField o1, DocFieldProcessorPerField o2) {
+      return o1.fieldInfo.name.compareTo(o2.fieldInfo.name);
     }
-
-    int mid = (lo + hi) >>> 1;
-
-    if (array[lo].fieldInfo.name.compareTo(array[mid].fieldInfo.name) > 0) {
-      DocFieldProcessorPerField tmp = array[lo];
-      array[lo] = array[mid];
-      array[mid] = tmp;
-    }
-
-    if (array[mid].fieldInfo.name.compareTo(array[hi].fieldInfo.name) > 0) {
-      DocFieldProcessorPerField tmp = array[mid];
-      array[mid] = array[hi];
-      array[hi] = tmp;
-
-      if (array[lo].fieldInfo.name.compareTo(array[mid].fieldInfo.name) > 0) {
-        DocFieldProcessorPerField tmp2 = array[lo];
-        array[lo] = array[mid];
-        array[mid] = tmp2;
-      }
-    }
-
-    int left = lo + 1;
-    int right = hi - 1;
-
-    if (left >= right)
-      return;
-
-    DocFieldProcessorPerField partition = array[mid];
-
-    for (; ;) {
-      while (array[right].fieldInfo.name.compareTo(partition.fieldInfo.name) > 0)
-        --right;
-
-      while (left < right && array[left].fieldInfo.name.compareTo(partition.fieldInfo.name) <= 0)
-        ++left;
-
-      if (left < right) {
-        DocFieldProcessorPerField tmp = array[left];
-        array[left] = array[right];
-        array[right] = tmp;
-        --right;
-      } else {
-        break;
-      }
-    }
-
-    quickSort(array, lo, left);
-    quickSort(array, left + 1, hi);
-  }
+  };
 
   PerDoc[] docFreeList = new PerDoc[1];
   int freeCount;
@@ -340,7 +287,7 @@ final class DocFieldProcessorPerThread extends DocConsumerPerThread {
         // enough space to recycle all outstanding PerDoc
         // instances
         assert allocCount == 1+docFreeList.length;
-        docFreeList = new PerDoc[ArrayUtil.getNextSize(allocCount)];
+        docFreeList = new PerDoc[ArrayUtil.oversize(allocCount, RamUsageEstimator.NUM_BYTES_OBJECT_REF)];
       }
       return new PerDoc();
     } else

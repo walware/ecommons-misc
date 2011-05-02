@@ -22,14 +22,15 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.FieldSelector;
 import org.apache.lucene.index.DirectoryReader.MultiTermDocs;
 import org.apache.lucene.index.DirectoryReader.MultiTermEnum;
 import org.apache.lucene.index.DirectoryReader.MultiTermPositions;
-import org.apache.lucene.search.DefaultSimilarity;
-import org.apache.lucene.search.FieldCache; // not great (circular); used only to purge FieldCache entry on close
+import org.apache.lucene.search.Similarity;
+import org.apache.lucene.util.MapBackedSet;
 
 /** An IndexReader which reads multiple indexes, appending
  * their content. */
@@ -48,7 +49,6 @@ public class MultiReader extends IndexReader implements Cloneable {
   * left to the subreaders. </p>
   * <p>Note that all subreaders are closed if this Multireader is closed.</p>
   * @param subReaders set of (sub)readers
-  * @throws IOException
   */
   public MultiReader(IndexReader... subReaders) {
     initialize(subReaders, true);
@@ -61,7 +61,6 @@ public class MultiReader extends IndexReader implements Cloneable {
    * @param closeSubReaders indicates whether the subreaders should be closed
    * when this MultiReader is closed
    * @param subReaders set of (sub)readers
-   * @throws IOException
    */
   public MultiReader(IndexReader[] subReaders, boolean closeSubReaders) {
     initialize(subReaders, closeSubReaders);
@@ -86,6 +85,7 @@ public class MultiReader extends IndexReader implements Cloneable {
         hasDeletions = true;
     }
     starts[subReaders.length] = maxDoc;
+    readerFinishedListeners = new MapBackedSet<ReaderFinishedListener>(new ConcurrentHashMap<ReaderFinishedListener,Boolean>());
   }
   
   /**
@@ -319,7 +319,7 @@ public class MultiReader extends IndexReader implements Cloneable {
       subReaders[i].norms(field, result, offset + starts[i]);
 
     if (bytes==null && !hasNorms(field)) {
-      Arrays.fill(result, offset, result.length, DefaultSimilarity.encodeNorm(1.0f));
+      Arrays.fill(result, offset, result.length, Similarity.getDefault().encodeNormValue(1.0f));
     } else if (bytes != null) {                         // cache hit
       System.arraycopy(bytes, 0, result, offset, maxDoc());
     } else {
@@ -342,13 +342,23 @@ public class MultiReader extends IndexReader implements Cloneable {
   @Override
   public TermEnum terms() throws IOException {
     ensureOpen();
-    return new MultiTermEnum(this, subReaders, starts, null);
+    if (subReaders.length == 1) {
+      // Optimize single segment case:
+      return subReaders[0].terms();
+    } else {
+      return new MultiTermEnum(this, subReaders, starts, null);
+    }
   }
 
   @Override
   public TermEnum terms(Term term) throws IOException {
     ensureOpen();
-    return new MultiTermEnum(this, subReaders, starts, term);
+    if (subReaders.length == 1) {
+      // Optimize single segment case:
+      return subReaders[0].terms(term);
+    } else {
+      return new MultiTermEnum(this, subReaders, starts, term);
+    }
   }
 
   @Override
@@ -363,13 +373,34 @@ public class MultiReader extends IndexReader implements Cloneable {
   @Override
   public TermDocs termDocs() throws IOException {
     ensureOpen();
-    return new MultiTermDocs(this, subReaders, starts);
+    if (subReaders.length == 1) {
+      // Optimize single segment case:
+      return subReaders[0].termDocs();
+    } else {
+      return new MultiTermDocs(this, subReaders, starts);
+    }
+  }
+
+  @Override
+  public TermDocs termDocs(Term term) throws IOException {
+    ensureOpen();
+    if (subReaders.length == 1) {
+      // Optimize single segment case:
+      return subReaders[0].termDocs(term);
+    } else {
+      return super.termDocs(term);
+    }
   }
 
   @Override
   public TermPositions termPositions() throws IOException {
     ensureOpen();
-    return new MultiTermPositions(this, subReaders, starts);
+    if (subReaders.length == 1) {
+      // Optimize single segment case:
+      return subReaders[0].termPositions();
+    } else {
+      return new MultiTermPositions(this, subReaders, starts);
+    }
   }
 
   @Override
@@ -387,11 +418,6 @@ public class MultiReader extends IndexReader implements Cloneable {
         subReaders[i].close();
       }
     }
-
-    // NOTE: only needed in case someone had asked for
-    // FieldCache for top-level reader (which is generally
-    // not a good idea):
-    FieldCache.DEFAULT.purge(this);
   }
   
   @Override
@@ -426,5 +452,21 @@ public class MultiReader extends IndexReader implements Cloneable {
   @Override
   public IndexReader[] getSequentialSubReaders() {
     return subReaders;
+  }
+
+  @Override
+  public void addReaderFinishedListener(ReaderFinishedListener listener) {
+    super.addReaderFinishedListener(listener);
+    for(IndexReader sub : subReaders) {
+      sub.addReaderFinishedListener(listener);
+    }
+  }
+
+  @Override
+  public void removeReaderFinishedListener(ReaderFinishedListener listener) {
+    super.removeReaderFinishedListener(listener);
+    for(IndexReader sub : subReaders) {
+      sub.removeReaderFinishedListener(listener);
+    }
   }
 }

@@ -26,11 +26,7 @@
   The <code>function</code> package provides tight control over documents scores.
 </DIV>
 <DIV>
-<font color="#FF0000">
-WARNING: The status of the <b>search.function</b> package is experimental. The APIs
-introduced here might change in the future and will not be supported anymore
-in such a case.
-</font>
+@lucene.experimental
 </DIV>
 <DIV>
   Two types of queries are available in this package:
@@ -134,14 +130,14 @@ in such a case.
     Using field (byte) values to as scores:
     <p>
     Indexing:
-    <pre>
+    <pre class="prettyprint">
       f = new Field("score", "7", Field.Store.NO, Field.Index.UN_TOKENIZED);
       f.setOmitNorms(true);
       d1.add(f);
     </pre>
     <p>
     Search:
-    <pre>
+    <pre class="prettyprint">
       Query q = new FieldScoreQuery("score", FieldScoreQuery.Type.BYTE);
     </pre>
     Document d1 above would get a score of 7.
@@ -152,7 +148,7 @@ in such a case.
     <p>
     Dividing the original score of each document by a square root of its docid
     (just to demonstrate what it takes to manipulate scores this way)
-    <pre>
+    <pre class="prettyprint">
       Query q = queryParser.parse("my query text");
       CustomScoreQuery customQ = new CustomScoreQuery(q) {
         public float customScore(int doc, float subQueryScore, float valSrcScore) {
@@ -162,7 +158,7 @@ in such a case.
     </pre>
         <p>
         For more informative debug info on the custom query, also override the name() method:
-        <pre>
+        <pre class="prettyprint">
       CustomScoreQuery customQ = new CustomScoreQuery(q) {
         public float customScore(int doc, float subQueryScore, float valSrcScore) {
           return subQueryScore / Math.sqrt(docid);
@@ -175,7 +171,7 @@ in such a case.
         <p>
         Taking the square root of the original score and multiplying it by a "short field driven score", ie, the
         short value that was indexed for the scored doc in a certain field:
-        <pre>
+        <pre class="prettyprint">
       Query q = queryParser.parse("my query text");
       FieldScoreQuery qf = new FieldScoreQuery("shortScore", FieldScoreQuery.Type.SHORT);
       CustomScoreQuery customQ = new CustomScoreQuery(q,qf) {

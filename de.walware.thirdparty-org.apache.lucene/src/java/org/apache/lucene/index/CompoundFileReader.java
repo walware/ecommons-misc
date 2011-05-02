@@ -24,6 +24,7 @@ import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.store.Lock;
 
 import java.util.HashMap;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 
@@ -54,9 +55,7 @@ class CompoundFileReader extends Directory {
     this(dir, name, BufferedIndexInput.BUFFER_SIZE);
   }
 
-  public CompoundFileReader(Directory dir, String name, int readBufferSize)
-    throws IOException
-    {
+  public CompoundFileReader(Directory dir, String name, int readBufferSize) throws IOException {
         directory = dir;
         fileName = name;
         this.readBufferSize = readBufferSize;
@@ -66,13 +65,37 @@ class CompoundFileReader extends Directory {
         try {
             stream = dir.openInput(name, readBufferSize);
 
+            // read the first VInt. If it is negative, it's the version number
+            // otherwise it's the count (pre-3.1 indexes)
+            int firstInt = stream.readVInt();
+            
+            final int count;
+            final boolean stripSegmentName;
+            if (firstInt < CompoundFileWriter.FORMAT_PRE_VERSION) {
+              if (firstInt < CompoundFileWriter.FORMAT_CURRENT) {
+                throw new CorruptIndexException("Incompatible format version: "
+                    + firstInt + " expected " + CompoundFileWriter.FORMAT_CURRENT);
+              }
+              // It's a post-3.1 index, read the count.
+              count = stream.readVInt();
+              stripSegmentName = false;
+            } else {
+              count = firstInt;
+              stripSegmentName = true;
+            }
+
             // read the directory and init files
-            int count = stream.readVInt();
             FileEntry entry = null;
             for (int i=0; i<count; i++) {
                 long offset = stream.readLong();
                 String id = stream.readString();
 
+                if (stripSegmentName) {
+                  // Fix the id to not include the segment names. This is relevant for
+                  // pre-3.1 indexes.
+                  id = IndexFileNames.stripSegmentName(id);
+                }
+                
                 if (entry != null) {
                     // set length of the previous entry
                     entry.length = offset - entry.offset;
@@ -91,7 +114,7 @@ class CompoundFileReader extends Directory {
             success = true;
 
         } finally {
-            if (! success && (stream != null)) {
+            if (!success && (stream != null)) {
                 try {
                     stream.close();
                 } catch (IOException e) { }
@@ -131,10 +154,11 @@ class CompoundFileReader extends Directory {
     {
         if (stream == null)
             throw new IOException("Stream closed");
-
+        
+        id = IndexFileNames.stripSegmentName(id);
         FileEntry entry = entries.get(id);
         if (entry == null)
-            throw new IOException("No sub-file with id " + id + " found");
+          throw new IOException("No sub-file with id " + id + " found (files: " + entries.keySet() + ")");
 
         return new CSIndexInput(stream, entry.offset, entry.length, readBufferSize);
     }
@@ -142,14 +166,19 @@ class CompoundFileReader extends Directory {
     /** Returns an array of strings, one for each file in the directory. */
     @Override
     public String[] listAll() {
-        String res[] = new String[entries.size()];
-        return entries.keySet().toArray(res);
+        String[] res = entries.keySet().toArray(new String[entries.size()]);
+        // Add the segment name
+        String seg = fileName.substring(0, fileName.indexOf('.'));
+        for (int i = 0; i < res.length; i++) {
+          res[i] = seg + res[i];
+        }
+        return res;
     }
 
     /** Returns true iff a file with the given name exists. */
     @Override
     public boolean fileExists(String name) {
-        return entries.containsKey(name);
+        return entries.containsKey(IndexFileNames.stripSegmentName(name));
     }
 
     /** Returns the time the compound file was last modified. */
@@ -182,12 +211,10 @@ class CompoundFileReader extends Directory {
     /** Returns the length of a file in the directory.
      * @throws IOException if the file does not exist */
     @Override
-    public long fileLength(String name)
-    throws IOException
-    {
-        FileEntry e = entries.get(name);
+    public long fileLength(String name) throws IOException {
+        FileEntry e = entries.get(IndexFileNames.stripSegmentName(name));
         if (e == null)
-            throw new IOException("File " + name + " does not exist");
+            throw new FileNotFoundException(name);
         return e.length;
     }
 
@@ -275,6 +302,22 @@ class CompoundFileReader extends Directory {
           return length;
         }
 
+        @Override
+        public void copyBytes(IndexOutput out, long numBytes) throws IOException {
+          // Copy first whatever is in the buffer
+          numBytes -= flushBuffer(out, numBytes);
+          
+          // If there are more bytes left to copy, delegate the copy task to the
+          // base IndexInput, in case it can do an optimized copy.
+          if (numBytes > 0) {
+            long start = getFilePointer();
+            if (start + numBytes > length) {
+              throw new IOException("read past EOF");
+            }
+            base.seek(fileOffset + start);
+            base.copyBytes(out, numBytes);
+          }
+        }
 
     }
     

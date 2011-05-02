@@ -22,20 +22,24 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.util.ToStringUtils;
 
 import java.io.IOException;
-import java.util.PriorityQueue;
 
 /** Implements the fuzzy search query. The similarity measurement
  * is based on the Levenshtein (edit distance) algorithm.
  * 
- * Warning: this query is not very scalable with its default prefix
+ * <p><em>Warning:</em> this query is not very scalable with its default prefix
  * length of 0 - in this case, *every* term will be enumerated and
  * cause an edit score calculation.
  * 
+ * <p>This query uses {@link MultiTermQuery.TopTermsScoringBooleanQueryRewrite}
+ * as default. So terms will be collected and scored according to their
+ * edit distance. Only the top terms are used for building the {@link BooleanQuery}.
+ * It is not recommended to change the rewrite mode for fuzzy queries.
  */
 public class FuzzyQuery extends MultiTermQuery {
   
   public final static float defaultMinSimilarity = 0.5f;
   public final static int defaultPrefixLength = 0;
+  public final static int defaultMaxExpansions = Integer.MAX_VALUE;
   
   private float minimumSimilarity;
   private int prefixLength;
@@ -56,10 +60,14 @@ public class FuzzyQuery extends MultiTermQuery {
    *  as the query term is considered similar to the query term if the edit distance
    *  between both terms is less than <code>length(term)*0.5</code>
    * @param prefixLength length of common (non-fuzzy) prefix
+   * @param maxExpansions the maximum number of terms to match. If this number is
+   *  greater than {@link BooleanQuery#getMaxClauseCount} when the query is rewritten, 
+   *  then the maxClauseCount will be used instead.
    * @throws IllegalArgumentException if minimumSimilarity is &gt;= 1 or &lt; 0
    * or if prefixLength &lt; 0
    */
-  public FuzzyQuery(Term term, float minimumSimilarity, int prefixLength) throws IllegalArgumentException {
+  public FuzzyQuery(Term term, float minimumSimilarity, int prefixLength,
+      int maxExpansions) {
     this.term = term;
     
     if (minimumSimilarity >= 1.0f)
@@ -68,6 +76,10 @@ public class FuzzyQuery extends MultiTermQuery {
       throw new IllegalArgumentException("minimumSimilarity < 0");
     if (prefixLength < 0)
       throw new IllegalArgumentException("prefixLength < 0");
+    if (maxExpansions < 0)
+      throw new IllegalArgumentException("maxExpansions < 0");
+    
+    setRewriteMethod(new MultiTermQuery.TopTermsScoringBooleanQueryRewrite(maxExpansions));
     
     if (term.text().length() > 1.0f / (1.0f - minimumSimilarity)) {
       this.termLongEnough = true;
@@ -75,21 +87,27 @@ public class FuzzyQuery extends MultiTermQuery {
     
     this.minimumSimilarity = minimumSimilarity;
     this.prefixLength = prefixLength;
-    rewriteMethod = SCORING_BOOLEAN_QUERY_REWRITE;
   }
   
   /**
-   * Calls {@link #FuzzyQuery(Term, float) FuzzyQuery(term, minimumSimilarity, 0)}.
+   * Calls {@link #FuzzyQuery(Term, float) FuzzyQuery(term, minimumSimilarity, prefixLength, Integer.MAX_VALUE)}.
    */
-  public FuzzyQuery(Term term, float minimumSimilarity) throws IllegalArgumentException {
-      this(term, minimumSimilarity, defaultPrefixLength);
+  public FuzzyQuery(Term term, float minimumSimilarity, int prefixLength) {
+    this(term, minimumSimilarity, prefixLength, defaultMaxExpansions);
+  }
+  
+  /**
+   * Calls {@link #FuzzyQuery(Term, float) FuzzyQuery(term, minimumSimilarity, 0, Integer.MAX_VALUE)}.
+   */
+  public FuzzyQuery(Term term, float minimumSimilarity) {
+    this(term, minimumSimilarity, defaultPrefixLength, defaultMaxExpansions);
   }
 
   /**
-   * Calls {@link #FuzzyQuery(Term, float) FuzzyQuery(term, 0.5f, 0)}.
+   * Calls {@link #FuzzyQuery(Term, float) FuzzyQuery(term, 0.5f, 0, Integer.MAX_VALUE)}.
    */
   public FuzzyQuery(Term term) {
-    this(term, defaultMinSimilarity, defaultPrefixLength);
+    this(term, defaultMinSimilarity, defaultPrefixLength, defaultMaxExpansions);
   }
   
   /**
@@ -111,6 +129,9 @@ public class FuzzyQuery extends MultiTermQuery {
 
   @Override
   protected FilteredTermEnum getEnum(IndexReader reader) throws IOException {
+    if (!termLongEnough) {  // can only match if it's exact
+      return new SingleTermEnum(reader, term);
+    }
     return new FuzzyTermEnum(reader, getTerm(), minimumSimilarity, prefixLength);
   }
   
@@ -119,62 +140,6 @@ public class FuzzyQuery extends MultiTermQuery {
    */
   public Term getTerm() {
     return term;
-  }
-
-  @Override
-  public void setRewriteMethod(RewriteMethod method) {
-    throw new UnsupportedOperationException("FuzzyQuery cannot change rewrite method");
-  }
-  
-  @Override
-  public Query rewrite(IndexReader reader) throws IOException {
-    if(!termLongEnough) {  // can only match if it's exact
-      return new TermQuery(term);
-    }
-
-    int maxSize = BooleanQuery.getMaxClauseCount();
-    PriorityQueue<ScoreTerm> stQueue = new PriorityQueue<ScoreTerm>();
-    FilteredTermEnum enumerator = getEnum(reader);
-    try {
-      ScoreTerm st = new ScoreTerm();
-      do {
-        final Term t = enumerator.term();
-        if (t == null) break;
-        final float score = enumerator.difference();
-        // ignore uncompetetive hits
-        if (stQueue.size() >= maxSize && score <= stQueue.peek().score)
-          continue;
-        // add new entry in PQ
-        st.term = t;
-        st.score = score;
-        stQueue.offer(st);
-        // possibly drop entries from queue
-        st = (stQueue.size() > maxSize) ? stQueue.poll() : new ScoreTerm();
-      } while (enumerator.next());
-    } finally {
-      enumerator.close();
-    }
-    
-    BooleanQuery query = new BooleanQuery(true);
-    for (final ScoreTerm st : stQueue) {
-      TermQuery tq = new TermQuery(st.term);      // found a match
-      tq.setBoost(getBoost() * st.score); // set the boost
-      query.add(tq, BooleanClause.Occur.SHOULD);          // add to query
-    }
-
-    return query;
-  }
-  
-  private static final class ScoreTerm implements Comparable<ScoreTerm> {
-    public Term term;
-    public float score;
-    
-    public int compareTo(ScoreTerm other) {
-      if (this.score == other.score)
-        return other.term.compareTo(this.term);
-      else
-        return Float.compare(this.score, other.score);
-    }
   }
     
   @Override

@@ -55,6 +55,6 @@ final class ReusableStringReader extends Reader {
     }
   }
   @Override
-  public void close() {};
+  public void close() {}
 }
 

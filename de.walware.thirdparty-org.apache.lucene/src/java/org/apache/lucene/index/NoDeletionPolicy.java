@@ -1,4 +1,4 @@
-package org.apache.lucene.util.cache;
+package org.apache.lucene.index;
 
 /**
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -17,28 +17,25 @@ package org.apache.lucene.util.cache;
  * limitations under the License.
  */
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.io.IOException;
+import java.util.List;
 
 /**
- * Simple LRU cache implementation that uses a LinkedHashMap.
- * This cache is not synchronized, use {@link Cache#synchronizedCache(Cache)}
- * if needed.
- * 
+ * An {@link IndexDeletionPolicy} which keeps all index commits around, never
+ * deleting them. This class is a singleton and can be accessed by referencing
+ * {@link #INSTANCE}.
  */
-public class SimpleLRUCache<K,V> extends SimpleMapCache<K,V> {
-  private final static float LOADFACTOR = 0.75f;
+public final class NoDeletionPolicy implements IndexDeletionPolicy {
 
-  /**
-   * Creates a last-recently-used cache with the specified size. 
-   */
-  public SimpleLRUCache(final int cacheSize) {
-    super(new LinkedHashMap<K,V>((int) Math.ceil(cacheSize / LOADFACTOR) + 1, LOADFACTOR, true) {
-      @Override
-      protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
-        return size() > cacheSize;
-      }
-    });
+  /** The single instance of this class. */
+  public static final IndexDeletionPolicy INSTANCE = new NoDeletionPolicy();
+  
+  private NoDeletionPolicy() {
+    // keep private to avoid instantiation
   }
+  
+  public void onCommit(List<? extends IndexCommit> commits) throws IOException {}
 
+  public void onInit(List<? extends IndexCommit> commits) throws IOException {}
+  
 }

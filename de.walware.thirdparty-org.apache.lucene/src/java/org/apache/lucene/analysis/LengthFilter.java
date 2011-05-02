@@ -19,44 +19,44 @@ package org.apache.lucene.analysis;
 
 import java.io.IOException;
 
-import org.apache.lucene.analysis.tokenattributes.TermAttribute;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
 /**
  * Removes words that are too long or too short from the stream.
+ * <p>
+ * Note: Length is calculated as the number of UTF-16 code units.
+ * </p>
  */
-public final class LengthFilter extends TokenFilter {
+public final class LengthFilter extends FilteringTokenFilter {
 
-  final int min;
-  final int max;
+  private final int min;
+  private final int max;
   
-  private TermAttribute termAtt;
+  private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
 
   /**
    * Build a filter that removes words that are too long or too
    * short from the text.
    */
-  public LengthFilter(TokenStream in, int min, int max)
-  {
-    super(in);
+  public LengthFilter(boolean enablePositionIncrements, TokenStream in, int min, int max) {
+    super(enablePositionIncrements, in);
     this.min = min;
     this.max = max;
-    termAtt = addAttribute(TermAttribute.class);
   }
   
   /**
-   * Returns the next input Token whose term() is the right len
+   * Build a filter that removes words that are too long or too
+   * short from the text.
+   * @deprecated Use {@link #LengthFilter(boolean, TokenStream, int, int)} instead.
    */
+  @Deprecated
+  public LengthFilter(TokenStream in, int min, int max) {
+    this(false, in, min, max);
+  }
+  
   @Override
-  public final boolean incrementToken() throws IOException {
-    // return the first non-stop word found
-    while (input.incrementToken()) {
-      int len = termAtt.termLength();
-      if (len >= min && len <= max) {
-          return true;
-      }
-      // note: else we ignore it but should we index each part of it?
-    }
-    // reached EOS -- return false
-    return false;
+  public boolean accept() throws IOException {
+    final int len = termAtt.length();
+    return (len >= min && len <= max);
   }
 }

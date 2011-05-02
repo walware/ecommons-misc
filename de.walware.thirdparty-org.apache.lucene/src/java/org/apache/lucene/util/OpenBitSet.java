@@ -73,8 +73,6 @@ Test system: AMD Opteron, 64 bit linux, Sun Java 1.5_06 -server -Xbatch -Xmx64M
    <th>1% full</th> <td>2.51</td> <td>3.49</td> <td>&nbsp;</td> <td>1.00</td> <td>&nbsp;</td> <td>1.02</td>
  </tr>
 </table>
-
- * @version $Id$
  */
 
 public class OpenBitSet extends DocIdSet implements Cloneable, Serializable {
@@ -644,7 +642,7 @@ public class OpenBitSet extends DocIdSet implements Cloneable, Serializable {
   public Object clone() {
     try {
       OpenBitSet obs = (OpenBitSet)super.clone();
-      obs.bits = (long[]) obs.bits.clone();  // hopefully an array clone is as fast(er) than arraycopy
+      obs.bits = obs.bits.clone();  // hopefully an array clone is as fast(er) than arraycopy
       return obs;
     } catch (CloneNotSupportedException e) {
       throw new RuntimeException(e);

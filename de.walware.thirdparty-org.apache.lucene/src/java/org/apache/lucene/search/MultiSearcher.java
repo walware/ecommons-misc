@@ -37,7 +37,13 @@ import java.util.concurrent.locks.Lock;
  *
  * <p>Applications usually need only call the inherited {@link #search(Query,int)}
  * or {@link #search(Query,Filter,int)} methods.
+ *
+ * @deprecated If you are using MultiSearcher over
+ * IndexSearchers, please use MultiReader instead; this class
+ * does not properly handle certain kinds of queries (see <a
+ * href="https://issues.apache.org/jira/browse/LUCENE-2756">LUCENE-2756</a>).
  */
+@Deprecated
 public class MultiSearcher extends Searcher {
   
   /**
@@ -201,6 +207,7 @@ public class MultiSearcher extends Searcher {
   public TopDocs search(Weight weight, Filter filter, int nDocs)
       throws IOException {
 
+    nDocs = Math.min(nDocs, maxDoc());
     final HitQueue hq = new HitQueue(nDocs, false);
     int totalHits = 0;
 
@@ -221,6 +228,7 @@ public class MultiSearcher extends Searcher {
 
   @Override
   public TopFieldDocs search (Weight weight, Filter filter, int n, Sort sort) throws IOException {
+    n = Math.min(n, maxDoc());
     FieldDocSortedHitQueue hq = new FieldDocSortedHitQueue(n);
     int totalHits = 0;
 
@@ -311,20 +319,7 @@ public class MultiSearcher extends Searcher {
     rewrittenQuery.extractTerms(terms);
 
     // step3
-    final Term[] allTermsArray = new Term[terms.size()];
-    terms.toArray(allTermsArray);
-    int[] aggregatedDfs = new int[terms.size()];
-    for (int i = 0; i < searchables.length; i++) {
-      int[] dfs = searchables[i].docFreqs(allTermsArray);
-      for(int j=0; j<aggregatedDfs.length; j++){
-        aggregatedDfs[j] += dfs[j];
-      }
-    }
-
-    final HashMap<Term,Integer> dfMap = new HashMap<Term,Integer>();
-    for(int i=0; i<allTermsArray.length; i++) {
-      dfMap.put(allTermsArray[i], Integer.valueOf(aggregatedDfs[i]));
-    }
+    final Map<Term,Integer> dfMap = createDocFrequencyMap(terms);
 
     // step4
     final int numDocs = maxDoc();
@@ -332,11 +327,34 @@ public class MultiSearcher extends Searcher {
 
     return rewrittenQuery.weight(cacheSim);
   }
-
+  /**
+   * Collects the document frequency for the given terms form all searchables
+   * @param terms term set used to collect the document frequency form all
+   *        searchables 
+   * @return a map with a term as the key and the terms aggregated document
+   *         frequency as a value  
+   * @throws IOException if a searchable throws an {@link IOException}
+   */
+   Map<Term, Integer> createDocFrequencyMap(final Set<Term> terms) throws IOException  {
+    final Term[] allTermsArray = terms.toArray(new Term[terms.size()]);
+    final int[] aggregatedDfs = new int[allTermsArray.length];
+    for (Searchable searchable : searchables) {
+      final int[] dfs = searchable.docFreqs(allTermsArray); 
+      for(int j=0; j<aggregatedDfs.length; j++){
+        aggregatedDfs[j] += dfs[j];
+      }
+    }
+    final HashMap<Term,Integer> dfMap = new HashMap<Term,Integer>();
+    for(int i=0; i<allTermsArray.length; i++) {
+      dfMap.put(allTermsArray[i], Integer.valueOf(aggregatedDfs[i]));
+    }
+    return dfMap;
+  }
+  
   /**
    * A thread subclass for searching a single searchable 
    */
-  static class MultiSearcherCallableNoSort implements Callable<TopDocs> {
+  static final class MultiSearcherCallableNoSort implements Callable<TopDocs> {
 
     private final Lock lock;
     private final Searchable searchable;
@@ -381,7 +399,7 @@ public class MultiSearcher extends Searcher {
   /**
    * A thread subclass for searching a single searchable 
    */
-  static class MultiSearcherCallableWithSort implements Callable<TopFieldDocs> {
+  static final class MultiSearcherCallableWithSort implements Callable<TopFieldDocs> {
 
     private final Lock lock;
     private final Searchable searchable;

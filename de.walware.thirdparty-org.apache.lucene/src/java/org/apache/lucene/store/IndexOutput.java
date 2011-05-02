@@ -82,7 +82,7 @@ public abstract class IndexOutput implements Closeable {
     writeInt((int) i);
   }
 
-  /** Writes an long in a variable-length format.  Writes between one and five
+  /** Writes an long in a variable-length format.  Writes between one and nine
    * bytes.  Smaller values take fewer bytes.  Negative numbers are not
    * supported.
    * @see IndexInput#readVLong()
@@ -113,11 +113,12 @@ public abstract class IndexOutput implements Closeable {
    * @deprecated -- please pre-convert to utf8 bytes
    * instead or use {@link #writeString}
    */
+  @Deprecated
   public void writeChars(String s, int start, int length)
        throws IOException {
     final int end = start + length;
     for (int i = start; i < end; i++) {
-      final int code = (int)s.charAt(i);
+      final int code = s.charAt(i);
       if (code >= 0x01 && code <= 0x7F)
 	writeByte((byte)code);
       else if (((code >= 0x80) && (code <= 0x7FF)) || code == 0) {
@@ -138,11 +139,12 @@ public abstract class IndexOutput implements Closeable {
    * @param length the number of characters in the sequence
    * @deprecated -- please pre-convert to utf8 bytes instead or use {@link #writeString}
    */
+  @Deprecated
   public void writeChars(char[] s, int start, int length)
     throws IOException {
     final int end = start + length;
     for (int i = start; i < end; i++) {
-      final int code = (int)s[i];
+      final int code = s[i];
       if (code >= 0x01 && code <= 0x7F)
 	writeByte((byte)code);
       else if (((code >= 0x80) && (code <= 0x7FF)) || code == 0) {
@@ -207,7 +209,7 @@ public abstract class IndexOutput implements Closeable {
    * undefined.  Otherwise the file is truncated.
    * @param length file length
    */
-  public void setLength(long length) throws IOException {};
+  public void setLength(long length) throws IOException {}
 
   public void writeStringStringMap(Map<String,String> map) throws IOException {
     if (map == null) {

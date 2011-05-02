@@ -32,13 +32,13 @@ import java.io.IOException;
  */
 public class ScoreCachingWrappingScorer extends Scorer {
 
-  private Scorer scorer;
+  private final Scorer scorer;
   private int curDoc = -1;
   private float curScore;
   
   /** Creates a new instance by wrapping the given scorer. */
   public ScoreCachingWrappingScorer(Scorer scorer) {
-    super(scorer.getSimilarity());
+    super(scorer.getSimilarity(), scorer.weight);
     this.scorer = scorer;
   }
 

@@ -40,10 +40,7 @@ import java.io.IOException;
  * when other documents are inserted or deleted,
  * or if a MultiSearcher is used. 
  * 
- * <p><font color="#FF0000">
- * WARNING: The status of the <b>search.function</b> package is experimental. 
- * The APIs introduced here might change in the future and will not be 
- * supported anymore in such a case.</font>
+ * @lucene.experimental
  *
  * <p><b>NOTE</b>: with the switch in 2.9 to segment-based
  * searching, if {@link #getValues} is invoked with a
@@ -82,7 +79,7 @@ public class ReverseOrdFieldSource extends ValueSource {
       /*(non-Javadoc) @see org.apache.lucene.search.function.DocValues#floatVal(int) */
       @Override
       public float floatVal(int doc) {
-        return (float)(end - arr[doc]);
+        return (end - arr[doc]);
       }
       /* (non-Javadoc) @see org.apache.lucene.search.function.DocValues#intVal(int) */
       @Override
@@ -111,7 +108,9 @@ public class ReverseOrdFieldSource extends ValueSource {
   /*(non-Javadoc) @see java.lang.Object#equals(java.lang.Object) */
   @Override
   public boolean equals(Object o) {
-    if (o.getClass() !=  ReverseOrdFieldSource.class) return false;
+    if (o == this) return true;
+    if (o == null) return false;
+    if (o.getClass() != ReverseOrdFieldSource.class) return false;
     ReverseOrdFieldSource other = (ReverseOrdFieldSource)o;
     return this.field.equals(other.field); 
   }

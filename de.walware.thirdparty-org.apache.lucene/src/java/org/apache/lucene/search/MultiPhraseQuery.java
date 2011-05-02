@@ -24,6 +24,8 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultipleTermPositions;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermPositions;
+import org.apache.lucene.search.Explanation.IDFExplanation;
+import org.apache.lucene.util.ArrayUtil;
 import org.apache.lucene.util.ToStringUtils;
 
 /**
@@ -126,6 +128,7 @@ public class MultiPhraseQuery extends Query {
   private class MultiPhraseWeight extends Weight {
     private Similarity similarity;
     private float value;
+    private final IDFExplanation idfExp;
     private float idf;
     private float queryNorm;
     private float queryWeight;
@@ -135,12 +138,14 @@ public class MultiPhraseQuery extends Query {
       this.similarity = getSimilarity(searcher);
 
       // compute idf
-      final int maxDoc = searcher.maxDoc();
+      ArrayList<Term> allTerms = new ArrayList<Term>();
       for(final Term[] terms: termArrays) {
         for (Term term: terms) {
-          idf += this.similarity.idf(searcher.docFreq(term), maxDoc);
+          allTerms.add(term);
         }
       }
+      idfExp = similarity.idfExplain(allTerms, searcher);
+      idf = idfExp.getIdf();
     }
 
     @Override
@@ -167,28 +172,51 @@ public class MultiPhraseQuery extends Query {
       if (termArrays.size() == 0)                  // optimize zero-term case
         return null;
 
-      TermPositions[] tps = new TermPositions[termArrays.size()];
-      for (int i=0; i<tps.length; i++) {
-        Term[] terms = termArrays.get(i);
+      PhraseQuery.PostingsAndFreq[] postingsFreqs = new PhraseQuery.PostingsAndFreq[termArrays.size()];
 
-        TermPositions p;
-        if (terms.length > 1)
+      for (int pos=0; pos<postingsFreqs.length; pos++) {
+        Term[] terms = termArrays.get(pos);
+
+        final TermPositions p;
+        int docFreq;
+
+        if (terms.length > 1) {
           p = new MultipleTermPositions(reader, terms);
-        else
+
+          // coarse -- this overcounts since a given doc can
+          // have more than one terms:
+          docFreq = 0;
+          for(int termIdx=0;termIdx<terms.length;termIdx++) {
+            docFreq += reader.docFreq(terms[termIdx]);
+          }
+        } else {
           p = reader.termPositions(terms[0]);
+          docFreq = reader.docFreq(terms[0]);
 
-        if (p == null)
-          return null;
+          if (p == null)
+            return null;
+        }
 
-        tps[i] = p;
+        postingsFreqs[pos] = new PhraseQuery.PostingsAndFreq(p, docFreq, positions.get(pos).intValue());
       }
 
-      if (slop == 0)
-        return new ExactPhraseScorer(this, tps, getPositions(), similarity,
-                                     reader.norms(field));
-      else
-        return new SloppyPhraseScorer(this, tps, getPositions(), similarity,
+      // sort by increasing docFreq order
+      if (slop == 0) {
+        ArrayUtil.quickSort(postingsFreqs);
+      }
+
+      if (slop == 0) {
+        ExactPhraseScorer s = new ExactPhraseScorer(this, postingsFreqs, similarity,
+                                                    reader.norms(field));
+        if (s.noDocs) {
+          return null;
+        } else {
+          return s;
+        }
+      } else {
+        return new SloppyPhraseScorer(this, postingsFreqs, similarity,
                                       slop, reader.norms(field));
+      }
     }
 
     @Override
@@ -197,7 +225,7 @@ public class MultiPhraseQuery extends Query {
       ComplexExplanation result = new ComplexExplanation();
       result.setDescription("weight("+getQuery()+" in "+doc+"), product of:");
 
-      Explanation idfExpl = new Explanation(idf, "idf("+getQuery()+")");
+      Explanation idfExpl = new Explanation(idf, "idf(" + field + ":" + idfExp.explain() +")");
 
       // explain query weight
       Explanation queryExpl = new Explanation();
@@ -223,13 +251,20 @@ public class MultiPhraseQuery extends Query {
       fieldExpl.setDescription("fieldWeight("+getQuery()+" in "+doc+
                                "), product of:");
 
-      PhraseScorer scorer = (PhraseScorer) scorer(reader, true, false);
+      Scorer scorer = scorer(reader, true, false);
       if (scorer == null) {
         return new Explanation(0.0f, "no matching docs");
       }
+
       Explanation tfExplanation = new Explanation();
       int d = scorer.advance(doc);
-      float phraseFreq = (d == doc) ? scorer.currentFreq() : 0.0f;
+      float phraseFreq;
+      if (d == doc) {
+        phraseFreq = scorer.freq();
+      } else {
+        phraseFreq = 0.0f;
+      }
+
       tfExplanation.setValue(similarity.tf(phraseFreq));
       tfExplanation.setDescription("tf(phraseFreq=" + phraseFreq + ")");
       fieldExpl.addDetail(tfExplanation);
@@ -238,7 +273,7 @@ public class MultiPhraseQuery extends Query {
       Explanation fieldNormExpl = new Explanation();
       byte[] fieldNorms = reader.norms(field);
       float fieldNorm =
-        fieldNorms!=null ? Similarity.decodeNorm(fieldNorms[doc]) : 1.0f;
+        fieldNorms!=null ? similarity.decodeNormValue(fieldNorms[doc]) : 1.0f;
       fieldNormExpl.setValue(fieldNorm);
       fieldNormExpl.setDescription("fieldNorm(field="+field+", doc="+doc+")");
       fieldExpl.addDetail(fieldNormExpl);
@@ -285,7 +320,7 @@ public class MultiPhraseQuery extends Query {
   @Override
   public final String toString(String f) {
     StringBuilder buffer = new StringBuilder();
-    if (!field.equals(f)) {
+    if (field == null || !field.equals(f)) {
       buffer.append(field);
       buffer.append(":");
     }

@@ -19,9 +19,6 @@ package org.apache.lucene.search;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.Term;
@@ -51,7 +48,11 @@ import org.apache.lucene.queryParser.QueryParser; // for javadoc
  * <p>The recommended rewrite method is {@link
  * #CONSTANT_SCORE_AUTO_REWRITE_DEFAULT}: it doesn't spend CPU
  * computing unhelpful scores, and it tries to pick the most
- * performant rewrite method given the query.
+ * performant rewrite method given the query. If you
+ * need scoring (like {@link FuzzyQuery}, use
+ * {@link TopTermsScoringBooleanQueryRewrite} which uses
+ * a priority queue to only collect competitive terms
+ * and not hit this limitation.
  *
  * Note that {@link QueryParser} produces
  * MultiTermQueries using {@link
@@ -66,20 +67,6 @@ public abstract class MultiTermQuery extends Query {
     public abstract Query rewrite(IndexReader reader, MultiTermQuery query) throws IOException;
   }
 
-  private static final class ConstantScoreFilterRewrite extends RewriteMethod implements Serializable {
-    @Override
-    public Query rewrite(IndexReader reader, MultiTermQuery query) {
-      Query result = new ConstantScoreQuery(new MultiTermQueryWrapperFilter<MultiTermQuery>(query));
-      result.setBoost(query.getBoost());
-      return result;
-    }
-
-    // Make sure we are still a singleton even after deserializing
-    protected Object readResolve() {
-      return CONSTANT_SCORE_FILTER_REWRITE;
-    }
-  }
-
   /** A rewrite method that first creates a private Filter,
    *  by visiting each term in sequence and marking all docs
    *  for that term.  Matching documents are assigned a
@@ -92,37 +79,19 @@ public abstract class MultiTermQuery extends Query {
    *  exception.
    *
    *  @see #setRewriteMethod */
-  public final static RewriteMethod CONSTANT_SCORE_FILTER_REWRITE = new ConstantScoreFilterRewrite();
-
-  private static class ScoringBooleanQueryRewrite extends RewriteMethod implements Serializable {
+  public static final RewriteMethod CONSTANT_SCORE_FILTER_REWRITE = new RewriteMethod() {
     @Override
-    public Query rewrite(IndexReader reader, MultiTermQuery query) throws IOException {
-
-      FilteredTermEnum enumerator = query.getEnum(reader);
-      BooleanQuery result = new BooleanQuery(true);
-      int count = 0;
-      try {
-        do {
-          Term t = enumerator.term();
-          if (t != null) {
-            TermQuery tq = new TermQuery(t); // found a match
-            tq.setBoost(query.getBoost() * enumerator.difference()); // set the boost
-            result.add(tq, BooleanClause.Occur.SHOULD); // add to query
-            count++;
-          }
-        } while (enumerator.next());    
-      } finally {
-        enumerator.close();
-      }
-      query.incTotalNumberOfTerms(count);
+    public Query rewrite(IndexReader reader, MultiTermQuery query) {
+      Query result = new ConstantScoreQuery(new MultiTermQueryWrapperFilter<MultiTermQuery>(query));
+      result.setBoost(query.getBoost());
       return result;
     }
 
     // Make sure we are still a singleton even after deserializing
     protected Object readResolve() {
-      return SCORING_BOOLEAN_QUERY_REWRITE;
+      return CONSTANT_SCORE_FILTER_REWRITE;
     }
-  }
+  };
 
   /** A rewrite method that first translates each term into
    *  {@link BooleanClause.Occur#SHOULD} clause in a
@@ -137,24 +106,8 @@ public abstract class MultiTermQuery extends Query {
    *  exceeds {@link BooleanQuery#getMaxClauseCount}.
    *
    *  @see #setRewriteMethod */
-  public final static RewriteMethod SCORING_BOOLEAN_QUERY_REWRITE = new ScoringBooleanQueryRewrite();
-
-  private static class ConstantScoreBooleanQueryRewrite extends ScoringBooleanQueryRewrite implements Serializable {
-    @Override
-    public Query rewrite(IndexReader reader, MultiTermQuery query) throws IOException {
-      // strip the scores off
-      Query result = new ConstantScoreQuery(new QueryWrapperFilter(super.rewrite(reader, query)));
-      result.setBoost(query.getBoost());
-      return result;
-    }
-
-    // Make sure we are still a singleton even after deserializing
-    @Override
-    protected Object readResolve() {
-      return CONSTANT_SCORE_BOOLEAN_QUERY_REWRITE;
-    }
-  }
-
+  public final static RewriteMethod SCORING_BOOLEAN_QUERY_REWRITE = ScoringRewrite.SCORING_BOOLEAN_QUERY_REWRITE;
+  
   /** Like {@link #SCORING_BOOLEAN_QUERY_REWRITE} except
    *  scores are not computed.  Instead, each matching
    *  document receives a constant score equal to the
@@ -165,9 +118,92 @@ public abstract class MultiTermQuery extends Query {
    *  exceeds {@link BooleanQuery#getMaxClauseCount}.
    *
    *  @see #setRewriteMethod */
-  public final static RewriteMethod CONSTANT_SCORE_BOOLEAN_QUERY_REWRITE = new ConstantScoreBooleanQueryRewrite();
+  public final static RewriteMethod CONSTANT_SCORE_BOOLEAN_QUERY_REWRITE = ScoringRewrite.CONSTANT_SCORE_BOOLEAN_QUERY_REWRITE;
 
+  /**
+   * A rewrite method that first translates each term into
+   * {@link BooleanClause.Occur#SHOULD} clause in a BooleanQuery, and keeps the
+   * scores as computed by the query.
+   * 
+   * <p>
+   * This rewrite method only uses the top scoring terms so it will not overflow
+   * the boolean max clause count. It is the default rewrite method for
+   * {@link FuzzyQuery}.
+   * 
+   * @see #setRewriteMethod
+   */
+  public static final class TopTermsScoringBooleanQueryRewrite extends TopTermsRewrite<BooleanQuery> {
 
+    /** 
+     * Create a TopTermsScoringBooleanQueryRewrite for 
+     * at most <code>size</code> terms.
+     * <p>
+     * NOTE: if {@link BooleanQuery#getMaxClauseCount} is smaller than 
+     * <code>size</code>, then it will be used instead. 
+     */
+    public TopTermsScoringBooleanQueryRewrite(int size) {
+      super(size);
+    }
+    
+    @Override
+    protected int getMaxSize() {
+      return BooleanQuery.getMaxClauseCount();
+    }
+    
+    @Override
+    protected BooleanQuery getTopLevelQuery() {
+      return new BooleanQuery(true);
+    }
+    
+    @Override
+    protected void addClause(BooleanQuery topLevel, Term term, float boost) {
+      final TermQuery tq = new TermQuery(term);
+      tq.setBoost(boost);
+      topLevel.add(tq, BooleanClause.Occur.SHOULD);
+    }
+  }
+  
+  /**
+   * A rewrite method that first translates each term into
+   * {@link BooleanClause.Occur#SHOULD} clause in a BooleanQuery, but the scores
+   * are only computed as the boost.
+   * <p>
+   * This rewrite method only uses the top scoring terms so it will not overflow
+   * the boolean max clause count.
+   * 
+   * @see #setRewriteMethod
+   */
+  public static final class TopTermsBoostOnlyBooleanQueryRewrite extends TopTermsRewrite<BooleanQuery> {
+    
+    /** 
+     * Create a TopTermsBoostOnlyBooleanQueryRewrite for 
+     * at most <code>size</code> terms.
+     * <p>
+     * NOTE: if {@link BooleanQuery#getMaxClauseCount} is smaller than 
+     * <code>size</code>, then it will be used instead. 
+     */
+    public TopTermsBoostOnlyBooleanQueryRewrite(int size) {
+      super(size);
+    }
+    
+    @Override
+    protected int getMaxSize() {
+      return BooleanQuery.getMaxClauseCount();
+    }
+    
+    @Override
+    protected BooleanQuery getTopLevelQuery() {
+      return new BooleanQuery(true);
+    }
+    
+    @Override
+    protected void addClause(BooleanQuery topLevel, Term term, float boost) {
+      final Query q = new ConstantScoreQuery(new TermQuery(term));
+      q.setBoost(boost);
+      topLevel.add(q, BooleanClause.Occur.SHOULD);
+    }
+  }
+    
   /** A rewrite method that tries to pick the best
    *  constant-score rewrite method based on term and
    *  document counts from the query.  If both the number of
@@ -176,123 +212,7 @@ public abstract class MultiTermQuery extends Query {
    *  Otherwise, {@link #CONSTANT_SCORE_FILTER_REWRITE} is
    *  used.
    */
-  public static class ConstantScoreAutoRewrite extends RewriteMethod implements Serializable {
-
-    // Defaults derived from rough tests with a 20.0 million
-    // doc Wikipedia index.  With more than 350 terms in the
-    // query, the filter method is fastest:
-    public static int DEFAULT_TERM_COUNT_CUTOFF = 350;
-
-    // If the query will hit more than 1 in 1000 of the docs
-    // in the index (0.1%), the filter method is fastest:
-    public static double DEFAULT_DOC_COUNT_PERCENT = 0.1;
-
-    private int termCountCutoff = DEFAULT_TERM_COUNT_CUTOFF;
-    private double docCountPercent = DEFAULT_DOC_COUNT_PERCENT;
-
-    /** If the number of terms in this query is equal to or
-     *  larger than this setting then {@link
-     *  #CONSTANT_SCORE_FILTER_REWRITE} is used. */
-    public void setTermCountCutoff(int count) {
-      termCountCutoff = count;
-    }
-
-    /** @see #setTermCountCutoff */
-    public int getTermCountCutoff() {
-      return termCountCutoff;
-    }
-
-    /** If the number of documents to be visited in the
-     *  postings exceeds this specified percentage of the
-     *  maxDoc() for the index, then {@link
-     *  #CONSTANT_SCORE_FILTER_REWRITE} is used.
-     *  @param percent 0.0 to 100.0 */
-    public void setDocCountPercent(double percent) {
-      docCountPercent = percent;
-    }
-
-    /** @see #setDocCountPercent */
-    public double getDocCountPercent() {
-      return docCountPercent;
-    }
-
-    @Override
-    public Query rewrite(IndexReader reader, MultiTermQuery query) throws IOException {
-      // Get the enum and start visiting terms.  If we
-      // exhaust the enum before hitting either of the
-      // cutoffs, we use ConstantBooleanQueryRewrite; else,
-      // ConstantFilterRewrite:
-      final Collection<Term> pendingTerms = new ArrayList<Term>();
-      final int docCountCutoff = (int) ((docCountPercent / 100.) * reader.maxDoc());
-      final int termCountLimit = Math.min(BooleanQuery.getMaxClauseCount(), termCountCutoff);
-      int docVisitCount = 0;
-
-      FilteredTermEnum enumerator = query.getEnum(reader);
-      try {
-        while(true) {
-          Term t = enumerator.term();
-          if (t != null) {
-            pendingTerms.add(t);
-            // Loading the TermInfo from the terms dict here
-            // should not be costly, because 1) the
-            // query/filter will load the TermInfo when it
-            // runs, and 2) the terms dict has a cache:
-            docVisitCount += reader.docFreq(t);
-          }
-
-          if (pendingTerms.size() >= termCountLimit || docVisitCount >= docCountCutoff) {
-            // Too many terms -- make a filter.
-            Query result = new ConstantScoreQuery(new MultiTermQueryWrapperFilter<MultiTermQuery>(query));
-            result.setBoost(query.getBoost());
-            return result;
-          } else  if (!enumerator.next()) {
-            // Enumeration is done, and we hit a small
-            // enough number of terms & docs -- just make a
-            // BooleanQuery, now
-            BooleanQuery bq = new BooleanQuery(true);
-            for (final Term term: pendingTerms) {
-              TermQuery tq = new TermQuery(term);
-              bq.add(tq, BooleanClause.Occur.SHOULD);
-            }
-            // Strip scores
-            Query result = new ConstantScoreQuery(new QueryWrapperFilter(bq));
-            result.setBoost(query.getBoost());
-            query.incTotalNumberOfTerms(pendingTerms.size());
-            return result;
-          }
-        }
-      } finally {
-        enumerator.close();
-      }
-    }
-    
-    @Override
-    public int hashCode() {
-      final int prime = 1279;
-      return (int) (prime * termCountCutoff + Double.doubleToLongBits(docCountPercent));
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if (this == obj)
-        return true;
-      if (obj == null)
-        return false;
-      if (getClass() != obj.getClass())
-        return false;
-
-      ConstantScoreAutoRewrite other = (ConstantScoreAutoRewrite) obj;
-      if (other.termCountCutoff != termCountCutoff) {
-        return false;
-      }
-
-      if (Double.doubleToLongBits(other.docCountPercent) != Double.doubleToLongBits(docCountPercent)) {
-        return false;
-      }
-      
-      return true;
-    }
-  }
+  public static class ConstantScoreAutoRewrite extends org.apache.lucene.search.ConstantScoreAutoRewrite {}
 
   /** Read-only default instance of {@link
    *  ConstantScoreAutoRewrite}, with {@link

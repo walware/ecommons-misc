@@ -27,7 +27,13 @@ import org.apache.lucene.util.OpenBitSetDISI;
 
 /**
  * Wraps another filter's result and caches it.  The purpose is to allow
- * filters to simply filter, and then wrap with this class to add caching.
+ * filters to simply filter, and then wrap with this class
+ * to add caching.
+ *
+ * <p><b>NOTE</b>: if you wrap this filter as a query (eg,
+ * using ConstantScoreQuery), you'll likely want to enforce
+ * deletions (using either {@link DeletesMode#RECACHE} or
+ * {@link DeletesMode#DYNAMIC}).
  */
 public class CachingWrapperFilter extends Filter {
   Filter filter;
@@ -86,7 +92,6 @@ public class CachingWrapperFilter extends Filter {
         // key on deletes, if any, else core
         value = cache.get(delCoreKey);
       } else {
-
         assert deletesMode == DeletesMode.DYNAMIC;
 
         // first try for exact match
@@ -183,7 +188,7 @@ public class CachingWrapperFilter extends Filter {
   @Override
   public DocIdSet getDocIdSet(IndexReader reader) throws IOException {
 
-    final Object coreKey = reader.getFieldCacheKey();
+    final Object coreKey = reader.getCoreCacheKey();
     final Object delCoreKey = reader.hasDeletions() ? reader.getDeletesCacheKey() : coreKey;
 
     DocIdSet docIdSet = cache.get(reader, coreKey, delCoreKey);

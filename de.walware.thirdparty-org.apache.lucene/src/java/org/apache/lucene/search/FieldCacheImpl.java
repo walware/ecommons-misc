@@ -58,27 +58,26 @@ class FieldCacheImpl implements FieldCache {
     caches.put(StringIndex.class, new StringIndexCache(this));
   }
 
-  public void purgeAllCaches() {
+  public synchronized void purgeAllCaches() {
     init();
   }
 
-  public void purge(IndexReader r) {
+  public synchronized void purge(IndexReader r) {
     for(Cache c : caches.values()) {
       c.purge(r);
     }
   }
   
-  public CacheEntry[] getCacheEntries() {
+  public synchronized CacheEntry[] getCacheEntries() {
     List<CacheEntry> result = new ArrayList<CacheEntry>(17);
-    for(final Class<?> cacheType: caches.keySet()) {
-      Cache cache = caches.get(cacheType);
-      for (final Object readerKey : cache.readerCache.keySet()) {
-        // we've now materialized a hard ref
-        
-        // innerKeys was backed by WeakHashMap, sanity check
-        // that it wasn't GCed before we made hard ref
-        if (null != readerKey && cache.readerCache.containsKey(readerKey)) {
-          Map<Entry, Object> innerCache = cache.readerCache.get(readerKey);
+    for(final Map.Entry<Class<?>,Cache> cacheEntry: caches.entrySet()) {
+      final Cache cache = cacheEntry.getValue();
+      final Class<?> cacheType = cacheEntry.getKey();
+      synchronized(cache.readerCache) {
+        for (final Map.Entry<Object,Map<Entry, Object>> readerCacheEntry : cache.readerCache.entrySet()) {
+          final Object readerKey = readerCacheEntry.getKey();
+          if (readerKey == null) continue;
+          final Map<Entry, Object> innerCache = readerCacheEntry.getValue();
           for (final Map.Entry<Entry, Object> mapEntry : innerCache.entrySet()) {
             Entry entry = mapEntry.getKey();
             result.add(new CacheEntryImpl(readerKey, entry.field,
@@ -133,6 +132,13 @@ class FieldCacheImpl implements FieldCache {
   static final class StopFillCacheException extends RuntimeException {
   }
 
+  final static IndexReader.ReaderFinishedListener purgeReader = new IndexReader.ReaderFinishedListener() {
+    // @Override -- not until Java 1.6
+    public void finished(IndexReader reader) {
+      FieldCache.DEFAULT.purge(reader);
+    }
+  };
+
   /** Expert: Internal cache. */
   abstract static class Cache {
     Cache() {
@@ -152,7 +158,7 @@ class FieldCacheImpl implements FieldCache {
 
     /** Remove this reader from the cache, if present. */
     public void purge(IndexReader r) {
-      Object readerKey = r.getFieldCacheKey();
+      Object readerKey = r.getCoreCacheKey();
       synchronized(readerCache) {
         readerCache.remove(readerKey);
       }
@@ -161,12 +167,14 @@ class FieldCacheImpl implements FieldCache {
     public Object get(IndexReader reader, Entry key) throws IOException {
       Map<Entry,Object> innerCache;
       Object value;
-      final Object readerKey = reader.getFieldCacheKey();
+      final Object readerKey = reader.getCoreCacheKey();
       synchronized (readerCache) {
         innerCache = readerCache.get(readerKey);
         if (innerCache == null) {
+          // First time this reader is using FieldCache
           innerCache = new HashMap<Entry,Object>();
           readerCache.put(readerKey, innerCache);
+          reader.addReaderFinishedListener(purgeReader);
           value = null;
         } else {
           value = innerCache.get(key);
@@ -297,7 +305,7 @@ class FieldCacheImpl implements FieldCache {
       }
       return retArray;
     }
-  };
+  }
   
   // inherit javadocs
   public short[] getShorts (IndexReader reader, String field) throws IOException {
@@ -344,7 +352,7 @@ class FieldCacheImpl implements FieldCache {
       }
       return retArray;
     }
-  };
+  }
   
   // inherit javadocs
   public int[] getInts (IndexReader reader, String field) throws IOException {
@@ -399,7 +407,7 @@ class FieldCacheImpl implements FieldCache {
         retArray = new int[reader.maxDoc()];
       return retArray;
     }
-  };
+  }
 
 
   // inherit javadocs
@@ -457,7 +465,7 @@ class FieldCacheImpl implements FieldCache {
         retArray = new float[reader.maxDoc()];
       return retArray;
     }
-  };
+  }
 
 
   public long[] getLongs(IndexReader reader, String field) throws IOException {
@@ -511,7 +519,7 @@ class FieldCacheImpl implements FieldCache {
         retArray = new long[reader.maxDoc()];
       return retArray;
     }
-  };
+  }
 
   // inherit javadocs
   public double[] getDoubles(IndexReader reader, String field)
@@ -567,7 +575,7 @@ class FieldCacheImpl implements FieldCache {
         retArray = new double[reader.maxDoc()];
       return retArray;
     }
-  };
+  }
 
   // inherit javadocs
   public String[] getStrings(IndexReader reader, String field)
@@ -587,8 +595,17 @@ class FieldCacheImpl implements FieldCache {
       final String[] retArray = new String[reader.maxDoc()];
       TermDocs termDocs = reader.termDocs();
       TermEnum termEnum = reader.terms (new Term (field));
+      final int termCountHardLimit = reader.maxDoc();
+      int termCount = 0;
       try {
         do {
+          if (termCount++ == termCountHardLimit) {
+            // app is misusing the API (there is more than
+            // one term per doc); in this case we make best
+            // effort to load what we can (see LUCENE-2142)
+            break;
+          }
+
           Term term = termEnum.term();
           if (term==null || term.field() != field) break;
           String termval = term.text();
@@ -603,7 +620,7 @@ class FieldCacheImpl implements FieldCache {
       }
       return retArray;
     }
-  };
+  }
 
   // inherit javadocs
   public StringIndex getStringIndex(IndexReader reader, String field)
@@ -667,7 +684,7 @@ class FieldCacheImpl implements FieldCache {
       StringIndex value = new StringIndex (retArray, mterms);
       return value;
     }
-  };
+  }
 
   private volatile PrintStream infoStream;
 

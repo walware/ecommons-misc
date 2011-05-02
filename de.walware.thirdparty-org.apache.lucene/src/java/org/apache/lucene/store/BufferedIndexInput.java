@@ -26,9 +26,9 @@ public abstract class BufferedIndexInput extends IndexInput {
   public static final int BUFFER_SIZE = 1024;
 
   private int bufferSize = BUFFER_SIZE;
-
+  
   protected byte[] buffer;
-
+  
   private long bufferStart = 0;			  // position in file of buffer
   private int bufferLength = 0;			  // end of valid bytes
   private int bufferPosition = 0;		  // next byte to read
@@ -143,7 +143,60 @@ public abstract class BufferedIndexInput extends IndexInput {
       }
     }
   }
+  
+  @Override
+  public int readInt() throws IOException {
+    if (4 <= (bufferLength-bufferPosition)) {
+      return ((buffer[bufferPosition++] & 0xFF) << 24) | ((buffer[bufferPosition++] & 0xFF) << 16)
+        | ((buffer[bufferPosition++] & 0xFF) <<  8) |  (buffer[bufferPosition++] & 0xFF);
+    } else {
+      return super.readInt();
+    }
+  }
+  
+  @Override
+  public long readLong() throws IOException {
+    if (8 <= (bufferLength-bufferPosition)) {
+      final int i1 = ((buffer[bufferPosition++] & 0xff) << 24) | ((buffer[bufferPosition++] & 0xff) << 16) |
+        ((buffer[bufferPosition++] & 0xff) << 8) | (buffer[bufferPosition++] & 0xff);
+      final int i2 = ((buffer[bufferPosition++] & 0xff) << 24) | ((buffer[bufferPosition++] & 0xff) << 16) |
+        ((buffer[bufferPosition++] & 0xff) << 8) | (buffer[bufferPosition++] & 0xff);
+      return (((long)i1) << 32) | (i2 & 0xFFFFFFFFL);
+    } else {
+      return super.readLong();
+    }
+  }
 
+  @Override
+  public int readVInt() throws IOException {
+    if (5 <= (bufferLength-bufferPosition)) {
+      byte b = buffer[bufferPosition++];
+      int i = b & 0x7F;
+      for (int shift = 7; (b & 0x80) != 0; shift += 7) {
+        b = buffer[bufferPosition++];
+        i |= (b & 0x7F) << shift;
+      }
+      return i;
+    } else {
+      return super.readVInt();
+    }
+  }
+  
+  @Override
+  public long readVLong() throws IOException {
+    if (9 <= bufferLength-bufferPosition) {
+      byte b = buffer[bufferPosition++];
+      long i = b & 0x7F;
+      for (int shift = 7; (b & 0x80) != 0; shift += 7) {
+        b = buffer[bufferPosition++];
+        i |= (b & 0x7FL) << shift;
+      }
+      return i;
+    } else {
+      return super.readVLong();
+    }
+  }
+  
   private void refill() throws IOException {
     long start = bufferStart + bufferPosition;
     long end = start + bufferSize;
@@ -205,4 +258,37 @@ public abstract class BufferedIndexInput extends IndexInput {
     return clone;
   }
 
+  /**
+   * Flushes the in-memory bufer to the given output, copying at most
+   * <code>numBytes</code>.
+   * <p>
+   * <b>NOTE:</b> this method does not refill the buffer, however it does
+   * advance the buffer position.
+   * 
+   * @return the number of bytes actually flushed from the in-memory buffer.
+   */
+  protected int flushBuffer(IndexOutput out, long numBytes) throws IOException {
+    int toCopy = bufferLength - bufferPosition;
+    if (toCopy > numBytes) {
+      toCopy = (int) numBytes;
+    }
+    if (toCopy > 0) {
+      out.writeBytes(buffer, bufferPosition, toCopy);
+      bufferPosition += toCopy;
+    }
+    return toCopy;
+  }
+  
+  @Override
+  public void copyBytes(IndexOutput out, long numBytes) throws IOException {
+    assert numBytes >= 0: "numBytes=" + numBytes;
+
+    while (numBytes > 0) {
+      if (bufferLength == bufferPosition) {
+        refill();
+      }
+      numBytes -= flushBuffer(out, numBytes);
+    }
+  }
+  
 }

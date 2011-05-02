@@ -18,15 +18,17 @@ package org.apache.lucene.search;
  */
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Callable;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -39,21 +41,31 @@ import org.apache.lucene.util.ThreadInterruptedException;
  *
  * <p>Applications usually need only call the inherited {@link #search(Query,int)}
  * or {@link #search(Query,Filter,int)} methods.
+ * 
+ * @deprecated Please pass an ExecutorService to {@link
+ * IndexSearcher}, instead.
  */
+@Deprecated
 public class ParallelMultiSearcher extends MultiSearcher {
-  
   private final ExecutorService executor;
   private final Searchable[] searchables;
   private final int[] starts;
 
-  /** Creates a {@link Searchable} which searches <i>searchables</i>. */
+  /** Creates a {@link Searchable} which searches <i>searchables</i> with the default 
+   * executor service (a cached thread pool). */
   public ParallelMultiSearcher(Searchable... searchables) throws IOException {
+    this(Executors.newCachedThreadPool(new NamedThreadFactory(ParallelMultiSearcher.class.getSimpleName())), searchables);
+  }
+
+  /**
+   * Creates a {@link Searchable} which searches <i>searchables</i> with the specified ExecutorService.
+   */
+  public ParallelMultiSearcher(ExecutorService executor, Searchable... searchables) throws IOException {
     super(searchables);
     this.searchables = searchables;
     this.starts = getStarts();
-    executor = Executors.newCachedThreadPool(new NamedThreadFactory(this.getClass().getSimpleName())); 
+    this.executor = executor;
   }
-
   /**
    * Executes each {@link Searchable}'s docFreq() in its own thread and waits for each search to complete and merge
    * the results back together.
@@ -188,6 +200,47 @@ public class ParallelMultiSearcher extends MultiSearcher {
   public void close() throws IOException {
     executor.shutdown();
     super.close();
+  }
+
+  @Override
+  HashMap<Term, Integer> createDocFrequencyMap(Set<Term> terms) throws IOException {
+    final Term[] allTermsArray = terms.toArray(new Term[terms.size()]);
+    final int[] aggregatedDocFreqs = new int[terms.size()];
+    final ExecutionHelper<int[]> runner = new ExecutionHelper<int[]>(executor);
+    for (Searchable searchable : searchables) {
+      runner.submit(
+          new DocumentFrequencyCallable(searchable, allTermsArray));
+    }
+    final int docFreqLen = aggregatedDocFreqs.length;
+    for (final int[] docFreqs : runner) {
+      for(int i=0; i < docFreqLen; i++){
+        aggregatedDocFreqs[i] += docFreqs[i];
+      }
+    }
+
+    final HashMap<Term,Integer> dfMap = new HashMap<Term,Integer>();
+    for(int i=0; i<allTermsArray.length; i++) {
+      dfMap.put(allTermsArray[i], Integer.valueOf(aggregatedDocFreqs[i]));
+    }
+    return dfMap;
+  }
+
+  
+  /**
+   * A {@link Callable} to retrieve the document frequencies for a Term array  
+   */
+  private static final class DocumentFrequencyCallable implements Callable<int[]> {
+    private final Searchable searchable;
+    private final Term[] terms;
+    
+    public DocumentFrequencyCallable(Searchable searchable, Term[] terms) {
+      this.searchable = searchable;
+      this.terms = terms;
+    }
+    
+    public int[] call() throws Exception {
+      return searchable.docFreqs(terms);
+    }
   }
   
   /**

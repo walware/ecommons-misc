@@ -32,7 +32,7 @@ import org.apache.lucene.util.Version;
 /**
  * A QueryParser which constructs queries to search multiple fields.
  *
- * @version $Revision: 829231 $
+ * @version $Revision: 965592 $
  */
 public class MultiFieldQueryParser extends QueryParser
 {
@@ -96,11 +96,12 @@ public class MultiFieldQueryParser extends QueryParser
     this.fields = fields;
   }
   
+  @Override
   protected Query getFieldQuery(String field, String queryText, int slop) throws ParseException {
     if (field == null) {
       List<BooleanClause> clauses = new ArrayList<BooleanClause>();
       for (int i = 0; i < fields.length; i++) {
-        Query q = super.getFieldQuery(fields[i], queryText);
+        Query q = super.getFieldQuery(fields[i], queryText, true);
         if (q != null) {
           //If the user passes a map of boosts
           if (boosts != null) {
@@ -118,7 +119,7 @@ public class MultiFieldQueryParser extends QueryParser
         return null;
       return getBooleanQuery(clauses, true);
     }
-    Query q = super.getFieldQuery(field, queryText);
+    Query q = super.getFieldQuery(field, queryText, true);
     applySlop(q,slop);
     return q;
   }
@@ -132,11 +133,34 @@ public class MultiFieldQueryParser extends QueryParser
   }
   
 
-  protected Query getFieldQuery(String field, String queryText) throws ParseException {
-    return getFieldQuery(field, queryText, 0);
+  @Override
+  protected Query getFieldQuery(String field, String queryText, boolean quoted) throws ParseException {
+    if (field == null) {
+      List<BooleanClause> clauses = new ArrayList<BooleanClause>();
+      for (int i = 0; i < fields.length; i++) {
+        Query q = super.getFieldQuery(fields[i], queryText, quoted);
+        if (q != null) {
+          //If the user passes a map of boosts
+          if (boosts != null) {
+            //Get the boost from the map and apply them
+            Float boost = boosts.get(fields[i]);
+            if (boost != null) {
+              q.setBoost(boost.floatValue());
+            }
+          }
+          clauses.add(new BooleanClause(q, BooleanClause.Occur.SHOULD));
+        }
+      }
+      if (clauses.size() == 0)  // happens for stopwords
+        return null;
+      return getBooleanQuery(clauses, true);
+    }
+    Query q = super.getFieldQuery(field, queryText, quoted);
+    return q;
   }
 
 
+  @Override
   protected Query getFuzzyQuery(String field, String termStr, float minSimilarity) throws ParseException
   {
     if (field == null) {
@@ -150,6 +174,7 @@ public class MultiFieldQueryParser extends QueryParser
     return super.getFuzzyQuery(field, termStr, minSimilarity);
   }
 
+  @Override
   protected Query getPrefixQuery(String field, String termStr) throws ParseException
   {
     if (field == null) {
@@ -163,6 +188,7 @@ public class MultiFieldQueryParser extends QueryParser
     return super.getPrefixQuery(field, termStr);
   }
 
+  @Override
   protected Query getWildcardQuery(String field, String termStr) throws ParseException {
     if (field == null) {
       List<BooleanClause> clauses = new ArrayList<BooleanClause>();
@@ -176,6 +202,7 @@ public class MultiFieldQueryParser extends QueryParser
   }
 
  
+  @Override
   protected Query getRangeQuery(String field, String part1, String part2, boolean inclusive) throws ParseException {
     if (field == null) {
       List<BooleanClause> clauses = new ArrayList<BooleanClause>();

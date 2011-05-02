@@ -49,13 +49,6 @@ public class SimpleFSDirectory extends FSDirectory {
     super(path, null);
   }
 
-  /** Creates an IndexOutput for the file with the given name. */
-  @Override
-  public IndexOutput createOutput(String name) throws IOException {
-    initOutput(name);
-    return new SimpleFSIndexOutput(new File(directory, name));
-  }
-
   /** Creates an IndexInput for the file with the given name. */
   @Override
   public IndexInput openInput(String name, int bufferSize) throws IOException {
@@ -132,7 +125,7 @@ public class SimpleFSDirectory extends FSDirectory {
           final OutOfMemoryError outOfMemoryError = new OutOfMemoryError(
               "OutOfMemoryError likely caused by the Sun VM Bug described in "
               + "https://issues.apache.org/jira/browse/LUCENE-1566; try calling FSDirectory.setReadChunkSize "
-              + "with a a value smaller than the current chunks size (" + chunkSize + ")");
+              + "with a value smaller than the current chunks size (" + chunkSize + ")");
           outOfMemoryError.initCause(e);
           throw outOfMemoryError;
         }
@@ -167,60 +160,12 @@ public class SimpleFSDirectory extends FSDirectory {
     boolean isFDValid() throws IOException {
       return file.getFD().valid();
     }
-  }
-
-  protected static class SimpleFSIndexOutput extends BufferedIndexOutput {
-    RandomAccessFile file = null;
-  
-    // remember if the file is open, so that we don't try to close it
-    // more than once
-    private volatile boolean isOpen;
-
-    public SimpleFSIndexOutput(File path) throws IOException {
-      file = new RandomAccessFile(path, "rw");
-      isOpen = true;
-    }
-  
-    /** output methods: */
+    
     @Override
-    public void flushBuffer(byte[] b, int offset, int size) throws IOException {
-      file.write(b, offset, size);
-    }
-    @Override
-    public void close() throws IOException {
-      // only close the file if it has not been closed yet
-      if (isOpen) {
-        boolean success = false;
-        try {
-          super.close();
-          success = true;
-        } finally {
-          isOpen = false;
-          if (!success) {
-            try {
-              file.close();
-            } catch (Throwable t) {
-              // Suppress so we don't mask original exception
-            }
-          } else
-            file.close();
-        }
-      }
-    }
-  
-    /** Random-access methods */
-    @Override
-    public void seek(long pos) throws IOException {
-      super.seek(pos);
-      file.seek(pos);
-    }
-    @Override
-    public long length() throws IOException {
-      return file.length();
-    }
-    @Override
-    public void setLength(long length) throws IOException {
-      file.setLength(length);
+    public void copyBytes(IndexOutput out, long numBytes) throws IOException {
+      numBytes -= flushBuffer(out, numBytes);
+      // If out is FSIndexOutput, the copy will be optimized
+      out.copyBytes(this, numBytes);
     }
   }
 }

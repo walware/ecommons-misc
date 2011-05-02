@@ -37,10 +37,7 @@ import java.util.Set;
  * <p>
  * Score is set as: Score(doc,query) = query.getBoost()<sup>2</sup> * valueSource(doc).  
  *
- * <p><font color="#FF0000">
- * WARNING: The status of the <b>search.function</b> package is experimental. 
- * The APIs introduced here might change in the future and will not be 
- * supported anymore in such a case.</font>
+ * @lucene.experimental
  */
 public class ValueSourceQuery extends Query {
   ValueSource valSrc;
@@ -128,7 +125,6 @@ public class ValueSourceQuery extends Query {
    * be used. (assuming field is indexed for this doc, with a single token.)   
    */
   private class ValueSourceScorer extends Scorer {
-    private final ValueSourceWeight weight;
     private final float qWeight;
     private final DocValues vals;
     private final TermDocs termDocs;
@@ -136,9 +132,8 @@ public class ValueSourceQuery extends Query {
 
     // constructor
     private ValueSourceScorer(Similarity similarity, IndexReader reader, ValueSourceWeight w) throws IOException {
-      super(similarity);
-      this.weight = w;
-      this.qWeight = w.getValue();
+      super(similarity,w);
+      qWeight = w.getValue();
       // this is when/where the values are first created.
       vals = valSrc.getValues(reader);
       termDocs = reader.termDocs(null);
@@ -179,6 +174,10 @@ public class ValueSourceQuery extends Query {
   /** Returns true if <code>o</code> is equal to this. */
   @Override
   public boolean equals(Object o) {
+    if (this == o)
+      return true;
+    if (!super.equals(o))
+      return false;
     if (getClass() != o.getClass()) {
       return false;
     }

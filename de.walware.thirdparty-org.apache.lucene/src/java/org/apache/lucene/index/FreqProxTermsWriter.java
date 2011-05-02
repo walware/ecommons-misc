@@ -21,23 +21,16 @@ import org.apache.lucene.util.UnicodeUtil;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.lucene.util.CollectionUtil;
 
 final class FreqProxTermsWriter extends TermsHashConsumer {
 
   @Override
   public TermsHashConsumerPerThread addThread(TermsHashPerThread perThread) {
     return new FreqProxTermsWriterPerThread(perThread);
-  }
-
-  @Override
-  void createPostings(RawPostingList[] postings, int start, int count) {
-    final int end = start + count;
-    for(int i=start;i<end;i++)
-      postings[i] = new PostingList();
   }
 
   private static int compareText(final char[] text1, int pos1, final char[] text2, int pos2) {
@@ -57,10 +50,7 @@ final class FreqProxTermsWriter extends TermsHashConsumer {
   }
 
   @Override
-  void closeDocStore(SegmentWriteState state) {}
-  @Override
   void abort() {}
-
 
   // TODO: would be nice to factor out more of this, eg the
   // FreqProxFieldMergeState, and code to visit all Fields
@@ -87,7 +77,7 @@ final class FreqProxTermsWriter extends TermsHashConsumer {
     }
 
     // Sort by field name
-    Collections.sort(allFields);
+    CollectionUtil.quickSort(allFields);
     final int numAllFields = allFields.size();
 
     // TODO: allow Lucene user to customize this consumer:
@@ -272,16 +262,4 @@ final class FreqProxTermsWriter extends TermsHashConsumer {
   }
 
   final UnicodeUtil.UTF8Result termsUTF8 = new UnicodeUtil.UTF8Result();
-
-  static final class PostingList extends RawPostingList {
-    int docFreq;                                    // # times this term occurs in the current doc
-    int lastDocID;                                  // Last docID where this term occurred
-    int lastDocCode;                                // Code for prior doc
-    int lastPosition;                               // Last position where this term occurred
-  }
-
-  @Override
-  int bytesPerPosting() {
-    return RawPostingList.BYTES_SIZE + 4 * DocumentsWriter.INT_NUM_BYTE;
-  }
 }

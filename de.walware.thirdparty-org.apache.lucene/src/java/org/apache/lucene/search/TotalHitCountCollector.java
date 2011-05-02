@@ -1,4 +1,4 @@
-package org.apache.lucene.index;
+package org.apache.lucene.search;
 
 /**
  * Licensed to the Apache Software Foundation (ASF) under one or more
@@ -17,20 +17,35 @@ package org.apache.lucene.index;
  * limitations under the License.
  */
 
+import org.apache.lucene.index.IndexReader;
 
-/** This is the base class for an in-memory posting list,
- *  keyed by a Token.  {@link TermsHash} maintains a hash
- *  table holding one instance of this per unique Token.
- *  Consumers of TermsHash ({@link TermsHashConsumer}) must
- *  subclass this class with its own concrete class.
- *  FreqProxTermsWriter.PostingList is a private inner class used 
- *  for the freq/prox postings, and 
- *  TermVectorsTermsWriter.PostingList is a private inner class
- *  used to hold TermVectors postings. */
+/**
+ * Just counts the total number of hits.
+ */
 
-abstract class RawPostingList {
-  final static int BYTES_SIZE = DocumentsWriter.OBJECT_HEADER_BYTES + 3*DocumentsWriter.INT_NUM_BYTE;
-  int textStart;
-  int intStart;
-  int byteStart;
+public class TotalHitCountCollector extends Collector {
+  private int totalHits;
+
+  /** Returns how many hits matched the search. */
+  public int getTotalHits() {
+    return totalHits;
+  }
+
+  @Override
+  public void setScorer(Scorer scorer) {
+  }
+
+  @Override
+  public void collect(int doc) {
+    totalHits++;
+  }
+
+  @Override
+  public void setNextReader(IndexReader reader, int docBase) {
+  }
+
+  @Override
+  public boolean acceptsDocsOutOfOrder() {
+    return true;
+  }
 }

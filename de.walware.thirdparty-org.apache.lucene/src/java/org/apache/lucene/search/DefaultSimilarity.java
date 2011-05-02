@@ -29,8 +29,7 @@ public class DefaultSimilarity extends Similarity {
    *  FieldInvertState#getLength()} - {@link
    *  FieldInvertState#getNumOverlap()}.
    *
-   *  <p><b>WARNING</b>: This API is new and experimental, and may suddenly
-   *  change.</p> */
+   *  @lucene.experimental */
   @Override
   public float computeNorm(String field, FieldInvertState state) {
     final int numTerms;
@@ -38,13 +37,7 @@ public class DefaultSimilarity extends Similarity {
       numTerms = state.getLength() - state.getNumOverlap();
     else
       numTerms = state.getLength();
-    return (state.getBoost() * lengthNorm(field, numTerms));
-  }
-  
-  /** Implemented as <code>1/sqrt(numTerms)</code>. */
-  @Override
-  public float lengthNorm(String fieldName, int numTerms) {
-    return (float)(1.0 / Math.sqrt(numTerms));
+    return state.getBoost() * ((float) (1.0 / Math.sqrt(numTerms)));
   }
   
   /** Implemented as <code>1/sqrt(sumOfSquaredWeights)</code>. */
@@ -77,16 +70,15 @@ public class DefaultSimilarity extends Similarity {
     return overlap / (float)maxOverlap;
   }
 
-  // Default false
-  protected boolean discountOverlaps;
+  // Default true
+  protected boolean discountOverlaps = true;
 
   /** Determines whether overlap tokens (Tokens with
    *  0 position increment) are ignored when computing
-   *  norm.  By default this is false, meaning overlap
-   *  tokens are counted just like non-overlap tokens.
+   *  norm.  By default this is true, meaning overlap
+   *  tokens do not count when computing norms.
    *
-   *  <p><b>WARNING</b>: This API is new and experimental, and may suddenly
-   *  change.</p>
+   *  @lucene.experimental
    *
    *  @see #computeNorm
    */

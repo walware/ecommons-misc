@@ -20,11 +20,12 @@ package org.apache.lucene.index;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.FieldSelector;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.search.FieldCache; // not great (circular); used only to purge FieldCache entry on close
+import org.apache.lucene.util.MapBackedSet;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**  A <code>FilterIndexReader</code> contains another IndexReader, which it
  * uses as its basic source of data, possibly transforming the data along the
@@ -108,6 +109,7 @@ public class FilterIndexReader extends IndexReader {
   public FilterIndexReader(IndexReader in) {
     super();
     this.in = in;
+    readerFinishedListeners = new MapBackedSet<ReaderFinishedListener>(new ConcurrentHashMap<ReaderFinishedListener,Boolean>());
   }
 
   @Override
@@ -244,11 +246,6 @@ public class FilterIndexReader extends IndexReader {
   @Override
   protected void doClose() throws IOException {
     in.close();
-
-    // NOTE: only needed in case someone had asked for
-    // FieldCache for top-level reader (which is generally
-    // not a good idea):
-    FieldCache.DEFAULT.purge(this);
   }
 
 
@@ -285,8 +282,8 @@ public class FilterIndexReader extends IndexReader {
    *  contents of the FieldCache, you must override this
    *  method to provide a different key */
   @Override
-  public Object getFieldCacheKey() {
-    return in.getFieldCacheKey();
+  public Object getCoreCacheKey() {
+    return in.getCoreCacheKey();
   }
 
   /** If the subclass of FilteredIndexReader modifies the
@@ -296,4 +293,26 @@ public class FilterIndexReader extends IndexReader {
   public Object getDeletesCacheKey() {
     return in.getDeletesCacheKey();
   }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toString() {
+    final StringBuilder buffer = new StringBuilder("FilterReader(");
+    buffer.append(in);
+    buffer.append(')');
+    return buffer.toString();
+  }
+
+  @Override
+  public void addReaderFinishedListener(ReaderFinishedListener listener) {
+    super.addReaderFinishedListener(listener);
+    in.addReaderFinishedListener(listener);
+  }
+
+  @Override
+  public void removeReaderFinishedListener(ReaderFinishedListener listener) {
+    super.removeReaderFinishedListener(listener);
+    in.removeReaderFinishedListener(listener);
+  }
 }
+

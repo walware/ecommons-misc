@@ -31,9 +31,6 @@ final class TermsHashPerThread extends InvertedDocConsumerPerThread {
   final boolean primary;
   final DocumentsWriter.DocState docState;
 
-  final RawPostingList freePostings[] = new RawPostingList[256];
-  int freePostingsCount;
-
   public TermsHashPerThread(DocInverterPerThread docInverterPerThread, final TermsHash termsHash, final TermsHash nextTermsHash, final TermsHashPerThread primaryPerThread) {
     docState = docInverterPerThread.docState;
 
@@ -49,8 +46,8 @@ final class TermsHashPerThread extends InvertedDocConsumerPerThread {
       primary = false;
     }
 
-    intPool = new IntBlockPool(termsHash.docWriter, termsHash.trackAllocations);
-    bytePool = new ByteBlockPool(termsHash.docWriter.byteBlockAllocator, termsHash.trackAllocations);
+    intPool = new IntBlockPool(termsHash.docWriter);
+    bytePool = new ByteBlockPool(termsHash.docWriter.byteBlockAllocator);
 
     if (nextTermsHash != null)
       nextPerThread = nextTermsHash.addThread(docInverterPerThread, this);
@@ -69,20 +66,6 @@ final class TermsHashPerThread extends InvertedDocConsumerPerThread {
     consumer.abort();
     if (nextPerThread != null)
       nextPerThread.abort();
-  }
-
-  // perField calls this when it needs more postings:
-  void morePostings() throws IOException {
-    assert freePostingsCount == 0;
-    termsHash.getPostings(freePostings);
-    freePostingsCount = freePostings.length;
-    assert noNullPostings(freePostings, freePostingsCount, "consumer=" + consumer);
-  }
-
-  private static boolean noNullPostings(RawPostingList[] postings, int count, String details) {
-    for(int i=0;i<count;i++)
-      assert postings[i] != null: "postings[" + i + "] of " + count + " is null: " + details;
-    return true;
   }
 
   @Override
@@ -116,10 +99,5 @@ final class TermsHashPerThread extends InvertedDocConsumerPerThread {
 
     if (primary)
       charPool.reset();
-
-    if (recyclePostings) {
-      termsHash.recyclePostings(freePostings, freePostingsCount);
-      freePostingsCount = 0;
-    }
   }
 }

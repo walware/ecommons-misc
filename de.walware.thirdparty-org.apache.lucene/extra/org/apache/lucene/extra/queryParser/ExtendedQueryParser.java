@@ -108,20 +108,22 @@ public class ExtendedQueryParser extends QueryParser {
   public ExtendedQueryParser(final Version matchVersion, final String[] fields, final Analyzer analyzer) {
     super(matchVersion, checkFields(fields), analyzer);
     this.fields = fields;
-    super.setLowercaseExpandedTerms(false);
-  }
-  
+		super.setLowercaseExpandedTerms(false);
+		super.setAutoGeneratePhraseQueries(true);
+	}
+	
 	
 	@Override
 	public void setLowercaseExpandedTerms(final boolean lowercaseExpandedTerms) {
 		throw new UnsupportedOperationException();
 	}
 	
-	protected Query extGetFieldQuery(final String field, final String queryText) throws ParseException {
+	protected Query extGetFieldQuery(final String field, final String queryText,
+			final boolean quoted) throws ParseException {
 		if (!(field.endsWith(".txt") || field.endsWith(".html"))) {
 			return new TermQuery(new Term(field, queryText));
 		}
-		return super.getFieldQuery(field, queryText);
+		return super.getFieldQuery(field, queryText, quoted);
 	}
 	
 	protected Query extGetWildcardQuery(final String field, final String queryText) throws ParseException {
@@ -146,47 +148,72 @@ public class ExtendedQueryParser extends QueryParser {
 	}
 	
 	
-  protected Query getFieldQuery(final String field, final String queryText, final int slop) throws ParseException {
-    if (field == null) {
-      final List<BooleanClause> clauses = new ArrayList<BooleanClause>();
-      for (int i = 0; i < fields.length; i++) {
-        final Query q = extGetFieldQuery(fields[i], queryText);
-        if (q != null) {
-          //If the user passes a map of boosts
-          if (boosts != null) {
-            //Get the boost from the map and apply them
-            final Float boost = boosts.get(fields[i]);
-            if (boost != null) {
-              q.setBoost(boost.floatValue());
-            }
-          }
-          applySlop(q,slop);
-          clauses.add(new BooleanClause(q, Occur.SHOULD));
-        }
-      }
-      if (clauses.size() == 0)  // happens for stopwords
-        return null;
-      return getBooleanQuery(clauses, true);
-    }
-    final Query q = extGetFieldQuery(field, queryText);
-    applySlop(q,slop);
-    return q;
-  }
-  
-  private void applySlop(final Query q, final int slop) {
-    if (q instanceof PhraseQuery) {
-      ((PhraseQuery) q).setSlop(slop);
-    } else if (q instanceof MultiPhraseQuery) {
-      ((MultiPhraseQuery) q).setSlop(slop);
-    }
-  }
-  
+	@Override
+	protected Query getFieldQuery(final String field, final String queryText, final int slop) throws ParseException {
+		if (field == null) {
+			final List<BooleanClause> clauses = new ArrayList<BooleanClause>();
+			for (int i = 0; i < fields.length; i++) {
+				final Query q = extGetFieldQuery(fields[i], queryText, true);
+				if (q != null) {
+					//If the user passes a map of boosts
+					if (boosts != null) {
+						//Get the boost from the map and apply them
+						final Float boost = boosts.get(fields[i]);
+						if (boost != null) {
+							q.setBoost(boost.floatValue());
+						}
+					}
+					applySlop(q,slop);
+					clauses.add(new BooleanClause(q, Occur.SHOULD));
+				}
+			}
+			if (clauses.size() == 0) {
+				return null;
+			}
+			return getBooleanQuery(clauses, true);
+		}
+		final Query q = extGetFieldQuery(field, queryText, true);
+		applySlop(q,slop);
+		return q;
+	}
+	
+	private void applySlop(final Query q, final int slop) {
+		if (q instanceof PhraseQuery) {
+			((PhraseQuery) q).setSlop(slop);
+		} else if (q instanceof MultiPhraseQuery) {
+			((MultiPhraseQuery) q).setSlop(slop);
+		}
+	}
+	
+	@Override
+	protected Query getFieldQuery(final String field, final String queryText, final boolean quoted) throws ParseException {
+		if (field == null) {
+			final List<BooleanClause> clauses = new ArrayList<BooleanClause>();
+			for (int i = 0; i < fields.length; i++) {
+				final Query q = extGetFieldQuery(fields[i], queryText, quoted);
+				if (q != null) {
+					//If the user passes a map of boosts
+					if (boosts != null) {
+						//Get the boost from the map and apply them
+						final Float boost = boosts.get(fields[i]);
+						if (boost != null) {
+							q.setBoost(boost.floatValue());
+						}
+					}
+					clauses.add(new BooleanClause(q, Occur.SHOULD));
+				}
+			}
+			if (clauses.size() == 0) {
+				return null;
+			}
+			return getBooleanQuery(clauses, true);
+		}
+		final Query q = extGetFieldQuery(field, queryText, quoted);
+		return q;
+	}
 
-  protected Query getFieldQuery(final String field, final String queryText) throws ParseException {
-    return getFieldQuery(field, queryText, 0);
-  }
 
-
+  @Override
   protected Query getFuzzyQuery(final String field, final String termStr, final float minSimilarity) throws ParseException
   {
     if (field == null) {
@@ -200,6 +227,7 @@ public class ExtendedQueryParser extends QueryParser {
     return extGetFuzzyQuery(field, termStr, minSimilarity);
   }
 
+  @Override
   protected Query getPrefixQuery(final String field, final String termStr) throws ParseException
   {
     if (field == null) {
@@ -213,6 +241,7 @@ public class ExtendedQueryParser extends QueryParser {
     return extGetPrefixQuery(field, termStr);
   }
 
+  @Override
   protected Query getWildcardQuery(final String field, final String termStr) throws ParseException {
     if (field == null) {
       final List<BooleanClause> clauses = new ArrayList<BooleanClause>();
@@ -225,7 +254,7 @@ public class ExtendedQueryParser extends QueryParser {
     return extGetWildcardQuery(field, termStr);
   }
 
- 
+  @Override
   protected Query getRangeQuery(final String field, final String part1, final String part2, final boolean inclusive) throws ParseException {
     if (field == null) {
       final List<BooleanClause> clauses = new ArrayList<BooleanClause>();

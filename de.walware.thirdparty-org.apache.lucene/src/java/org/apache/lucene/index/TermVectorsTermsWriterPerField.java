@@ -23,6 +23,7 @@ import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.document.Fieldable;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.UnicodeUtil;
+import org.apache.lucene.util.RamUsageEstimator;
 
 final class TermVectorsTermsWriterPerField extends TermsHashConsumerPerField {
 
@@ -126,8 +127,9 @@ final class TermVectorsTermsWriterPerField extends TermsHashConsumerPerField {
     assert perThread.vectorFieldsInOrder(fieldInfo);
 
     perThread.doc.addField(termsHashPerField.fieldInfo.number);
+    TermVectorsPostingsArray postings = (TermVectorsPostingsArray) termsHashPerField.postingsArray;
 
-    final RawPostingList[] postings = termsHashPerField.sortPostings();
+    final int[] termIDs = termsHashPerField.sortPostings();
 
     tvf.writeVInt(numPostings);
     byte bits = 0x0;
@@ -143,11 +145,11 @@ final class TermVectorsTermsWriterPerField extends TermsHashConsumerPerField {
     final ByteSliceReader reader = perThread.vectorSliceReader;
     final char[][] charBuffers = perThread.termsHashPerThread.charPool.buffers;
     for(int j=0;j<numPostings;j++) {
-      final TermVectorsTermsWriter.PostingList posting = (TermVectorsTermsWriter.PostingList) postings[j];
-      final int freq = posting.freq;
+      final int termID = termIDs[j];
+      final int freq = postings.freqs[termID];
           
-      final char[] text2 = charBuffers[posting.textStart >> DocumentsWriter.CHAR_BLOCK_SHIFT];
-      final int start2 = posting.textStart & DocumentsWriter.CHAR_BLOCK_MASK;
+      final char[] text2 = charBuffers[postings.textStarts[termID] >> DocumentsWriter.CHAR_BLOCK_SHIFT];
+      final int start2 = postings.textStarts[termID] & DocumentsWriter.CHAR_BLOCK_MASK;
 
       // We swap between two encoders to save copying
       // last Term's byte array
@@ -180,12 +182,12 @@ final class TermVectorsTermsWriterPerField extends TermsHashConsumerPerField {
       tvf.writeVInt(freq);
 
       if (doVectorPositions) {
-        termsHashPerField.initReader(reader, posting, 0);
+        termsHashPerField.initReader(reader, termID, 0);
         reader.writeTo(tvf);
       }
 
       if (doVectorOffsets) {
-        termsHashPerField.initReader(reader, posting, 1);
+        termsHashPerField.initReader(reader, termID, 1);
         reader.writeTo(tvf);
       }
     }
@@ -215,52 +217,93 @@ final class TermVectorsTermsWriterPerField extends TermsHashConsumerPerField {
   }
 
   @Override
-  void newTerm(RawPostingList p0) {
+  void newTerm(final int termID) {
 
     assert docState.testPoint("TermVectorsTermsWriterPerField.newTerm start");
 
-    TermVectorsTermsWriter.PostingList p = (TermVectorsTermsWriter.PostingList) p0;
+    TermVectorsPostingsArray postings = (TermVectorsPostingsArray) termsHashPerField.postingsArray;
 
-    p.freq = 1;
+    postings.freqs[termID] = 1;
 
     if (doVectorOffsets) {
-      int startOffset = fieldState.offset + offsetAttribute.startOffset();;
+      int startOffset = fieldState.offset + offsetAttribute.startOffset();
       int endOffset = fieldState.offset + offsetAttribute.endOffset();
       
       termsHashPerField.writeVInt(1, startOffset);
       termsHashPerField.writeVInt(1, endOffset - startOffset);
-      p.lastOffset = endOffset;
+      postings.lastOffsets[termID] = endOffset;
     }
 
     if (doVectorPositions) {
       termsHashPerField.writeVInt(0, fieldState.position);
-      p.lastPosition = fieldState.position;
+      postings.lastPositions[termID] = fieldState.position;
     }
   }
 
   @Override
-  void addTerm(RawPostingList p0) {
+  void addTerm(final int termID) {
 
     assert docState.testPoint("TermVectorsTermsWriterPerField.addTerm start");
 
-    TermVectorsTermsWriter.PostingList p = (TermVectorsTermsWriter.PostingList) p0;
-    p.freq++;
+    TermVectorsPostingsArray postings = (TermVectorsPostingsArray) termsHashPerField.postingsArray;
+    
+    postings.freqs[termID]++;
 
     if (doVectorOffsets) {
-      int startOffset = fieldState.offset + offsetAttribute.startOffset();;
+      int startOffset = fieldState.offset + offsetAttribute.startOffset();
       int endOffset = fieldState.offset + offsetAttribute.endOffset();
       
-      termsHashPerField.writeVInt(1, startOffset - p.lastOffset);
+      termsHashPerField.writeVInt(1, startOffset - postings.lastOffsets[termID]);
       termsHashPerField.writeVInt(1, endOffset - startOffset);
-      p.lastOffset = endOffset;
+      postings.lastOffsets[termID] = endOffset;
     }
 
     if (doVectorPositions) {
-      termsHashPerField.writeVInt(0, fieldState.position - p.lastPosition);
-      p.lastPosition = fieldState.position;
+      termsHashPerField.writeVInt(0, fieldState.position - postings.lastPositions[termID]);
+      postings.lastPositions[termID] = fieldState.position;
     }
   }
 
   @Override
   void skippingLongTerm() {}
+
+  @Override
+  ParallelPostingsArray createPostingsArray(int size) {
+    return new TermVectorsPostingsArray(size);
+  }
+
+  static final class TermVectorsPostingsArray extends ParallelPostingsArray {
+    public TermVectorsPostingsArray(int size) {
+      super(size);
+      freqs = new int[size];
+      lastOffsets = new int[size];
+      lastPositions = new int[size];
+    }
+
+    int[] freqs;                                       // How many times this term occurred in the current doc
+    int[] lastOffsets;                                 // Last offset we saw
+    int[] lastPositions;                               // Last position where this term occurred
+    
+    @Override
+    ParallelPostingsArray newInstance(int size) {
+      return new TermVectorsPostingsArray(size);
+    }
+
+    @Override
+    void copyTo(ParallelPostingsArray toArray, int numToCopy) {
+      assert toArray instanceof TermVectorsPostingsArray;
+      TermVectorsPostingsArray to = (TermVectorsPostingsArray) toArray;
+
+      super.copyTo(toArray, numToCopy);
+
+      System.arraycopy(freqs, 0, to.freqs, 0, size);
+      System.arraycopy(lastOffsets, 0, to.lastOffsets, 0, size);
+      System.arraycopy(lastPositions, 0, to.lastPositions, 0, size);
+    }
+
+    @Override
+    int bytesPerPosting() {
+      return super.bytesPerPosting() + 3 * RamUsageEstimator.NUM_BYTES_INT;
+    }
+  }
 }

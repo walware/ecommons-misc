@@ -1,7 +1,5 @@
 package org.apache.lucene.store;
 
-import java.io.IOException;
-
 /**
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -19,10 +17,9 @@ import java.io.IOException;
  * limitations under the License.
  */
 
-/**
- * A memory-resident {@link IndexInput} implementation.
- */
+import java.io.IOException;
 
+/** A memory-resident {@link IndexInput} implementation. */
 class RAMInputStream extends IndexInput implements Cloneable {
   static final int BUFFER_SIZE = RAMOutputStream.BUFFER_SIZE;
 
@@ -86,6 +83,7 @@ class RAMInputStream extends IndexInput implements Cloneable {
   }
 
   private final void switchCurrentBuffer(boolean enforceEOF) throws IOException {
+    bufferStart = (long) BUFFER_SIZE * (long) currentBufferIndex;
     if (currentBufferIndex >= file.numBuffers()) {
       // end of file reached, no more buffers left
       if (enforceEOF)
@@ -98,12 +96,32 @@ class RAMInputStream extends IndexInput implements Cloneable {
     } else {
       currentBuffer = file.getBuffer(currentBufferIndex);
       bufferPosition = 0;
-      bufferStart = (long) BUFFER_SIZE * (long) currentBufferIndex;
       long buflen = length - bufferStart;
       bufferLength = buflen > BUFFER_SIZE ? BUFFER_SIZE : (int) buflen;
     }
   }
 
+  @Override
+  public void copyBytes(IndexOutput out, long numBytes) throws IOException {
+    assert numBytes >= 0: "numBytes=" + numBytes;
+    
+    long left = numBytes;
+    while (left > 0) {
+      if (bufferPosition == bufferLength) {
+        ++currentBufferIndex;
+        switchCurrentBuffer(true);
+      }
+      
+      final int bytesInBuffer = bufferLength - bufferPosition;
+      final int toCopy = (int) (bytesInBuffer < left ? bytesInBuffer : left);
+      out.writeBytes(currentBuffer, bufferPosition, toCopy);
+      bufferPosition += toCopy;
+      left -= toCopy;
+    }
+    
+    assert left == 0: "Insufficient bytes to copy: numBytes=" + numBytes + " copied=" + (numBytes - left);
+  }
+  
   @Override
   public long getFilePointer() {
     return currentBufferIndex < 0 ? 0 : bufferStart + bufferPosition;

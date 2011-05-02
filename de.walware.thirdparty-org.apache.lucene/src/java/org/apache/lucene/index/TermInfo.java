@@ -19,7 +19,7 @@ package org.apache.lucene.index;
 
 /** A TermInfo is the record of information stored for a term.*/
 
-final class TermInfo {
+class TermInfo {
   /** The number of documents which contain the term. */
   int docFreq = 0;
 

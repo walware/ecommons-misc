@@ -20,6 +20,7 @@ package org.apache.lucene.index;
 import java.io.IOException;
 import org.apache.lucene.store.RAMOutputStream;
 import org.apache.lucene.util.ArrayUtil;
+import org.apache.lucene.util.RamUsageEstimator;
 
 /** This is a DocFieldConsumer that writes stored fields. */
 final class StoredFieldsWriter {
@@ -42,59 +43,27 @@ final class StoredFieldsWriter {
   }
 
   synchronized public void flush(SegmentWriteState state) throws IOException {
-
-    if (state.numDocsInStore > 0) {
-      // It's possible that all documents seen in this segment
-      // hit non-aborting exceptions, in which case we will
-      // not have yet init'd the FieldsWriter:
+    if (state.numDocs > lastDocID) {
       initFieldsWriter();
-
-      // Fill fdx file to include any final docs that we
-      // skipped because they hit non-aborting exceptions
-      fill(state.numDocsInStore - docWriter.getDocStoreOffset());
-    }
-
-    if (fieldsWriter != null)
-      fieldsWriter.flush();
-  }
-  
-  private void initFieldsWriter() throws IOException {
-    if (fieldsWriter == null) {
-      final String docStoreSegment = docWriter.getDocStoreSegment();
-      if (docStoreSegment != null) {
-        assert docStoreSegment != null;
-        fieldsWriter = new FieldsWriter(docWriter.directory,
-                                        docStoreSegment,
-                                        fieldInfos);
-        docWriter.addOpenFile(docStoreSegment + "." + IndexFileNames.FIELDS_EXTENSION);
-        docWriter.addOpenFile(docStoreSegment + "." + IndexFileNames.FIELDS_INDEX_EXTENSION);
-        lastDocID = 0;
-      }
-    }
-  }
-
-  synchronized public void closeDocStore(SegmentWriteState state) throws IOException {
-    final int inc = state.numDocsInStore - lastDocID;
-    if (inc > 0) {
-      initFieldsWriter();
-      fill(state.numDocsInStore - docWriter.getDocStoreOffset());
+      fill(state.numDocs);
     }
 
     if (fieldsWriter != null) {
       fieldsWriter.close();
       fieldsWriter = null;
       lastDocID = 0;
-      assert state.docStoreSegmentName != null;
-      state.flushedFiles.add(state.docStoreSegmentName + "." + IndexFileNames.FIELDS_EXTENSION);
-      state.flushedFiles.add(state.docStoreSegmentName + "." + IndexFileNames.FIELDS_INDEX_EXTENSION);
 
-      state.docWriter.removeOpenFile(state.docStoreSegmentName + "." + IndexFileNames.FIELDS_EXTENSION);
-      state.docWriter.removeOpenFile(state.docStoreSegmentName + "." + IndexFileNames.FIELDS_INDEX_EXTENSION);
+      String fieldsIdxName = IndexFileNames.segmentFileName(state.segmentName, IndexFileNames.FIELDS_INDEX_EXTENSION);
+      if (4 + ((long) state.numDocs) * 8 != state.directory.fileLength(fieldsIdxName)) {
+        throw new RuntimeException("after flush: fdx size mismatch: " + state.numDocs + " docs vs " + state.directory.fileLength(fieldsIdxName) + " length in bytes of " + fieldsIdxName + " file exists?=" + state.directory.fileExists(fieldsIdxName));
+      }
+    }
+  }
 
-      final String fileName = state.docStoreSegmentName + "." + IndexFileNames.FIELDS_INDEX_EXTENSION;
-
-      if (4+((long) state.numDocsInStore)*8 != state.directory.fileLength(fileName))
-        throw new RuntimeException("after flush: fdx size mismatch: " + state.numDocsInStore + " docs vs " + state.directory.fileLength(fileName) + " length in bytes of " + fileName + " file exists?=" + state.directory.fileExists(fileName));
+  private synchronized void initFieldsWriter() throws IOException {
+    if (fieldsWriter == null) {
+      fieldsWriter = new FieldsWriter(docWriter.directory, docWriter.getSegment(), fieldInfos);
+      lastDocID = 0;
     }
   }
 
@@ -108,19 +77,17 @@ final class StoredFieldsWriter {
         // enough space to recycle all outstanding PerDoc
         // instances
         assert allocCount == 1+docFreeList.length;
-        docFreeList = new PerDoc[ArrayUtil.getNextSize(allocCount)];
+        docFreeList = new PerDoc[ArrayUtil.oversize(allocCount, RamUsageEstimator.NUM_BYTES_OBJECT_REF)];
       }
       return new PerDoc();
-    } else
+    } else {
       return docFreeList[--freeCount];
+    }
   }
 
   synchronized void abort() {
     if (fieldsWriter != null) {
-      try {
-        fieldsWriter.close();
-      } catch (Throwable t) {
-      }
+      fieldsWriter.abort();
       fieldsWriter = null;
       lastDocID = 0;
     }
@@ -128,12 +95,9 @@ final class StoredFieldsWriter {
 
   /** Fills in any hole in the docIDs */
   void fill(int docID) throws IOException {
-    final int docStoreOffset = docWriter.getDocStoreOffset();
-
     // We must "catch up" for all docs before us
     // that had no stored fields:
-    final int end = docID+docStoreOffset;
-    while(lastDocID < end) {
+    while(lastDocID < docID) {
       fieldsWriter.skipDocument();
       lastDocID++;
     }
@@ -151,10 +115,6 @@ final class StoredFieldsWriter {
     perDoc.reset();
     free(perDoc);
     assert docWriter.writer.testPoint("StoredFieldsWriter.finishDocument end");
-  }
-
-  public boolean freeRAM() {
-    return false;
   }
 
   synchronized void free(PerDoc perDoc) {

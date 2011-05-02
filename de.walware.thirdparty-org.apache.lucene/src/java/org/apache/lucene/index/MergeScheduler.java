@@ -24,23 +24,15 @@ import java.io.IOException;
  *  selected by a {@link MergePolicy}.  The default
  *  MergeScheduler is {@link ConcurrentMergeScheduler}.</p>
  *
- * <p><b>NOTE:</b> This API is new and still experimental
- * (subject to change suddenly in the next release)</p>
- *
- * <p><b>NOTE</b>: This class typically requires access to
- * package-private APIs (eg, SegmentInfos) to do its job;
- * if you implement your own MergePolicy, you'll need to put
- * it in package org.apache.lucene.index in order to use
- * these APIs.
+ * @lucene.experimental
 */
-
 public abstract class MergeScheduler {
 
   /** Run the merges provided by {@link IndexWriter#getNextMerge()}. */
-  abstract void merge(IndexWriter writer)
+  public abstract void merge(IndexWriter writer)
     throws CorruptIndexException, IOException;
 
   /** Close this MergeScheduler. */
-  abstract void close()
+  public abstract void close()
     throws CorruptIndexException, IOException;
 }

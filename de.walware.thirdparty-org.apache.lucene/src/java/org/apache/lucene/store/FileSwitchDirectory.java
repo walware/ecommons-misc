@@ -19,6 +19,10 @@ package org.apache.lucene.store;
 
 import java.io.IOException;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
 
@@ -32,8 +36,7 @@ import java.util.HashSet;
  * to this class, and must allow multiple threads to call
  * contains at once.</p>
  *
- * <p><b>NOTE</b>: this API is new and experimental and is
- * subject to suddenly change in the next release.
+ * @lucene.experimental
  */
 
 public class FileSwitchDirectory extends Directory {
@@ -132,9 +135,25 @@ public class FileSwitchDirectory extends Directory {
     return getDirectory(name).createOutput(name);
   }
 
+  @Deprecated
   @Override
   public void sync(String name) throws IOException {
-    getDirectory(name).sync(name);
+    sync(Collections.singleton(name));
+  }
+
+  @Override
+  public void sync(Collection<String> names) throws IOException {
+    List<String> primaryNames = new ArrayList<String>();
+    List<String> secondaryNames = new ArrayList<String>();
+
+    for (String name : names)
+      if (primaryExtensions.contains(getExtension(name)))
+        primaryNames.add(name);
+      else
+        secondaryNames.add(name);
+
+    primaryDir.sync(primaryNames);
+    secondaryDir.sync(secondaryNames);
   }
 
   @Override

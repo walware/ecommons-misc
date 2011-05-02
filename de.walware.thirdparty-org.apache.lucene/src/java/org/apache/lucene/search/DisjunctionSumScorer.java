@@ -58,6 +58,7 @@ class DisjunctionSumScorer extends Scorer {
   private float currentScore = Float.NaN;
   
   /** Construct a <code>DisjunctionScorer</code>.
+   * @param weight The weight to be used.
    * @param subScorers A collection of at least two subscorers.
    * @param minimumNrMatchers The positive minimum number of subscorers that should
    * match to match this query.
@@ -67,8 +68,8 @@ class DisjunctionSumScorer extends Scorer {
    * <br>When minimumNrMatchers equals the number of subScorers,
    * it more efficient to use <code>ConjunctionScorer</code>.
    */
-  public DisjunctionSumScorer( List<Scorer> subScorers, int minimumNrMatchers) throws IOException {
-    super(null);
+  public DisjunctionSumScorer(Weight weight, List<Scorer> subScorers, int minimumNrMatchers) throws IOException {
+    super(weight);
     
     nrScorers = subScorers.size();
 
@@ -88,8 +89,8 @@ class DisjunctionSumScorer extends Scorer {
   /** Construct a <code>DisjunctionScorer</code>, using one as the minimum number
    * of matching subscorers.
    */
-  public DisjunctionSumScorer(List<Scorer> subScorers) throws IOException {
-    this(subScorers, 1);
+  public DisjunctionSumScorer(Weight weight, List<Scorer> subScorers) throws IOException {
+    this(weight, subScorers, 1);
   }
 
   /** Called the first time next() or skipTo() is called to
@@ -188,7 +189,7 @@ class DisjunctionSumScorer extends Scorer {
   }
   
   /** Returns the score of the current document matching the query.
-   * Initially invalid, until {@link #next()} is called the first time.
+   * Initially invalid, until {@link #nextDoc()} is called the first time.
    */
   @Override
   public float score() throws IOException { return currentScore; }
@@ -199,7 +200,7 @@ class DisjunctionSumScorer extends Scorer {
   }
   
   /** Returns the number of subscorers matching the current document.
-   * Initially invalid, until {@link #next()} is called the first time.
+   * Initially invalid, until {@link #nextDoc()} is called the first time.
    */
   public int nrMatchers() {
     return nrMatchers;

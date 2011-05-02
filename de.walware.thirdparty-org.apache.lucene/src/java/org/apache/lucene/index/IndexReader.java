@@ -19,16 +19,18 @@ package org.apache.lucene.index;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.FieldSelector;
+import org.apache.lucene.search.FieldCache; // javadocs
 import org.apache.lucene.search.Similarity;
 import org.apache.lucene.store.*;
+import org.apache.lucene.util.ArrayUtil;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Closeable;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /** IndexReader is an abstract class, providing an interface for accessing an
  index.  Search of an index is done entirely through this abstract interface,
@@ -66,7 +68,7 @@ import java.util.Map;
  </p>
 
  <a name="thread-safety"></a><p><b>NOTE</b>: {@link
- <code>IndexReader</code>} instances are completely thread
+ IndexReader} instances are completely thread
  safe, meaning multiple threads can call any of its methods,
  concurrently.  If your application requires external
  synchronization, you should <b>not</b> synchronize on the
@@ -74,6 +76,62 @@ import java.util.Map;
  (non-Lucene) objects instead.
 */
 public abstract class IndexReader implements Cloneable,Closeable {
+
+  /**
+   * A custom listener that's invoked when the IndexReader
+   * is finished.
+   *
+   * <p>For a SegmentReader, this listener is called only
+   * once all SegmentReaders sharing the same core are
+   * closed.  At this point it is safe for apps to evict
+   * this reader from any caches keyed on {@link
+   * #getCoreCacheKey}.  This is the same interface that
+   * {@link FieldCache} uses, internally, to evict
+   * entries.</p>
+   *
+   * <p>For other readers, this listener is called when they
+   * are closed.</p>
+   *
+   * @lucene.experimental
+   */
+  public static interface ReaderFinishedListener {
+    public void finished(IndexReader reader);
+  }
+
+  // Impls must set this if they may call add/removeReaderFinishedListener:
+  protected volatile Collection<ReaderFinishedListener> readerFinishedListeners;
+
+  /** Expert: adds a {@link ReaderFinishedListener}.  The
+   * provided listener is also added to any sub-readers, if
+   * this is a composite reader.  Also, any reader reopened
+   * or cloned from this one will also copy the listeners at
+   * the time of reopen.
+   *
+   * @lucene.experimental */
+  public void addReaderFinishedListener(ReaderFinishedListener listener) {
+    readerFinishedListeners.add(listener);
+  }
+
+  /** Expert: remove a previously added {@link ReaderFinishedListener}.
+   *
+   * @lucene.experimental */
+  public void removeReaderFinishedListener(ReaderFinishedListener listener) {
+    readerFinishedListeners.remove(listener);
+  }
+
+  protected void notifyReaderFinishedListeners() {
+    // Defensive (should never be null -- all impls must set
+    // this):
+    if (readerFinishedListeners != null) {
+      for(ReaderFinishedListener listener : readerFinishedListeners) {
+        listener.finished(this);
+      }
+    }
+  }
+
+  protected void readerFinished() {
+    notifyReaderFinishedListeners();
+  }
 
   /**
    * Constants describing field properties, for example used for
@@ -116,13 +174,13 @@ public abstract class IndexReader implements Cloneable,Closeable {
   private boolean closed;
   protected boolean hasChanges;
   
-  private int refCount;
+  private final AtomicInteger refCount = new AtomicInteger();
 
   static int DEFAULT_TERMS_INDEX_DIVISOR = 1;
 
   /** Expert: returns the current refCount for this reader */
-  public synchronized int getRefCount() {
-    return refCount;
+  public int getRefCount() {
+    return refCount.get();
   }
   
   /**
@@ -139,41 +197,69 @@ public abstract class IndexReader implements Cloneable,Closeable {
    *
    * @see #decRef
    */
-  public synchronized void incRef() {
-    assert refCount > 0;
+  public void incRef() {
     ensureOpen();
-    refCount++;
+    refCount.incrementAndGet();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String toString() {
+    final StringBuilder buffer = new StringBuilder();
+    if (hasChanges) {
+      buffer.append('*');
+    }
+    buffer.append(getClass().getSimpleName());
+    buffer.append('(');
+    final IndexReader[] subReaders = getSequentialSubReaders();
+    if ((subReaders != null) && (subReaders.length > 0)) {
+      buffer.append(subReaders[0]);
+      for (int i = 1; i < subReaders.length; ++i) {
+        buffer.append(" ").append(subReaders[i]);
+      }
+    }
+    buffer.append(')');
+    return buffer.toString();
   }
 
   /**
    * Expert: decreases the refCount of this IndexReader
    * instance.  If the refCount drops to 0, then pending
    * changes (if any) are committed to the index and this
-   * reader is closed.
-   * 
+   * reader is closed.  If an exception is hit, the refCount
+   * is unchanged.
+   *
    * @throws IOException in case an IOException occurs in commit() or doClose()
    *
    * @see #incRef
    */
-  public synchronized void decRef() throws IOException {
-    assert refCount > 0;
+  public void decRef() throws IOException {
     ensureOpen();
-    if (refCount == 1) {
-      commit();
-      doClose();
+    if (refCount.getAndDecrement() == 1) {
+      boolean success = false;
+      try {
+        commit();
+        doClose();
+        success = true;
+      } finally {
+        if (!success) {
+          // Put reference back on failure
+          refCount.incrementAndGet();
+        }
+      }
+      readerFinished();
     }
-    refCount--;
   }
   
   protected IndexReader() { 
-    refCount = 1;
+    refCount.set(1);
   }
   
   /**
    * @throws AlreadyClosedException if this IndexReader is closed
    */
   protected final void ensureOpen() throws AlreadyClosedException {
-    if (refCount <= 0) {
+    if (refCount.get() <= 0) {
       throw new AlreadyClosedException("this IndexReader is closed");
     }
   }
@@ -200,6 +286,29 @@ public abstract class IndexReader implements Cloneable,Closeable {
    */
   public static IndexReader open(final Directory directory, boolean readOnly) throws CorruptIndexException, IOException {
     return open(directory, null, null, readOnly, DEFAULT_TERMS_INDEX_DIVISOR);
+  }
+
+  /**
+   * Open a near real time IndexReader from the {@link org.apache.lucene.index.IndexWriter}.
+   *
+   * @param writer The IndexWriter to open from
+   * @param applyAllDeletes If true, all buffered deletes will
+   * be applied (made visible) in the returned reader.  If
+   * false, the deletes are not applied but remain buffered
+   * (in IndexWriter) so that they will be applied in the
+   * future.  Applying deletes can be costly, so if your app
+   * can tolerate deleted documents being returned you might
+   * gain some performance by passing false.
+   * @return The new IndexReader
+   * @throws CorruptIndexException
+   * @throws IOException if there is a low-level IO error
+   *
+   * @see #reopen(IndexWriter,boolean)
+   *
+   * @lucene.experimental
+   */
+  public static IndexReader open(final IndexWriter writer, boolean applyAllDeletes) throws CorruptIndexException, IOException {
+    return writer.getReader(applyAllDeletes);
   }
 
   /** Expert: returns an IndexReader reading the index in the given
@@ -304,7 +413,10 @@ public abstract class IndexReader implements Cloneable,Closeable {
    *  memory.  By setting this to a value > 1 you can reduce
    *  memory usage, at the expense of higher latency when
    *  loading a TermInfo.  The default value is 1.  Set this
-   *  to -1 to skip loading the terms index entirely.
+   *  to -1 to skip loading the terms index entirely. This is only useful in 
+   *  advanced situations when you will only .next() through all terms; 
+   *  attempts to seek will hit an exception.
+   *  
    * @throws CorruptIndexException if the index is corrupt
    * @throws IOException if there is a low-level IO error
    */
@@ -385,6 +497,78 @@ public abstract class IndexReader implements Cloneable,Closeable {
   }
 
   /**
+   * Expert: returns a readonly reader, covering all
+   * committed as well as un-committed changes to the index.
+   * This provides "near real-time" searching, in that
+   * changes made during an IndexWriter session can be
+   * quickly made available for searching without closing
+   * the writer nor calling {@link #commit}.
+   *
+   * <p>Note that this is functionally equivalent to calling
+   * {#flush} (an internal IndexWriter operation) and then using {@link IndexReader#open} to
+   * open a new reader.  But the turnaround time of this
+   * method should be faster since it avoids the potentially
+   * costly {@link #commit}.</p>
+   *
+   * <p>You must close the {@link IndexReader} returned by
+   * this method once you are done using it.</p>
+   *
+   * <p>It's <i>near</i> real-time because there is no hard
+   * guarantee on how quickly you can get a new reader after
+   * making changes with IndexWriter.  You'll have to
+   * experiment in your situation to determine if it's
+   * fast enough.  As this is a new and experimental
+   * feature, please report back on your findings so we can
+   * learn, improve and iterate.</p>
+   *
+   * <p>The resulting reader supports {@link
+   * IndexReader#reopen}, but that call will simply forward
+   * back to this method (though this may change in the
+   * future).</p>
+   *
+   * <p>The very first time this method is called, this
+   * writer instance will make every effort to pool the
+   * readers that it opens for doing merges, applying
+   * deletes, etc.  This means additional resources (RAM,
+   * file descriptors, CPU time) will be consumed.</p>
+   *
+   * <p>For lower latency on reopening a reader, you should
+   * call {@link IndexWriterConfig#setMergedSegmentWarmer} to
+   * pre-warm a newly merged segment before it's committed
+   * to the index.  This is important for minimizing
+   * index-to-search delay after a large merge.  </p>
+   *
+   * <p>If an addIndexes* call is running in another thread,
+   * then this reader will only search those segments from
+   * the foreign index that have been successfully copied
+   * over, so far</p>.
+   *
+   * <p><b>NOTE</b>: Once the writer is closed, any
+   * outstanding readers may continue to be used.  However,
+   * if you attempt to reopen any of those readers, you'll
+   * hit an {@link AlreadyClosedException}.</p>
+   *
+   * @return IndexReader that covers entire index plus all
+   * changes made so far by this IndexWriter instance
+   *
+   * @param writer The IndexWriter to open from
+   * @param applyAllDeletes If true, all buffered deletes will
+   * be applied (made visible) in the returned reader.  If
+   * false, the deletes are not applied but remain buffered
+   * (in IndexWriter) so that they will be applied in the
+   * future.  Applying deletes can be costly, so if your app
+   * can tolerate deleted documents being returned you might
+   * gain some performance by passing false.
+   *
+   * @throws IOException
+   *
+   * @lucene.experimental
+   */
+  public IndexReader reopen(IndexWriter writer, boolean applyAllDeletes) throws CorruptIndexException, IOException {
+    return writer.getReader(applyAllDeletes);
+  }
+
+  /**
    * Efficiently clones the IndexReader (sharing most
    * internal state).
    * <p>
@@ -400,8 +584,6 @@ public abstract class IndexReader implements Cloneable,Closeable {
    * mutable state obeys "copy on write" semantics to ensure
    * the changes are not seen by other readers.
    * <p>
-   * @throws CorruptIndexException if the index is corrupt
-   * @throws IOException if there is a low-level IO error
    */
   @Override
   public synchronized Object clone() {
@@ -617,13 +799,17 @@ public abstract class IndexReader implements Cloneable,Closeable {
 
   /**
    * Returns <code>true</code> if an index exists at the specified directory.
-   * If the directory does not exist or if there is no index in it.
    * @param  directory the directory to check for an index
    * @return <code>true</code> if an index exists; <code>false</code> otherwise
    * @throws IOException if there is a problem with accessing the index
    */
   public static boolean indexExists(Directory directory) throws IOException {
-    return SegmentInfos.getCurrentSegmentGeneration(directory) != -1;
+    try {
+      new SegmentInfos().read(directory);
+      return true;
+    } catch (IOException ioe) {
+      return false;
+    }
   }
 
   /** Returns the number of documents in this index. */
@@ -730,7 +916,7 @@ public abstract class IndexReader implements Cloneable,Closeable {
    * this method call will silently do nothing.
    *
    * @see #norms(String)
-   * @see Similarity#decodeNorm(byte)
+   * @see Similarity#decodeNormValue(byte)
    * @throws StaleReaderException if the index has changed
    *  since this reader was opened
    * @throws CorruptIndexException if the index is corrupt
@@ -755,7 +941,7 @@ public abstract class IndexReader implements Cloneable,Closeable {
    * document.
    *
    * @see #norms(String)
-   * @see Similarity#decodeNorm(byte)
+   * @see Similarity#decodeNormValue(byte)
    * 
    * @throws StaleReaderException if the index has changed
    *  since this reader was opened
@@ -764,11 +950,15 @@ public abstract class IndexReader implements Cloneable,Closeable {
    *  has this index open (<code>write.lock</code> could not
    *  be obtained)
    * @throws IOException if there is a low-level IO error
+   * @deprecated Use {@link #setNorm(int, String, byte)} instead, encoding the
+   * float to byte with your Similarity's {@link Similarity#encodeNormValue(float)}.
+   * This method will be removed in Lucene 4.0
    */
+  @Deprecated
   public void setNorm(int doc, String field, float value)
           throws StaleReaderException, CorruptIndexException, LockObtainFailedException, IOException {
     ensureOpen();
-    setNorm(doc, field, Similarity.encodeNorm(value));
+    setNorm(doc, field, Similarity.getDefault().encodeNormValue(value));
   }
 
   /** Returns an enumeration of all the terms in the index. The
@@ -816,6 +1006,11 @@ public abstract class IndexReader implements Cloneable,Closeable {
   }
 
   /** Returns an unpositioned {@link TermDocs} enumerator.
+   * <p>
+   * Note: the TermDocs returned is unpositioned. Before using it, ensure
+   * that you first position it with {@link TermDocs#seek(Term)} or 
+   * {@link TermDocs#seek(TermEnum)}.
+   * 
    * @throws IOException if there is a low-level IO error
    */
   public abstract TermDocs termDocs() throws IOException;
@@ -913,7 +1108,16 @@ public abstract class IndexReader implements Cloneable,Closeable {
     return n;
   }
 
-  /** Undeletes all documents currently marked as deleted in this index.
+  /** Undeletes all documents currently marked as deleted in
+   * this index.
+   *
+   * <p>NOTE: this method can only recover documents marked
+   * for deletion but not yet removed from the index; when
+   * and how Lucene removes deleted documents is an
+   * implementation detail, subject to change from release
+   * to release.  However, you can use {@link
+   * #numDeletedDocs} on the current IndexReader instance to
+   * see how many documents will be un-deleted.
    *
    * @throws StaleReaderException if the index has changed
    *  since this reader was opened
@@ -1024,8 +1228,7 @@ public abstract class IndexReader implements Cloneable,Closeable {
    * readers that correspond to a Directory with its own
    * segments_N file.
    *
-   * <p><b>WARNING</b>: this API is new and experimental and
-   * may suddenly change.</p>
+   * @lucene.experimental
    */
   public IndexCommit getIndexCommit() throws IOException {
     throw new UnsupportedOperationException("This reader does not support this method.");
@@ -1066,7 +1269,7 @@ public abstract class IndexReader implements Cloneable,Closeable {
       cfr = new CompoundFileReader(dir, filename);
 
       String [] files = cfr.listAll();
-      Arrays.sort(files);   // sort the array of filename so that the output is more readable
+      ArrayUtil.quickSort(files);   // sort the array of filename so that the output is more readable
 
       for (int i = 0; i < files.length; ++i) {
         long len = cfr.fileLength(files[i]);
@@ -1118,9 +1321,12 @@ public abstract class IndexReader implements Cloneable,Closeable {
    *  it by calling {@link IndexReader#open(IndexCommit,boolean)}
    *  There must be at least one commit in
    *  the Directory, else this method throws {@link
-   *  java.io.IOException}.  Note that if a commit is in
+   *  IndexNotFoundException}.  Note that if a commit is in
    *  progress while this method is running, that commit
-   *  may or may not be returned array.  */
+   *  may or may not be returned.
+   *  
+   *  @return a sorted list of {@link IndexCommit}s, from oldest 
+   *  to latest. */
   public static Collection<IndexCommit> listCommits(Directory dir) throws IOException {
     return DirectoryReader.listCommits(dir);
   }
@@ -1145,7 +1351,7 @@ public abstract class IndexReader implements Cloneable,Closeable {
   }
 
   /** Expert */
-  public Object getFieldCacheKey() {
+  public Object getCoreCacheKey() {
     return this;
   }
 

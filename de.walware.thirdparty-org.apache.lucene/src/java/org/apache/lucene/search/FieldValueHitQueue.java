@@ -26,11 +26,8 @@ import org.apache.lucene.util.PriorityQueue;
  * Uses <code>FieldCache.DEFAULT</code> for maintaining
  * internal term lookup tables.
  * 
- * <b>NOTE:</b> This API is experimental and might change in
- * incompatible ways in the next release.
- *
+ * @lucene.experimental
  * @since 2.9
- * @version $Id:
  * @see Searcher#search(Query,Filter,int,Sort)
  * @see FieldCache
  */
@@ -62,9 +59,6 @@ public abstract class FieldValueHitQueue extends PriorityQueue<FieldValueHitQueu
     public OneComparatorFieldValueHitQueue(SortField[] fields, int size)
         throws IOException {
       super(fields);
-      if (fields.length == 0) {
-        throw new IllegalArgumentException("Sort must contain at least one field");
-      }
 
       SortField field = fields[0];
       comparator = field.getComparator(size, 0);
@@ -206,7 +200,7 @@ public abstract class FieldValueHitQueue extends PriorityQueue<FieldValueHitQueu
    */
   FieldDoc fillFields(final Entry entry) {
     final int n = comparators.length;
-    final Comparable[] fields = new Comparable[n];
+    final Comparable<?>[] fields = new Comparable[n];
     for (int i = 0; i < n; ++i) {
       fields[i] = comparators[i].value(entry.slot);
     }

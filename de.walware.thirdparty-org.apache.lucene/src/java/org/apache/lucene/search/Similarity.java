@@ -22,11 +22,11 @@ import org.apache.lucene.index.FieldInvertState;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Explanation.IDFExplanation;
 import org.apache.lucene.util.SmallFloat;
+import org.apache.lucene.util.VirtualMethod;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.IdentityHashMap;
 
 
 /** 
@@ -403,7 +403,7 @@ import java.util.IdentityHashMap;
  *
  *      The sum of squared weights (of the query terms) is
  *      computed by the query {@link org.apache.lucene.search.Weight} object.
- *      For example, a {@link org.apache.lucene.search.BooleanQuery boolean query}
+ *      For example, a {@link org.apache.lucene.search.BooleanQuery}
  *      computes this value as:
  *
  *      <br>&nbsp;<br>
@@ -463,12 +463,14 @@ import java.util.IdentityHashMap;
  *        {@link org.apache.lucene.document.Fieldable#setBoost(float) field.setBoost()}
  *        before adding the field to a document.
  *        </li>
- *        <li>{@link #lengthNorm(String, int) <b>lengthNorm</b>(field)} - computed
+ *        <li><b>lengthNorm</b> - computed
  *        when the document is added to the index in accordance with the number of tokens
  *        of this field in the document, so that shorter fields contribute more to the score.
  *        LengthNorm is computed by the Similarity class in effect at indexing.
  *        </li>
  *      </ul>
+ *      The {@link #computeNorm} method is responsible for
+ *      combining all of these factors into a single float.
  *
  *      <p>
  *      When a document is added to the index, all the above factors are multiplied.
@@ -481,7 +483,7 @@ import java.util.IdentityHashMap;
  *            norm(t,d) &nbsp; = &nbsp;
  *            {@link org.apache.lucene.document.Document#getBoost() doc.getBoost()}
  *            &nbsp;&middot;&nbsp;
- *            {@link #lengthNorm(String, int) lengthNorm(field)}
+ *            lengthNorm
  *            &nbsp;&middot;&nbsp;
  *          </td>
  *          <td valign="bottom" align="center" rowspan="1">
@@ -498,11 +500,11 @@ import java.util.IdentityHashMap;
  *        </tr>
  *      </table>
  *      <br>&nbsp;<br>
- *      However the resulted <i>norm</i> value is {@link #encodeNorm(float) encoded} as a single byte
+ *      However the resulted <i>norm</i> value is {@link #encodeNormValue(float) encoded} as a single byte
  *      before being stored.
  *      At search time, the norm byte value is read from the index
  *      {@link org.apache.lucene.store.Directory directory} and
- *      {@link #decodeNorm(byte) decoded} back to a float <i>norm</i> value.
+ *      {@link #decodeNormValue(byte) decoded} back to a float <i>norm</i> value.
  *      This encoding/decoding, while reducing index size, comes with the price of
  *      precision loss - it is not guaranteed that <i>decode(encode(x)) = x</i>.
  *      For instance, <i>decode(encode(0.89)) = 0.75</i>.
@@ -526,11 +528,21 @@ import java.util.IdentityHashMap;
  * @see Searcher#setSimilarity(Similarity)
  */
 public abstract class Similarity implements Serializable {
-  
+
+  // NOTE: this static code must precede setting the static defaultImpl:
+  private static final VirtualMethod<Similarity> withoutDocFreqMethod =
+    new VirtualMethod<Similarity>(Similarity.class, "idfExplain", Term.class, Searcher.class);
+  private static final VirtualMethod<Similarity> withDocFreqMethod =
+    new VirtualMethod<Similarity>(Similarity.class, "idfExplain", Term.class, Searcher.class, int.class);
+
+  private final boolean hasIDFExplainWithDocFreqAPI =
+    VirtualMethod.compareImplementationDistance(getClass(),
+        withDocFreqMethod, withoutDocFreqMethod) >= 0; // its ok for both to be overridden
   /**
    * The Similarity implementation used by default.
    **/
   private static Similarity defaultImpl = new DefaultSimilarity();
+
   public static final int NO_DOC_ID_PROVIDED = -1;
 
   /** Set the default Similarity implementation used by indexing and search
@@ -563,42 +575,69 @@ public abstract class Similarity implements Serializable {
       NORM_TABLE[i] = SmallFloat.byte315ToFloat((byte)i);
   }
 
-  /** Decodes a normalization factor stored in an index.
-   * @see #encodeNorm(float)
+  /**
+   * Decodes a normalization factor stored in an index.
+   * @see #decodeNormValue(byte)
+   * @deprecated Use {@link #decodeNormValue} instead.
    */
+  @Deprecated
   public static float decodeNorm(byte b) {
     return NORM_TABLE[b & 0xFF];  // & 0xFF maps negative bytes to positive above 127
   }
 
-  /** Returns a table for decoding normalization bytes.
-   * @see #encodeNorm(float)
+  /** Decodes a normalization factor stored in an index.
+   * <p>
+   * <b>WARNING: If you override this method, you should change the default
+   *    Similarity to your implementation with {@link Similarity#setDefault(Similarity)}. 
+   *    Otherwise, your method may not always be called, especially if you omit norms 
+   *    for some fields.</b>
+   * @see #encodeNormValue(float)
    */
+  public float decodeNormValue(byte b) {
+    return NORM_TABLE[b & 0xFF];  // & 0xFF maps negative bytes to positive above 127
+  }
+
+  /** Returns a table for decoding normalization bytes.
+   * @see #encodeNormValue(float)
+   * @see #decodeNormValue(byte)
+   * 
+   * @deprecated Use instance methods for encoding/decoding norm values to enable customization.
+   */
+  @Deprecated
   public static float[] getNormDecoder() {
     return NORM_TABLE;
   }
 
   /**
-   * Compute the normalization value for a field, given the accumulated
+   * Computes the normalization value for a field, given the accumulated
    * state of term processing for this field (see {@link FieldInvertState}).
    * 
    * <p>Implementations should calculate a float value based on the field
    * state and then return that value.
+   *
+   * <p>Matches in longer fields are less precise, so implementations of this
+   * method usually return smaller values when <code>state.getLength()</code> is large,
+   * and larger values when <code>state.getLength()</code> is small.
+   * 
+   * <p>Note that the return values are computed under 
+   * {@link org.apache.lucene.index.IndexWriter#addDocument(org.apache.lucene.document.Document)} 
+   * and then stored using
+   * {@link #encodeNormValue(float)}.  
+   * Thus they have limited precision, and documents
+   * must be re-indexed if this method is altered.
    *
    * <p>For backward compatibility this method by default calls
    * {@link #lengthNorm(String, int)} passing
    * {@link FieldInvertState#getLength()} as the second argument, and
    * then multiplies this value by {@link FieldInvertState#getBoost()}.</p>
    * 
-   * <p><b>WARNING</b>: This API is new and experimental and may
-   * suddenly change.</p>
+   * @lucene.experimental
    * 
    * @param field field name
    * @param state current processing state for this field
    * @return the calculated float norm
    */
-  public float computeNorm(String field, FieldInvertState state) {
-    return (float) (state.getBoost() * lengthNorm(field, state.getLength()));
-  }
+  public abstract float computeNorm(String field, FieldInvertState state);
   
   /** Computes the normalization value for a field given the total number of
    * terms contained in a field.  These values, together with field boosts, are
@@ -612,7 +651,7 @@ public abstract class Similarity implements Serializable {
    * <p>Note that the return values are computed under 
    * {@link org.apache.lucene.index.IndexWriter#addDocument(org.apache.lucene.document.Document)} 
    * and then stored using
-   * {@link #encodeNorm(float)}.  
+   * {@link #encodeNormValue(float)}.  
    * Thus they have limited precision, and documents
    * must be re-indexed if this method is altered.
    *
@@ -622,8 +661,13 @@ public abstract class Similarity implements Serializable {
    * @return a normalization factor for hits on this field of this document
    *
    * @see org.apache.lucene.document.Field#setBoost(float)
+   *
+   * @deprecated Please override computeNorm instead
    */
-  public abstract float lengthNorm(String fieldName, int numTokens);
+  @Deprecated
+  public final float lengthNorm(String fieldName, int numTokens) {
+    throw new UnsupportedOperationException("please use computeNorm instead");
+  }
 
   /** Computes the normalization value for a query given the sum of the squared
    * weights of each of the query terms.  This value is multiplied into the
@@ -650,10 +694,27 @@ public abstract class Similarity implements Serializable {
    * are rounded down to the largest representable value.  Positive values too
    * small to represent are rounded up to the smallest positive representable
    * value.
-   *
+   * <p>
+   * <b>WARNING: If you override this method, you should change the default
+   * Similarity to your implementation with {@link Similarity#setDefault(Similarity)}. 
+   * Otherwise, your method may not always be called, especially if you omit norms 
+   * for some fields.</b>
    * @see org.apache.lucene.document.Field#setBoost(float)
    * @see org.apache.lucene.util.SmallFloat
    */
+  public byte encodeNormValue(float f) {
+    return SmallFloat.floatToByte315(f);
+  }
+  
+  /**
+   * Static accessor kept for backwards compability reason, use encodeNormValue instead.
+   * @param f norm-value to encode
+   * @return byte representing the given float
+   * @deprecated Use {@link #encodeNormValue} instead.
+   * 
+   * @see #encodeNormValue(float)
+   */
+  @Deprecated
   public static byte encodeNorm(float f) {
     return SmallFloat.floatToByte315(f);
   }
@@ -708,6 +769,7 @@ public abstract class Similarity implements Serializable {
    */
   public abstract float tf(float freq);
 
+
   /**
    * Computes a score factor for a simple term and returns an explanation
    * for that score factor.
@@ -731,8 +793,13 @@ public abstract class Similarity implements Serializable {
              and an explanation for the term.
    * @throws IOException
    */
-  public IDFExplanation idfExplain(final Term term, final Searcher searcher) throws IOException {
-    final int df = searcher.docFreq(term);
+  public IDFExplanation idfExplain(final Term term, final Searcher searcher, int docFreq) throws IOException {
+
+    if (!hasIDFExplainWithDocFreqAPI) {
+      // Fallback to slow impl
+      return idfExplain(term, searcher);
+    }
+    final int df = docFreq;
     final int max = searcher.maxDoc();
     final float idf = idf(df, max);
     return new IDFExplanation() {
@@ -745,7 +812,21 @@ public abstract class Similarity implements Serializable {
         public float getIdf() {
           return idf;
         }};
-   }
+  }
+
+  /**
+   * This method forwards to {@link
+   * #idfExplain(Term,Searcher,int)} by passing
+   * <code>searcher.docFreq(term)</code> as the docFreq.
+   *
+   * WARNING: if you subclass Similariary and override this
+   * method then you may hit a peformance hit for certain
+   * queries.  Better to override {@link
+   * #idfExplain(Term,Searcher,int)} instead.
+   */
+  public IDFExplanation idfExplain(final Term term, final Searcher searcher) throws IOException {
+    return idfExplain(term, searcher, searcher.docFreq(term));
+  }
 
   /**
    * Computes a score factor for a phrase.

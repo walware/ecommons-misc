@@ -20,7 +20,7 @@ package org.apache.lucene.store;
 import java.util.ArrayList;
 import java.io.Serializable;
 
-/** For Lucene internal use */
+/** @lucene.internal */
 public class RAMFile implements Serializable {
 
   private static final long serialVersionUID = 1l;
@@ -66,9 +66,7 @@ public class RAMFile implements Serializable {
     }
 
     if (directory != null) {
-      synchronized(directory) {
-        directory.sizeInBytes += size;
-      }
+      directory.sizeInBytes.getAndAdd(size);
     }
     return buffer;
   }

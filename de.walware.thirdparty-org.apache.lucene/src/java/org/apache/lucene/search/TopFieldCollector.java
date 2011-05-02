@@ -30,8 +30,7 @@ import org.apache.lucene.util.PriorityQueue;
  * See the {@link #create(org.apache.lucene.search.Sort, int, boolean, boolean, boolean, boolean)} method
  * for instantiating a TopFieldCollector.
  * 
- * <p><b>NOTE:</b> This API is experimental and might change in
- * incompatible ways in the next release.</p>
+ * @lucene.experimental
  */
 public abstract class TopFieldCollector extends TopDocsCollector<Entry> {
   
@@ -910,6 +909,10 @@ public abstract class TopFieldCollector extends TopDocsCollector<Entry> {
       throw new IllegalArgumentException("Sort must contain at least one field");
     }
     
+    if (numHits <= 0) {
+      throw new IllegalArgumentException("numHits must be > 0; please use TotalHitCountCollector if you just need the total hit count");
+    }
+
     FieldValueHitQueue queue = FieldValueHitQueue.create(sort.fields, numHits);
     if (queue.getComparators().length == 1) {
       if (docsScoredInOrder) {

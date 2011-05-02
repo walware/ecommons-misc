@@ -42,11 +42,11 @@ import org.apache.lucene.index.TermEnum;
  * factory methods, eg:
  *
  * <pre>
- * Query q = NumericRangeQuery.newFloatRange("weight", 0.3f, 0.10f, true, true);
+ * Query q = NumericRangeQuery.newFloatRange("weight", 0.03f, 0.10f, true, true);
  * </pre>
  *
  * matches all documents whose float valued "weight" field
- * ranges from 0.3 to 0.10, inclusive.
+ * ranges from 0.03 to 0.10, inclusive.
  *
  * <p>The performance of NumericRangeQuery is much better
  * than the corresponding {@link TermRangeQuery} because the
@@ -74,9 +74,6 @@ import org.apache.lucene.index.TermEnum;
  * steps of &le;4, this query can be run with one of the
  * BooleanQuery rewrite methods without changing
  * BooleanQuery's default max clause count.
- *
- * <p><font color="red"><b>NOTE:</b> This API is experimental and
- * might change in incompatible ways in the next release.</font>
  *
  * <br><h3>How it works</h3>
  *
@@ -321,6 +318,9 @@ public final class NumericRangeQuery<T extends Number> extends MultiTermQuery {
   /** Returns the upper value of this range query */
   public T getMax() { return max; }
   
+  /** Returns the precision step. */
+  public int getPrecisionStep() { return precisionStep; }
+  
   @Override
   public String toString(final String field) {
     final StringBuilder sb = new StringBuilder();
@@ -494,8 +494,7 @@ public final class NumericRangeQuery<T extends Number> extends MultiTermQuery {
     }
     
     /**
-     * Compares if current upper bound is reached,
-     * this also updates the term count for statistics.
+     * Compares if current upper bound is reached.
      * In contrast to {@link FilteredTermEnum}, a return value
      * of <code>false</code> ends iterating the current enum
      * and forwards to the next sub-range.

@@ -134,15 +134,11 @@ import org.apache.lucene.search.FieldCache; // javadocs
  * values are returned as {@link String}s (according to
  * <code>toString(value)</code> of the used data type).
  *
- * <p><font color="red"><b>NOTE:</b> This API is
- * experimental and might change in incompatible ways in the
- * next release.</font>
- *
  * @since 2.9
  */
 public final class NumericField extends AbstractField {
 
-  private final NumericTokenStream tokenStream;
+  private final NumericTokenStream numericTS;
 
   /**
    * Creates a field for numeric values using the default <code>precisionStep</code>
@@ -197,12 +193,12 @@ public final class NumericField extends AbstractField {
   public NumericField(String name, int precisionStep, Field.Store store, boolean index) {
     super(name, store, index ? Field.Index.ANALYZED_NO_NORMS : Field.Index.NO, Field.TermVector.NO);
     setOmitTermFreqAndPositions(true);
-    tokenStream = new NumericTokenStream(precisionStep);
+    numericTS = new NumericTokenStream(precisionStep);
   }
 
   /** Returns a {@link NumericTokenStream} for indexing the numeric value. */
   public TokenStream tokenStreamValue()   {
-    return isIndexed() ? tokenStream : null;
+    return isIndexed() ? numericTS : null;
   }
   
   /** Returns always <code>null</code> for numeric fields */
@@ -226,6 +222,11 @@ public final class NumericField extends AbstractField {
     return (Number) fieldsData;
   }
   
+  /** Returns the precision step. */
+  public int getPrecisionStep() {
+    return numericTS.getPrecisionStep();
+  }
+  
   /**
    * Initializes the field with the supplied <code>long</code> value.
    * @param value the numeric value
@@ -233,7 +234,7 @@ public final class NumericField extends AbstractField {
    * <code>document.add(new NumericField(name, precisionStep).setLongValue(value))</code>
    */
   public NumericField setLongValue(final long value) {
-    tokenStream.setLongValue(value);
+    numericTS.setLongValue(value);
     fieldsData = Long.valueOf(value);
     return this;
   }
@@ -245,7 +246,7 @@ public final class NumericField extends AbstractField {
    * <code>document.add(new NumericField(name, precisionStep).setIntValue(value))</code>
    */
   public NumericField setIntValue(final int value) {
-    tokenStream.setIntValue(value);
+    numericTS.setIntValue(value);
     fieldsData = Integer.valueOf(value);
     return this;
   }
@@ -257,7 +258,7 @@ public final class NumericField extends AbstractField {
    * <code>document.add(new NumericField(name, precisionStep).setDoubleValue(value))</code>
    */
   public NumericField setDoubleValue(final double value) {
-    tokenStream.setDoubleValue(value);
+    numericTS.setDoubleValue(value);
     fieldsData = Double.valueOf(value);
     return this;
   }
@@ -269,7 +270,7 @@ public final class NumericField extends AbstractField {
    * <code>document.add(new NumericField(name, precisionStep).setFloatValue(value))</code>
    */
   public NumericField setFloatValue(final float value) {
-    tokenStream.setFloatValue(value);
+    numericTS.setFloatValue(value);
     fieldsData = Float.valueOf(value);
     return this;
   }

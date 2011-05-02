@@ -1,10 +1,5 @@
 package org.apache.lucene.analysis;
 
-import java.io.IOException;
-
-import org.apache.lucene.analysis.tokenattributes.TermAttribute;
-import org.apache.lucene.util.ArrayUtil;
-
 /**
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -21,6 +16,12 @@ import org.apache.lucene.util.ArrayUtil;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import java.io.IOException;
+
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.util.ArrayUtil;
+import org.apache.lucene.util.RamUsageEstimator;
 
 /**
  * This class converts alphabetic, numeric, and symbolic Unicode characters
@@ -60,18 +61,17 @@ public final class ASCIIFoldingFilter extends TokenFilter {
   public ASCIIFoldingFilter(TokenStream input)
   {
     super(input);
-    termAtt = addAttribute(TermAttribute.class);
   }
 
   private char[] output = new char[512];
   private int outputPos;
-  private TermAttribute termAtt;
+  private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
 
   @Override
   public boolean incrementToken() throws IOException {
     if (input.incrementToken()) {
-      final char[] buffer = termAtt.termBuffer();
-      final int length = termAtt.termLength();
+      final char[] buffer = termAtt.buffer();
+      final int length = termAtt.length();
 
       // If no characters actually require rewriting then we
       // just return token as-is:
@@ -80,7 +80,7 @@ public final class ASCIIFoldingFilter extends TokenFilter {
         if (c >= '\u0080')
         {
           foldToASCII(buffer, length);
-          termAtt.setTermBuffer(output, 0, outputPos);
+          termAtt.copyBuffer(output, 0, outputPos);
           break;
         }
       }
@@ -101,12 +101,27 @@ public final class ASCIIFoldingFilter extends TokenFilter {
     // Worst-case length required:
     final int maxSizeNeeded = 4 * length;
     if (output.length < maxSizeNeeded) {
-      output = new char[ArrayUtil.getNextSize(maxSizeNeeded)];
+      output = new char[ArrayUtil.oversize(maxSizeNeeded, RamUsageEstimator.NUM_BYTES_CHAR)];
     }
 
-    outputPos = 0;
+    outputPos = foldToASCII(input, 0, output, 0, length);
+  }
 
-    for (int pos = 0 ; pos < length ; ++pos) {
+  /**
+   * Converts characters above ASCII to their ASCII equivalents.  For example,
+   * accents are removed from accented characters.
+   * @param input     The characters to fold
+   * @param inputPos  Index of the first character to fold
+   * @param output    The result of the folding. Should be of size >= {@code length * 4}.
+   * @param outputPos Index of output where to put the result of the folding
+   * @param length    The number of characters to fold
+   * @return length of output
+   * @lucene.internal
+   */
+  public static final int foldToASCII(char input[], int inputPos, char output[], int outputPos, int length)
+  {
+    final int end = inputPos + length;
+    for (int pos = inputPos; pos < end ; ++pos) {
       final char c = input[pos];
 
       // Quick test: if it's not in range then just keep current character
@@ -2027,5 +2042,6 @@ public final class ASCIIFoldingFilter extends TokenFilter {
         }
       }
     }
+    return outputPos;
   }
 }

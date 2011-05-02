@@ -31,7 +31,11 @@ import org.apache.lucene.document.FieldSelector;
  * <p>
  * Note that you can only access hits from a Searcher as long as it is not yet
  * closed, otherwise an IOException will be thrown.
+ *
+ * @deprecated In 4.0 this abstract class is removed/absorbed
+ * into IndexSearcher
  */
+@Deprecated
 public abstract class Searcher implements Searchable {
   /** Search implementation with arbitrary sorting.  Finds
    * the top <code>n</code> hits for <code>query</code>, applying
@@ -47,6 +51,19 @@ public abstract class Searcher implements Searchable {
   public TopFieldDocs search(Query query, Filter filter, int n,
                              Sort sort) throws IOException {
     return search(createWeight(query), filter, n, sort);
+  }
+
+  /**
+   * Search implementation with arbitrary sorting and no filter.
+   * @param query The query to search for
+   * @param n Return only the top n results
+   * @param sort The {@link org.apache.lucene.search.Sort} object
+   * @return The top docs, sorted according to the supplied {@link org.apache.lucene.search.Sort} instance
+   * @throws IOException
+   */
+  public TopFieldDocs search(Query query, int n,
+                             Sort sort) throws IOException {
+    return search(createWeight(query), null, n, sort);
   }
 
   /** Lower-level search API.

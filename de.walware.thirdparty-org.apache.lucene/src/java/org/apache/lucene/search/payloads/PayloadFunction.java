@@ -17,17 +17,17 @@ package org.apache.lucene.search.payloads;
  */
 
 import java.io.Serializable;
-
+import org.apache.lucene.search.Explanation;
 
 /**
- * An abstract class that defines a way for Payload*Query instances
- * to transform the cumulative effects of payload scores for a document.
- *
+ * An abstract class that defines a way for Payload*Query instances to transform
+ * the cumulative effects of payload scores for a document.
+ * 
  * @see org.apache.lucene.search.payloads.PayloadTermQuery for more information
- *
- * <p/>
- * This class and its derivations are experimental and subject to change
- *
+ * 
+ * @lucene.experimental This class and its derivations are experimental and subject to
+ *               change
+ * 
  **/
 public abstract class PayloadFunction implements Serializable {
 
@@ -55,6 +55,13 @@ public abstract class PayloadFunction implements Serializable {
    * @return The final score for the payloads
    */
   public abstract float docScore(int docId, String field, int numPayloadsSeen, float payloadScore);
+  
+  public Explanation explain(int docId, int numPayloadsSeen, float payloadScore){
+	  Explanation result = new Explanation();
+	  result.setDescription("Unimpl Payload Function Explain");
+	  result.setValue(1);
+	  return result;
+  };
   
   @Override
   public abstract int hashCode();

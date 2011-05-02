@@ -20,6 +20,7 @@ package org.apache.lucene.index;
 import org.apache.lucene.store.BufferedIndexInput;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IndexInput;
+import org.apache.lucene.util.ArrayUtil;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -74,42 +75,34 @@ class TermVectorsReader implements Cloneable {
     boolean success = false;
 
     try {
-      if (d.fileExists(segment + "." + IndexFileNames.VECTORS_INDEX_EXTENSION)) {
-        tvx = d.openInput(segment + "." + IndexFileNames.VECTORS_INDEX_EXTENSION, readBufferSize);
-        format = checkValidFormat(tvx);
-        tvd = d.openInput(segment + "." + IndexFileNames.VECTORS_DOCUMENTS_EXTENSION, readBufferSize);
-        final int tvdFormat = checkValidFormat(tvd);
-        tvf = d.openInput(segment + "." + IndexFileNames.VECTORS_FIELDS_EXTENSION, readBufferSize);
-        final int tvfFormat = checkValidFormat(tvf);
+      String idxName = IndexFileNames.segmentFileName(segment, IndexFileNames.VECTORS_INDEX_EXTENSION);
+      tvx = d.openInput(idxName, readBufferSize);
+      format = checkValidFormat(tvx);
+      tvd = d.openInput(IndexFileNames.segmentFileName(segment, IndexFileNames.VECTORS_DOCUMENTS_EXTENSION), readBufferSize);
+      final int tvdFormat = checkValidFormat(tvd);
+      tvf = d.openInput(IndexFileNames.segmentFileName(segment, IndexFileNames.VECTORS_FIELDS_EXTENSION), readBufferSize);
+      final int tvfFormat = checkValidFormat(tvf);
 
-        assert format == tvdFormat;
-        assert format == tvfFormat;
+      assert format == tvdFormat;
+      assert format == tvfFormat;
 
-        if (format >= FORMAT_VERSION2) {
-          assert (tvx.length()-FORMAT_SIZE) % 16 == 0;
-          numTotalDocs = (int) (tvx.length() >> 4);
-        } else {
-          assert (tvx.length()-FORMAT_SIZE) % 8 == 0;
-          numTotalDocs = (int) (tvx.length() >> 3);
-        }
-
-        if (-1 == docStoreOffset) {
-          this.docStoreOffset = 0;
-          this.size = numTotalDocs;
-          assert size == 0 || numTotalDocs == size;
-        } else {
-          this.docStoreOffset = docStoreOffset;
-          this.size = size;
-          // Verify the file is long enough to hold all of our
-          // docs
-          assert numTotalDocs >= size + docStoreOffset: "numTotalDocs=" + numTotalDocs + " size=" + size + " docStoreOffset=" + docStoreOffset;
-        }
+      if (format >= FORMAT_VERSION2) {
+        numTotalDocs = (int) (tvx.length() >> 4);
       } else {
-        // If all documents flushed in a segment had hit
-        // non-aborting exceptions, it's possible that
-        // FieldInfos.hasVectors returns true yet the term
-        // vector files don't exist.
-        format = 0;
+        assert (tvx.length()-FORMAT_SIZE) % 8 == 0;
+        numTotalDocs = (int) (tvx.length() >> 3);
+      }
+
+      if (-1 == docStoreOffset) {
+        this.docStoreOffset = 0;
+        this.size = numTotalDocs;
+        assert size == 0 || numTotalDocs == size;
+      } else {
+        this.docStoreOffset = docStoreOffset;
+        this.size = size;
+        // Verify the file is long enough to hold all of our
+        // docs
+        assert numTotalDocs >= size + docStoreOffset: "numTotalDocs=" + numTotalDocs + " size=" + size + " docStoreOffset=" + docStoreOffset;
       }
 
       this.fieldInfos = fieldInfos;
@@ -211,7 +204,7 @@ class TermVectorsReader implements Cloneable {
     // make all effort to close up. Keep the first exception
     // and throw it as a new one.
     IOException keep = null;
-    if (tvx != null) try { tvx.close(); } catch (IOException e) { if (keep == null) keep = e; }
+    if (tvx != null) try { tvx.close(); } catch (IOException e) { keep = e; }
     if (tvd != null) try { tvd.close(); } catch (IOException e) { if (keep == null) keep = e; }
     if (tvf  != null) try {  tvf.close(); } catch (IOException e) { if (keep == null) keep = e; }
     if (keep != null) throw (IOException) keep.fillInStackTrace();
@@ -465,18 +458,14 @@ class TermVectorsReader implements Cloneable {
       if (preUTF8) {
         // Term stored as java chars
         if (charBuffer.length < totalLength) {
-          char[] newCharBuffer = new char[(int) (1.5*totalLength)];
-          System.arraycopy(charBuffer, 0, newCharBuffer, 0, start);
-          charBuffer = newCharBuffer;
+          charBuffer = ArrayUtil.grow(charBuffer, totalLength);
         }
         tvf.readChars(charBuffer, start, deltaLength);
         term = new String(charBuffer, 0, totalLength);
       } else {
         // Term stored as utf8 bytes
         if (byteBuffer.length < totalLength) {
-          byte[] newByteBuffer = new byte[(int) (1.5*totalLength)];
-          System.arraycopy(byteBuffer, 0, newByteBuffer, 0, start);
-          byteBuffer = newByteBuffer;
+          byteBuffer = ArrayUtil.grow(byteBuffer, totalLength);
         }
         tvf.readBytes(byteBuffer, start, deltaLength);
         term = new String(byteBuffer, 0, totalLength, "UTF-8");

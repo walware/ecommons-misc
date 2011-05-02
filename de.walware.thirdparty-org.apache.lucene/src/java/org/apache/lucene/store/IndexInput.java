@@ -27,7 +27,10 @@ import java.util.HashMap;
  * @see Directory
  */
 public abstract class IndexInput implements Cloneable,Closeable {
+
   private boolean preUTF8Strings;                 // true if we are reading old (modified UTF8) string format
+
+  protected byte[] copyBuf = null;
 
   /** Reads and returns a single byte.
    * @see IndexOutput#writeByte(byte)
@@ -56,8 +59,7 @@ public abstract class IndexInput implements Cloneable,Closeable {
    * @see IndexOutput#writeBytes(byte[],int)
    */
   public void readBytes(byte[] b, int offset, int len, boolean useBuffer)
-    throws IOException
-  {
+    throws IOException {
     // Default to ignoring useBuffer entirely
     readBytes(b, offset, len);
   }
@@ -76,6 +78,9 @@ public abstract class IndexInput implements Cloneable,Closeable {
    * @see IndexOutput#writeVInt(int)
    */
   public int readVInt() throws IOException {
+    /* This is the original code of this method,
+     * but a Hotspot bug (see LUCENE-2975) corrupts the for-loop if
+     * readByte() is inlined. So the loop was unwinded!
     byte b = readByte();
     int i = b & 0x7F;
     for (int shift = 7; (b & 0x80) != 0; shift += 7) {
@@ -83,6 +88,22 @@ public abstract class IndexInput implements Cloneable,Closeable {
       i |= (b & 0x7F) << shift;
     }
     return i;
+    */
+    byte b = readByte();
+    int i = b & 0x7F;
+    if ((b & 0x80) == 0) return i;
+    b = readByte();
+    i |= (b & 0x7F) << 7;
+    if ((b & 0x80) == 0) return i;
+    b = readByte();
+    i |= (b & 0x7F) << 14;
+    if ((b & 0x80) == 0) return i;
+    b = readByte();
+    i |= (b & 0x7F) << 21;
+    if ((b & 0x80) == 0) return i;
+    b = readByte();
+    assert (b & 0x80) == 0;
+    return i | ((b & 0x7F) << 28);
   }
 
   /** Reads eight bytes and returns a long.
@@ -96,6 +117,9 @@ public abstract class IndexInput implements Cloneable,Closeable {
    * nine bytes.  Smaller values take fewer bytes.  Negative numbers are not
    * supported. */
   public long readVLong() throws IOException {
+    /* This is the original code of this method,
+     * but a Hotspot bug (see LUCENE-2975) corrupts the for-loop if
+     * readByte() is inlined. So the loop was unwinded!
     byte b = readByte();
     long i = b & 0x7F;
     for (int shift = 7; (b & 0x80) != 0; shift += 7) {
@@ -103,6 +127,34 @@ public abstract class IndexInput implements Cloneable,Closeable {
       i |= (b & 0x7FL) << shift;
     }
     return i;
+    */
+    byte b = readByte();
+    long i = b & 0x7FL;
+    if ((b & 0x80) == 0) return i;
+    b = readByte();
+    i |= (b & 0x7FL) << 7;
+    if ((b & 0x80) == 0) return i;
+    b = readByte();
+    i |= (b & 0x7FL) << 14;
+    if ((b & 0x80) == 0) return i;
+    b = readByte();
+    i |= (b & 0x7FL) << 21;
+    if ((b & 0x80) == 0) return i;
+    b = readByte();
+    i |= (b & 0x7FL) << 28;
+    if ((b & 0x80) == 0) return i;
+    b = readByte();
+    i |= (b & 0x7FL) << 35;
+    if ((b & 0x80) == 0) return i;
+    b = readByte();
+    i |= (b & 0x7FL) << 42;
+    if ((b & 0x80) == 0) return i;
+    b = readByte();
+    i |= (b & 0x7FL) << 49;
+    if ((b & 0x80) == 0) return i;
+    b = readByte();
+    assert (b & 0x80) == 0;
+    return i | ((b & 0x7FL) << 56);
   }
 
   /** Call this if readString should read characters stored
@@ -142,6 +194,7 @@ public abstract class IndexInput implements Cloneable,Closeable {
    *                instead, and construct the string
    *                from those utf8 bytes
    */
+  @Deprecated
   public void readChars(char[] buffer, int start, int length)
        throws IOException {
     final int end = start + length;
@@ -152,10 +205,11 @@ public abstract class IndexInput implements Cloneable,Closeable {
       else if ((b & 0xE0) != 0xE0) {
 	buffer[i] = (char)(((b & 0x1F) << 6)
 		 | (readByte() & 0x3F));
-      } else
+      } else {
 	buffer[i] = (char)(((b & 0x0F) << 12)
 		| ((readByte() & 0x3F) << 6)
 	        |  (readByte() & 0x3F));
+      }
     }
   }
 
@@ -170,15 +224,15 @@ public abstract class IndexInput implements Cloneable,Closeable {
    * @deprecated this method operates on old "modified utf8" encoded
    *             strings
    */
+  @Deprecated
   public void skipChars(int length) throws IOException{
     for (int i = 0; i < length; i++) {
       byte b = readByte();
       if ((b & 0x80) == 0){
         //do nothing, we only need one byte
-      }
-      else if ((b & 0xE0) != 0xE0) {
+      } else if ((b & 0xE0) != 0xE0) {
         readByte();//read an additional byte
-      } else{      
+      } else {      
         //read two additional bytes.
         readByte();
         readByte();
@@ -234,4 +288,31 @@ public abstract class IndexInput implements Cloneable,Closeable {
 
     return map;
   }
+
+  /**
+   * Copies <code>numBytes</code> bytes to the given {@link IndexOutput}.
+   * <p>
+   * <b>NOTE:</b> this method uses an intermediate buffer to copy the bytes.
+   * Consider overriding it in your implementation, if you can make a better,
+   * optimized copy.
+   * <p>
+   * <b>NOTE</b> ensure that there are enough bytes in the input to copy to
+   * output. Otherwise, different exceptions may be thrown, depending on the
+   * implementation.
+   */
+  public void copyBytes(IndexOutput out, long numBytes) throws IOException {
+    assert numBytes >= 0: "numBytes=" + numBytes;
+
+    if (copyBuf == null) {
+      copyBuf = new byte[BufferedIndexInput.BUFFER_SIZE];
+    }
+
+    while (numBytes > 0) {
+      final int toCopy = (int) (numBytes > copyBuf.length ? copyBuf.length : numBytes);
+      readBytes(copyBuf, 0, toCopy);
+      out.writeBytes(copyBuf, 0, toCopy);
+      numBytes -= toCopy;
+    }
+  }
+  
 }

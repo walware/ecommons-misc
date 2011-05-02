@@ -23,7 +23,8 @@ package org.apache.lucene.util;
  *
  * <p><b>NOTE</b>: This class pre-allocates a full array of
  * length <code>maxSize+1</code>, in {@link #initialize}.
-  * 
+ * 
+ * @lucene.internal
 */
 public abstract class PriorityQueue<T> {
   private int size;
@@ -31,7 +32,9 @@ public abstract class PriorityQueue<T> {
   protected T[] heap;
 
   /** Determines the ordering of objects in this priority queue.  Subclasses
-    must define this one method. */
+   *  must define this one method.
+   *  @return <code>true</code> iff parameter <tt>a</tt> is less than parameter <tt>b</tt>.
+   */
   protected abstract boolean lessThan(T a, T b);
 
   /**

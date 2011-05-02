@@ -59,26 +59,28 @@ public abstract class LogMergePolicy extends MergePolicy {
    *  @see #setNoCFSRatio */
   public static final double DEFAULT_NO_CFS_RATIO = 0.1;
 
-  private int mergeFactor = DEFAULT_MERGE_FACTOR;
+  protected int mergeFactor = DEFAULT_MERGE_FACTOR;
 
-  long minMergeSize;
-  long maxMergeSize;
-  int maxMergeDocs = DEFAULT_MAX_MERGE_DOCS;
+  protected long minMergeSize;
+  protected long maxMergeSize;
+  // Although the core MPs set it explicitly, we must default in case someone
+  // out there wrote his own LMP ...
+  protected long maxMergeSizeForOptimize = Long.MAX_VALUE;
+  protected int maxMergeDocs = DEFAULT_MAX_MERGE_DOCS;
 
   protected double noCFSRatio = DEFAULT_NO_CFS_RATIO;
 
-  /* TODO 3.0: change this default to true */
-  protected boolean calibrateSizeByDeletes = false;
+  protected boolean calibrateSizeByDeletes = true;
   
-  private boolean useCompoundFile = true;
-  private boolean useCompoundDocStore = true;
+  protected boolean useCompoundFile = true;
 
-  public LogMergePolicy(IndexWriter writer) {
-    super(writer);
+  public LogMergePolicy() {
+    super();
   }
-  
+
   protected boolean verbose() {
-    return writer != null && writer.verbose();
+    IndexWriter w = writer.get();
+    return w != null && w.verbose();
   }
 
   /** @see #setNoCFSRatio */
@@ -98,9 +100,9 @@ public abstract class LogMergePolicy extends MergePolicy {
     this.noCFSRatio = noCFSRatio;
   }
   
-  private void message(String message) {
+  protected void message(String message) {
     if (verbose())
-      writer.message("LMP: " + message);
+      writer.get().message("LMP: " + message);
   }
 
   /** <p>Returns the number of segments that are merged at
@@ -127,8 +129,21 @@ public abstract class LogMergePolicy extends MergePolicy {
 
   // Javadoc inherited
   @Override
-  public boolean useCompoundFile(SegmentInfos infos, SegmentInfo info) {
-    return useCompoundFile;
+  public boolean useCompoundFile(SegmentInfos infos, SegmentInfo mergedInfo) throws IOException {
+    final boolean doCFS;
+
+    if (!useCompoundFile) {
+      doCFS = false;
+    } else if (noCFSRatio == 1.0) {
+      doCFS = true;
+    } else {
+      long totalSize = 0;
+      for (SegmentInfo info : infos)
+        totalSize += size(info);
+
+      doCFS = size(mergedInfo) <= noCFSRatio * totalSize;
+    }
+    return doCFS;
   }
 
   /** Sets whether compound file format should be used for
@@ -142,27 +157,6 @@ public abstract class LogMergePolicy extends MergePolicy {
    *  #setUseCompoundFile */
   public boolean getUseCompoundFile() {
     return useCompoundFile;
-  }
-
-  // Javadoc inherited
-  @Override
-  public boolean useCompoundDocStore(SegmentInfos infos) {
-    return useCompoundDocStore;
-  }
-
-  /** Sets whether compound file format should be used for
-   *  newly flushed and newly merged doc store
-   *  segment files (term vectors and stored fields). */
-  public void setUseCompoundDocStore(boolean useCompoundDocStore) {
-    this.useCompoundDocStore = useCompoundDocStore;
-  }
-
-  /** Returns true if newly flushed and newly merge doc
-   *  store segment files (term vectors and stored fields)
-   *  are written in compound file format. @see
-   *  #setUseCompoundDocStore */
-  public boolean getUseCompoundDocStore() {
-    return useCompoundDocStore;
   }
 
   /** Sets whether the segment size should be calibrated by
@@ -184,7 +178,8 @@ public abstract class LogMergePolicy extends MergePolicy {
 
   protected long sizeDocs(SegmentInfo info) throws IOException {
     if (calibrateSizeByDeletes) {
-      int delCount = writer.numDeletedDocs(info);
+      int delCount = writer.get().numDeletedDocs(info);
+      assert delCount <= info.docCount;
       return (info.docCount - (long)delCount);
     } else {
       return info.docCount;
@@ -192,17 +187,18 @@ public abstract class LogMergePolicy extends MergePolicy {
   }
   
   protected long sizeBytes(SegmentInfo info) throws IOException {
-    long byteSize = info.sizeInBytes();
+    long byteSize = info.sizeInBytes(true);
     if (calibrateSizeByDeletes) {
-      int delCount = writer.numDeletedDocs(info);
-      float delRatio = (info.docCount <= 0 ? 0.0f : ((float)delCount / (float)info.docCount));
-      return (info.docCount <= 0 ?  byteSize : (long)(byteSize * (1.0f - delRatio)));
+      int delCount = writer.get().numDeletedDocs(info);
+      double delRatio = (info.docCount <= 0 ? 0.0f : ((float)delCount / (float)info.docCount));
+      assert delRatio <= 1.0;
+      return (info.docCount <= 0 ?  byteSize : (long)(byteSize * (1.0 - delRatio)));
     } else {
       return byteSize;
     }
   }
   
-  private boolean isOptimized(SegmentInfos infos, int maxNumSegments, Set<SegmentInfo> segmentsToOptimize) throws IOException {
+  protected boolean isOptimized(SegmentInfos infos, int maxNumSegments, Set<SegmentInfo> segmentsToOptimize) throws IOException {
     final int numSegments = infos.size();
     int numToOptimize = 0;
     SegmentInfo optimizeInfo = null;
@@ -221,19 +217,124 @@ public abstract class LogMergePolicy extends MergePolicy {
   /** Returns true if this single info is optimized (has no
    *  pending norms or deletes, is in the same dir as the
    *  writer, and matches the current compound file setting */
-  private boolean isOptimized(SegmentInfo info)
+  protected boolean isOptimized(SegmentInfo info)
     throws IOException {
-    boolean hasDeletions = writer.numDeletedDocs(info) > 0;
+    IndexWriter w = writer.get();
+    assert w != null;
+    boolean hasDeletions = w.numDeletedDocs(info) > 0;
     return !hasDeletions &&
       !info.hasSeparateNorms() &&
-      info.dir == writer.getDirectory() &&
+      info.dir == w.getDirectory() &&
       (info.getUseCompoundFile() == useCompoundFile || noCFSRatio < 1.0);
   }
 
+  /**
+   * Returns the merges necessary to optimize the index, taking the max merge
+   * size or max merge docs into consideration. This method attempts to respect
+   * the {@code maxNumSegments} parameter, however it might be, due to size
+   * constraints, that more than that number of segments will remain in the
+   * index. Also, this method does not guarantee that exactly {@code
+   * maxNumSegments} will remain, but &lt;= that number.
+   */
+  private MergeSpecification findMergesForOptimizeSizeLimit(
+      SegmentInfos infos, int maxNumSegments, int last) throws IOException {
+    MergeSpecification spec = new MergeSpecification();
+
+    int start = last - 1;
+    while (start >= 0) {
+      SegmentInfo info = infos.info(start);
+      if (size(info) > maxMergeSizeForOptimize || sizeDocs(info) > maxMergeDocs) {
+        if (verbose()) {
+          message("optimize: skip segment=" + info + ": size is > maxMergeSize (" + maxMergeSizeForOptimize + ") or sizeDocs is > maxMergeDocs (" + maxMergeDocs + ")");
+        }
+        // need to skip that segment + add a merge for the 'right' segments,
+        // unless there is only 1 which is optimized.
+        if (last - start - 1 > 1 || (start != last - 1 && !isOptimized(infos.info(start + 1)))) {
+          // there is more than 1 segment to the right of this one, or an unoptimized single segment.
+          spec.add(new OneMerge(infos.range(start + 1, last)));
+        }
+        last = start;
+      } else if (last - start == mergeFactor) {
+        // mergeFactor eligible segments were found, add them as a merge.
+        spec.add(new OneMerge(infos.range(start, last)));
+        last = start;
+      }
+      --start;
+    }
+
+    // Add any left-over segments, unless there is just 1 already optimized.
+    if (last > 0 && (++start + 1 < last || !isOptimized(infos.info(start)))) {
+      spec.add(new OneMerge(infos.range(start, last)));
+    }
+
+    return spec.merges.size() == 0 ? null : spec;
+  }
+  
+  /**
+   * Returns the merges necessary to optimize the index. This method constraints
+   * the returned merges only by the {@code maxNumSegments} parameter, and
+   * guaranteed that exactly that number of segments will remain in the index.
+   */
+  private MergeSpecification findMergesForOptimizeMaxNumSegments(SegmentInfos infos, int maxNumSegments, int last) throws IOException {
+    MergeSpecification spec = new MergeSpecification();
+    
+    // First, enroll all "full" merges (size
+    // mergeFactor) to potentially be run concurrently:
+    while (last - maxNumSegments + 1 >= mergeFactor) {
+      spec.add(new OneMerge(infos.range(last-mergeFactor, last)));
+      last -= mergeFactor;
+    }
+
+    // Only if there are no full merges pending do we
+    // add a final partial (< mergeFactor segments) merge:
+    if (0 == spec.merges.size()) {
+      if (maxNumSegments == 1) {
+
+        // Since we must optimize down to 1 segment, the
+        // choice is simple:
+        if (last > 1 || !isOptimized(infos.info(0))) {
+          spec.add(new OneMerge(infos.range(0, last)));
+        }
+      } else if (last > maxNumSegments) {
+
+        // Take care to pick a partial merge that is
+        // least cost, but does not make the index too
+        // lopsided.  If we always just picked the
+        // partial tail then we could produce a highly
+        // lopsided index over time:
+
+        // We must merge this many segments to leave
+        // maxNumSegments in the index (from when
+        // optimize was first kicked off):
+        final int finalMergeSize = last - maxNumSegments + 1;
+
+        // Consider all possible starting points:
+        long bestSize = 0;
+        int bestStart = 0;
+
+        for(int i=0;i<last-finalMergeSize+1;i++) {
+          long sumSize = 0;
+          for(int j=0;j<finalMergeSize;j++)
+            sumSize += size(infos.info(j+i));
+          if (i == 0 || (sumSize < 2*size(infos.info(i-1)) && sumSize < bestSize)) {
+            bestStart = i;
+            bestSize = sumSize;
+          }
+        }
+
+        spec.add(new OneMerge(infos.range(bestStart, bestStart+finalMergeSize)));
+      }
+    }
+    return spec.merges.size() == 0 ? null : spec;
+  }
+  
   /** Returns the merges necessary to optimize the index.
-   *  This merge policy defines "optimized" to mean only one
-   *  segment in the index, where that segment has no
-   *  deletions pending nor separate norms, and it is in
+   *  This merge policy defines "optimized" to mean only the
+   *  requested number of segments is left in the index, and
+   *  respects the {@link #maxMergeSizeForOptimize} setting.
+   *  By default, and assuming {@code maxNumSegments=1}, only
+   *  one segment will be left in the index, where that segment
+   *  has no deletions pending nor separate norms, and it is in
    *  compound file format if the current useCompoundFile
    *  setting is true.  This method returns multiple merges
    *  (mergeFactor at a time) so the {@link MergeScheduler}
@@ -241,81 +342,45 @@ public abstract class LogMergePolicy extends MergePolicy {
   @Override
   public MergeSpecification findMergesForOptimize(SegmentInfos infos,
       int maxNumSegments, Set<SegmentInfo> segmentsToOptimize) throws IOException {
-    MergeSpecification spec;
 
     assert maxNumSegments > 0;
 
-    if (!isOptimized(infos, maxNumSegments, segmentsToOptimize)) {
-
-      // Find the newest (rightmost) segment that needs to
-      // be optimized (other segments may have been flushed
-      // since optimize started):
-      int last = infos.size();
-      while(last > 0) {
-        final SegmentInfo info = infos.info(--last);
-        if (segmentsToOptimize.contains(info)) {
-          last++;
-          break;
-        }
+    // If the segments are already optimized (e.g. there's only 1 segment), or
+    // there are <maxNumSegements, all optimized, nothing to do.
+    if (isOptimized(infos, maxNumSegments, segmentsToOptimize)) return null;
+    
+    // Find the newest (rightmost) segment that needs to
+    // be optimized (other segments may have been flushed
+    // since optimize started):
+    int last = infos.size();
+    while (last > 0) {
+      final SegmentInfo info = infos.info(--last);
+      if (segmentsToOptimize.contains(info)) {
+        last++;
+        break;
       }
+    }
 
-      if (last > 0) {
+    if (last == 0) return null;
+    
+    // There is only one segment already, and it is optimized
+    if (maxNumSegments == 1 && last == 1 && isOptimized(infos.info(0))) return null;
 
-        spec = new MergeSpecification();
-
-        // First, enroll all "full" merges (size
-        // mergeFactor) to potentially be run concurrently:
-        while (last - maxNumSegments + 1 >= mergeFactor) {
-          spec.add(makeOneMerge(infos, infos.range(last-mergeFactor, last)));
-          last -= mergeFactor;
-        }
-
-        // Only if there are no full merges pending do we
-        // add a final partial (< mergeFactor segments) merge:
-        if (0 == spec.merges.size()) {
-          if (maxNumSegments == 1) {
-
-            // Since we must optimize down to 1 segment, the
-            // choice is simple:
-            if (last > 1 || !isOptimized(infos.info(0)))
-              spec.add(makeOneMerge(infos, infos.range(0, last)));
-          } else if (last > maxNumSegments) {
-
-            // Take care to pick a partial merge that is
-            // least cost, but does not make the index too
-            // lopsided.  If we always just picked the
-            // partial tail then we could produce a highly
-            // lopsided index over time:
-
-            // We must merge this many segments to leave
-            // maxNumSegments in the index (from when
-            // optimize was first kicked off):
-            final int finalMergeSize = last - maxNumSegments + 1;
-
-            // Consider all possible starting points:
-            long bestSize = 0;
-            int bestStart = 0;
-
-            for(int i=0;i<last-finalMergeSize+1;i++) {
-              long sumSize = 0;
-              for(int j=0;j<finalMergeSize;j++)
-                sumSize += size(infos.info(j+i));
-              if (i == 0 || (sumSize < 2*size(infos.info(i-1)) && sumSize < bestSize)) {
-                bestStart = i;
-                bestSize = sumSize;
-              }
-            }
-
-            spec.add(makeOneMerge(infos, infos.range(bestStart, bestStart+finalMergeSize)));
-          }
-        }
-        
-      } else
-        spec = null;
-    } else
-      spec = null;
-
-    return spec;
+    // Check if there are any segments above the threshold
+    boolean anyTooLarge = false;
+    for (int i = 0; i < last; i++) {
+      SegmentInfo info = infos.info(i);
+      if (size(info) > maxMergeSizeForOptimize || sizeDocs(info) > maxMergeDocs) {
+        anyTooLarge = true;
+        break;
+      }
+    }
+    
+    if (anyTooLarge) {
+      return findMergesForOptimizeSizeLimit(infos, maxNumSegments, last);
+    } else {
+      return findMergesForOptimizeMaxNumSegments(infos, maxNumSegments, last);
+    }
   }
 
   /**
@@ -333,9 +398,11 @@ public abstract class LogMergePolicy extends MergePolicy {
 
     MergeSpecification spec = new MergeSpecification();
     int firstSegmentWithDeletions = -1;
+    IndexWriter w = writer.get();
+    assert w != null;
     for(int i=0;i<numSegments;i++) {
       final SegmentInfo info = segmentInfos.info(i);
-      int delCount = writer.numDeletedDocs(info);
+      int delCount = w.numDeletedDocs(info);
       if (delCount > 0) {
         if (verbose())
           message("  segment " + info.name + " has deletions");
@@ -346,7 +413,7 @@ public abstract class LogMergePolicy extends MergePolicy {
           // deletions, so force a merge now:
           if (verbose())
             message("  add merge " + firstSegmentWithDeletions + " to " + (i-1) + " inclusive");
-          spec.add(makeOneMerge(segmentInfos, segmentInfos.range(firstSegmentWithDeletions, i)));
+          spec.add(new OneMerge(segmentInfos.range(firstSegmentWithDeletions, i)));
           firstSegmentWithDeletions = i;
         }
       } else if (firstSegmentWithDeletions != -1) {
@@ -355,7 +422,7 @@ public abstract class LogMergePolicy extends MergePolicy {
         // mergeFactor segments
         if (verbose())
           message("  add merge " + firstSegmentWithDeletions + " to " + (i-1) + " inclusive");
-        spec.add(makeOneMerge(segmentInfos, segmentInfos.range(firstSegmentWithDeletions, i)));
+        spec.add(new OneMerge(segmentInfos.range(firstSegmentWithDeletions, i)));
         firstSegmentWithDeletions = -1;
       }
     }
@@ -363,7 +430,7 @@ public abstract class LogMergePolicy extends MergePolicy {
     if (firstSegmentWithDeletions != -1) {
       if (verbose())
         message("  add merge " + firstSegmentWithDeletions + " to " + (numSegments-1) + " inclusive");
-      spec.add(makeOneMerge(segmentInfos, segmentInfos.range(firstSegmentWithDeletions, numSegments)));
+      spec.add(new OneMerge(segmentInfos.range(firstSegmentWithDeletions, numSegments)));
     }
 
     return spec;
@@ -428,7 +495,7 @@ public abstract class LogMergePolicy extends MergePolicy {
       // Now search backwards for the rightmost segment that
       // falls into this level:
       float levelBottom;
-      if (maxLevel < levelFloor)
+      if (maxLevel <= levelFloor)
         // All remaining segments fall into the min level
         levelBottom = -1.0F;
       else {
@@ -463,7 +530,7 @@ public abstract class LogMergePolicy extends MergePolicy {
             spec = new MergeSpecification();
           if (verbose())
             message("    " + start + " to " + end + ": add this merge");
-          spec.add(makeOneMerge(infos, infos.range(start, end)));
+          spec.add(new OneMerge(infos.range(start, end)));
         } else if (verbose())
           message("    " + start + " to " + end + ": contains segment over maxMergeSize or maxMergeDocs; skipping");
 
@@ -475,29 +542,6 @@ public abstract class LogMergePolicy extends MergePolicy {
     }
 
     return spec;
-  }
-
-  protected OneMerge makeOneMerge(SegmentInfos infos, SegmentInfos infosToMerge) throws IOException {
-    final boolean doCFS;
-    if (!useCompoundFile) {
-      doCFS = false;
-    } else if (noCFSRatio == 1.0) {
-      doCFS = true;
-    } else {
-      
-      long totSize = 0;
-      for(SegmentInfo info : infos) {
-        totSize += size(info);
-      }
-      long mergeSize = 0;
-      for(SegmentInfo info : infosToMerge) {
-        mergeSize += size(info);
-      }
-
-      doCFS = mergeSize <= noCFSRatio * totSize;
-    }
-
-    return new OneMerge(infosToMerge, doCFS);
   }
 
   /** <p>Determines the largest segment (measured by
@@ -526,4 +570,18 @@ public abstract class LogMergePolicy extends MergePolicy {
     return maxMergeDocs;
   }
 
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder("[" + getClass().getSimpleName() + ": ");
+    sb.append("minMergeSize=").append(minMergeSize).append(", ");
+    sb.append("mergeFactor=").append(mergeFactor).append(", ");
+    sb.append("maxMergeSize=").append(maxMergeSize).append(", ");
+    sb.append("maxMergeSizeForOptimize=").append(maxMergeSizeForOptimize).append(", ");
+    sb.append("calibrateSizeByDeletes=").append(calibrateSizeByDeletes).append(", ");
+    sb.append("maxMergeDocs=").append(maxMergeDocs).append(", ");
+    sb.append("useCompoundFile=").append(useCompoundFile);
+    sb.append("]");
+    return sb.toString();
+  }
+  
 }

@@ -22,7 +22,7 @@ import java.io.File;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.BufferUnderflowException;
-import java.nio.channels.ClosedChannelException; // javadoc @link
+import java.nio.channels.ClosedChannelException; // javadoc
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 
@@ -35,7 +35,7 @@ import org.apache.lucene.util.Constants;
 
 /** File-based {@link Directory} implementation that uses
  *  mmap for reading, and {@link
- *  SimpleFSDirectory.SimpleFSIndexOutput} for writing.
+ *  FSDirectory.FSIndexOutput} for writing.
  *
  * <p><b>NOTE</b>: memory mapping uses up a portion of the
  * virtual memory address space in your process equal to the
@@ -64,7 +64,7 @@ import org.apache.lucene.util.Constants;
  * an important limitation to be aware of.
  *
  * <p>This class supplies the workaround mentioned in the bug report
- * (disabled by default, see {@link #setUseUnmap}), which may fail on
+ * (see {@link #setUseUnmap}), which may fail on
  * non-Sun JVMs. It forcefully unmaps the buffer on close by using
  * an undocumented internal cleanup functionality.
  * {@link #UNMAP_SUPPORTED} is <code>true</code>, if the workaround
@@ -78,6 +78,9 @@ import org.apache.lucene.util.Constants;
  * </p>
  */
 public class MMapDirectory extends FSDirectory {
+  private boolean useUnmapHack = UNMAP_SUPPORTED;
+  public static final int DEFAULT_MAX_BUFF = Constants.JRE_IS_64BIT ? Integer.MAX_VALUE : (256 * 1024 * 1024);
+  private int maxBBuf = DEFAULT_MAX_BUFF;
 
   /** Create a new MMapDirectory for the named location.
    *
@@ -99,9 +102,6 @@ public class MMapDirectory extends FSDirectory {
     super(path, null);
   }
 
-  private boolean useUnmapHack = false;
-  private int maxBBuf = Constants.JRE_IS_64BIT ? Integer.MAX_VALUE : (256*1024*1024);
-  
   /**
    * <code>true</code>, if this platform supports unmapping mmapped files.
    */
@@ -197,7 +197,22 @@ public class MMapDirectory extends FSDirectory {
    */
   public int getMaxChunkSize() {
     return maxBBuf;
-  } 
+  }
+
+  /** Creates an IndexInput for the file with the given name. */
+  @Override
+  public IndexInput openInput(String name, int bufferSize) throws IOException {
+    ensureOpen();
+    File f = new File(getDirectory(), name);
+    RandomAccessFile raf = new RandomAccessFile(f, "r");
+    try {
+      return (raf.length() <= maxBBuf)
+             ? (IndexInput) new MMapIndexInput(raf)
+             : (IndexInput) new MultiMMapIndexInput(raf, maxBBuf);
+    } finally {
+      raf.close();
+    }
+  }
 
   private class MMapIndexInput extends IndexInput {
 
@@ -228,6 +243,24 @@ public class MMapDirectory extends FSDirectory {
       }
     }
 
+    @Override
+    public int readInt() throws IOException {
+      try {
+        return buffer.getInt();
+      } catch (BufferUnderflowException e) {
+        throw new IOException("read past EOF");
+      }
+    }
+
+    @Override
+    public long readLong() throws IOException {
+      try {
+        return buffer.getLong();
+      } catch (BufferUnderflowException e) {
+        throw new IOException("read past EOF");
+      }
+    }
+    
     @Override
     public long getFilePointer() {
       return buffer.position();
@@ -279,7 +312,6 @@ public class MMapDirectory extends FSDirectory {
     private final int maxBufSize;
   
     private ByteBuffer curBuf; // redundant for speed: buffers[curBufIndex]
-    private int curAvail; // redundant for speed: (bufSizes[curBufIndex] - curBuf.position())
   
     private boolean isClone = false;
     
@@ -318,37 +350,57 @@ public class MMapDirectory extends FSDirectory {
   
     @Override
     public byte readByte() throws IOException {
-      // Performance might be improved by reading ahead into an array of
-      // e.g. 128 bytes and readByte() from there.
-      if (curAvail == 0) {
+      try {
+        return curBuf.get();
+      } catch (BufferUnderflowException e) {
         curBufIndex++;
         if (curBufIndex >= buffers.length)
           throw new IOException("read past EOF");
         curBuf = buffers[curBufIndex];
         curBuf.position(0);
-        curAvail = bufSizes[curBufIndex];
+        return curBuf.get();
       }
-      curAvail--;
-      return curBuf.get();
     }
   
     @Override
     public void readBytes(byte[] b, int offset, int len) throws IOException {
-      while (len > curAvail) {
-        curBuf.get(b, offset, curAvail);
-        len -= curAvail;
-        offset += curAvail;
-        curBufIndex++;
-        if (curBufIndex >= buffers.length)
-          throw new IOException("read past EOF");
-        curBuf = buffers[curBufIndex];
-        curBuf.position(0);
-        curAvail = bufSizes[curBufIndex];
+      try {
+        curBuf.get(b, offset, len);
+      } catch (BufferUnderflowException e) {
+        int curAvail = curBuf.remaining();
+        while (len > curAvail) {
+          curBuf.get(b, offset, curAvail);
+          len -= curAvail;
+          offset += curAvail;
+          curBufIndex++;
+          if (curBufIndex >= buffers.length)
+            throw new IOException("read past EOF");
+          curBuf = buffers[curBufIndex];
+          curBuf.position(0);
+          curAvail = curBuf.remaining();
+        }
+        curBuf.get(b, offset, len);
       }
-      curBuf.get(b, offset, len);
-      curAvail -= len;
     }
-  
+
+    @Override
+    public int readInt() throws IOException {
+      try {
+        return curBuf.getInt();
+      } catch (BufferUnderflowException e) {
+        return super.readInt();
+      }
+    }
+
+    @Override
+    public long readLong() throws IOException {
+      try {
+        return curBuf.getLong();
+      } catch (BufferUnderflowException e) {
+        return super.readLong();
+      }
+    }
+    
     @Override
     public long getFilePointer() {
       return ((long) curBufIndex * maxBufSize) + curBuf.position();
@@ -360,7 +412,6 @@ public class MMapDirectory extends FSDirectory {
       curBuf = buffers[curBufIndex];
       int bufOffset = (int) (pos - ((long) curBufIndex * maxBufSize));
       curBuf.position(bufOffset);
-      curAvail = bufSizes[curBufIndex] - bufOffset;
     }
   
     @Override
@@ -387,7 +438,7 @@ public class MMapDirectory extends FSDirectory {
         RuntimeException newException = new RuntimeException(ioe);
         newException.initCause(ioe);
         throw newException;
-      };
+      }
       return clone;
     }
   
@@ -407,27 +458,5 @@ public class MMapDirectory extends FSDirectory {
         buffers = null;
       }
     }
-  }
-  
-  /** Creates an IndexInput for the file with the given name. */
-  @Override
-  public IndexInput openInput(String name, int bufferSize) throws IOException {
-    ensureOpen();
-    File f =  new File(getFile(), name);
-    RandomAccessFile raf = new RandomAccessFile(f, "r");
-    try {
-      return (raf.length() <= (long) maxBBuf)
-             ? (IndexInput) new MMapIndexInput(raf)
-             : (IndexInput) new MultiMMapIndexInput(raf, maxBBuf);
-    } finally {
-      raf.close();
-    }
-  }
-
-  /** Creates an IndexOutput for the file with the given name. */
-  @Override
-  public IndexOutput createOutput(String name) throws IOException {
-    initOutput(name);
-    return new SimpleFSDirectory.SimpleFSIndexOutput(new File(directory, name));
   }
 }

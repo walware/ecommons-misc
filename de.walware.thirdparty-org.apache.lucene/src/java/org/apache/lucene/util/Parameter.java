@@ -26,17 +26,14 @@ import java.util.Map;
 /**
  * A serializable Enum class.
  * @deprecated Use Java 5 enum, will be removed in a later Lucene 3.x release.
+ * @lucene.internal
  */
+@Deprecated
 @SuppressWarnings("serial")
-public abstract class Parameter implements Serializable
-{
+public abstract class Parameter implements Serializable {
   static Map<String,Parameter> allParameters = new HashMap<String,Parameter>();
   
   private String name;
-  
-  private Parameter() {
-    // typesafe enum pattern, no public constructor
-  }
   
   protected Parameter(String name) {
     // typesafe enum pattern, no public constructor

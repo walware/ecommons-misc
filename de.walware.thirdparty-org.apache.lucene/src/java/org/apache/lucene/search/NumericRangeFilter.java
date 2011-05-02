@@ -31,17 +31,13 @@ import org.apache.lucene.util.NumericUtils; // for javadocs
  * factory methods, eg:
  *
  * <pre>
- * Filter f = NumericRangeFilter.newFloatRange("weight", 0.3f, 0.10f, true, true);
+ * Filter f = NumericRangeFilter.newFloatRange("weight", 0.03f, 0.10f, true, true);
  * </pre>
  *
  * accepts all documents whose float valued "weight" field
- * ranges from 0.3 to 0.10, inclusive.
+ * ranges from 0.03 to 0.10, inclusive.
  * See {@link NumericRangeQuery} for details on how Lucene
  * indexes and searches numeric valued fields.
- *
- * <p><font color="red"><b>NOTE:</b> This API is experimental and
- * might change in incompatible ways in the next
- * release.</font>
  *
  * @since 2.9
  **/
@@ -185,5 +181,8 @@ public final class NumericRangeFilter<T extends Number> extends MultiTermQueryWr
 
   /** Returns the upper value of this range filter */
   public T getMax() { return query.getMax(); }
+  
+  /** Returns the precision step. */
+  public int getPrecisionStep() { return query.getPrecisionStep(); }
   
 }

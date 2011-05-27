@@ -34,6 +34,9 @@ public class DirtyTracker implements IValueChangeListener, IChangeListener {
 	private boolean fDirty;
 	
 	
+	/**
+	 * Tracker tracking automatically all bindings
+	 */
 	public DirtyTracker(final DataBindingContext dbc) {
 		for (final Object obj : dbc.getBindings()) {
 			track((Binding) obj, true);
@@ -47,6 +50,20 @@ public class DirtyTracker implements IValueChangeListener, IChangeListener {
 		});
 	}
 	
+	/**
+	 * Tracker tracking bindings added manually
+	 */
+	public DirtyTracker() {
+	}
+	
+	
+	public void add(final Binding binding) {
+		track(binding, true);
+	}
+	
+	public void remove(final Binding binding) {
+		track(binding, false);
+	}
 	
 	private void track(final Binding binding, final boolean add) {
 		final IObservable obs = binding.getModel();

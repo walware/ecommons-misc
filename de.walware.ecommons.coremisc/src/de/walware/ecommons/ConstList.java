@@ -26,6 +26,8 @@ import java.util.RandomAccess;
  * the elements of list doesn't change. It has a minimal memory footprint.
  * <p>
  * Comparable to <code>Collections.unmodifiableList(Array.asList(...))</code>.</p>
+ * 
+ * @deprecated use {@link de.walware.ecommons.collections.ConstList}
  */
 public final class ConstList<E> implements List<E>, RandomAccess {
 	

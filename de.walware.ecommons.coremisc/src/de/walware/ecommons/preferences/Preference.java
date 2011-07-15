@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
-import de.walware.ecommons.ConstList;
+import de.walware.ecommons.collections.ConstList;
 
 
 /**

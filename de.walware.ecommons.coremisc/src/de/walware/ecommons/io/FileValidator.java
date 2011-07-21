@@ -65,7 +65,12 @@ public class FileValidator implements IValidator {
 	private int fOnDirectory;
 	private int fOnNotLocal;
 	private boolean fIgnoreRelative;
+	private String fRelativePrefix;
+	private int fRelativeMax = -1;
+	private IPath fRelativePath;
 	private Map<Pattern, Integer> fOnPattern;
+	
+	private int fCurrentMax;
 	
 	
 	/**
@@ -153,7 +158,19 @@ public class FileValidator implements IValidator {
 		return fOnNotLocal;
 	}
 	public void setIgnoreRelative(final boolean ignore) {
+		fRelativePrefix = null;
+		fRelativeMax = -1;
 		fIgnoreRelative = ignore;
+		fStatus = null;
+	}
+	
+	public void setRelative(final String prefix, int maxSeverity) {
+		fRelativePrefix = prefix;
+		if (prefix != null && !prefix.endsWith("/") && !prefix.endsWith("\\")) {
+			fRelativePrefix += '/';
+		}
+		fRelativeMax = maxSeverity;
+		fIgnoreRelative = false;
 		fStatus = null;
 	}
 	
@@ -235,6 +252,8 @@ public class FileValidator implements IValidator {
 	private IStatus doValidate1(Object value) {
 		fFileStore = null;
 		fWorkspaceResource = null;
+		fRelativePath = null;
+		fCurrentMax = Integer.MAX_VALUE;
 		
 		// Resolve string
 		if (value instanceof IPath) {
@@ -260,8 +279,18 @@ public class FileValidator implements IValidator {
 			if (s.length() == 0) {
 				return createStatus(fOnEmpty, Messages.Resource_error_NoInput_message, null);
 			}
-			if (fIgnoreRelative && !new Path(s).isAbsolute()) {
-				return Status.OK_STATUS;
+			final IPath path = new Path(s);
+			if (!path.isAbsolute()) {
+				fRelativePath = path;
+				if (fRelativeMax >= 0 && fRelativeMax < fCurrentMax) {
+					fCurrentMax = fRelativeMax;
+				}
+				if (fIgnoreRelative) {
+					return Status.OK_STATUS;
+				}
+				if (fRelativePrefix != null) {
+					s = fRelativePrefix + s;
+				}
 			}
 			
 			// search efs reference
@@ -292,7 +321,6 @@ public class FileValidator implements IValidator {
 		else if (value instanceof IResource) {
 			fWorkspaceResource = (IResource) value;
 		}
-		
 		
 		if (fFileStore != null) {
 			return validateFileStore();
@@ -383,9 +411,12 @@ public class FileValidator implements IValidator {
 		}
 	}
 	
-	protected IStatus createStatus(final int severity, final String message, String detail) {
+	protected IStatus createStatus(int severity, final String message, String detail) {
 		if (severity == IStatus.OK) {
 			return Status.OK_STATUS;
+		}
+		if (severity > fCurrentMax) {
+			severity = fCurrentMax;
 		}
 		if (detail == null) {
 			detail = ""; //$NON-NLS-1$
@@ -419,6 +450,14 @@ public class FileValidator implements IValidator {
 			return fileStore.getFileSystem().equals(EFS.getLocalFileSystem());
 		}
 		return false;
+	}
+	
+	public boolean isRelativeFile() {
+		return (fRelativePath != null);
+	}
+	
+	public IPath getRelativeFile() {
+		return fRelativePath;
 	}
 	
 	public IStatus getStatus() {

@@ -537,6 +537,9 @@ public abstract class FileUtil {
 	}
 	
 	public static FileUtil getFileUtil(final Object file) {
+		if (file == null) {
+			throw new NullPointerException("file");
+		}
 		if (file instanceof IFile) {
 			return new WorkspaceUtilImpl((IFile) file);
 		}
@@ -548,7 +551,7 @@ public abstract class FileUtil {
 			}
 			return new EFSUtilImpl(efsFile);
 		}
-		throw new IllegalArgumentException("Unknown file object.");
+		throw new IllegalArgumentException("Unknown file object: " + file.getClass());
 	}
 	
 	

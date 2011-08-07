@@ -12,9 +12,13 @@
 package de.walware.ecommons.net;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.BindException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
+import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -387,6 +391,45 @@ public class RMIUtil {
 			}
 			this.registries.clear();
 		}
+	}
+	
+	
+	public static final int ACCESS_TIMEOUT;
+	
+	public static void checkRegistryAccess(final RMIAddress address) throws RemoteException {
+		Socket socket = null;
+		try {
+			socket = new Socket();
+			try {
+				socket.setSoTimeout(ACCESS_TIMEOUT);
+			}
+			catch (final SocketException e) {}
+			socket.connect(new InetSocketAddress(address.getHostAddress(), address.getPortNum()),
+					ACCESS_TIMEOUT);
+		}
+		catch (final IOException e) {
+			throw new RemoteException("Cannot connect to RMI registry.", e);
+		}
+		finally {
+			if (socket != null && !socket.isClosed()) {
+				try {
+					socket.close();
+				}
+				catch (final IOException e) {}
+			}
+		}
+	}
+	
+	
+	static {
+		int timeout = 15000;
+		String s = System.getProperty("de.walware.ecommons.net.rmiAccessTimeout");
+		if (s != null) {
+			try {
+				timeout = Integer.parseInt(s);
+			} catch (Exception e) {}
+		}
+		ACCESS_TIMEOUT = timeout;
 	}
 	
 }

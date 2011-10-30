@@ -421,7 +421,7 @@ public class RMIUtil {
 				catch (final RemoteException e) {}
 			}
 			return new Status(IStatus.ERROR, ECommons.PLUGIN_ID,
-					MessageFormat.format(Messages.RMI_status_RegistryStartFailed_PortAlreadyUsed_message, address.getPort()) );
+					MessageFormat.format(Messages.RMI_status_RegistryStartFailedPortAlreadyUsed_message, address.getPort()) );
 		}
 		catch (final RemoteException e) {}
 		
@@ -525,7 +525,6 @@ public class RMIUtil {
 		r.process.destroy();
 		return Status.OK_STATUS;
 	}
-	
 	
 	
 	protected void dispose() {

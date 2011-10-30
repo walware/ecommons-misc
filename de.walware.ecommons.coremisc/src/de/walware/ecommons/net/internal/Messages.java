@@ -19,7 +19,7 @@ public class Messages extends NLS {
 	
 	public static String RMI_status_RegistryAlreadyStarted_message;
 	public static String RMI_status_RegistryStartFailed_message;
-	public static String RMI_status_RegistryStartFailed_PortAlreadyUsed_message;
+	public static String RMI_status_RegistryStartFailedPortAlreadyUsed_message;
 	public static String RMI_status_RegistryStartFailedWithExitValue_message;
 	public static String RMI_status_RegistryStopFailedNotFound_message;
 	

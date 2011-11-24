@@ -23,6 +23,7 @@ import org.eclipse.core.filesystem.IFileInfo;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -68,6 +69,8 @@ public class FileValidator implements IValidator {
 	private String fRelativePrefix;
 	private int fRelativeMax = -1;
 	private IPath fRelativePath;
+	private boolean fRequireWorkspace;
+	private boolean fAsWorkspacePath;
 	private Map<Pattern, Integer> fOnPattern;
 	
 	private int fCurrentMax;
@@ -164,7 +167,7 @@ public class FileValidator implements IValidator {
 		fStatus = null;
 	}
 	
-	public void setRelative(final String prefix, int maxSeverity) {
+	public void setRelative(final String prefix, final int maxSeverity) {
 		fRelativePrefix = prefix;
 		if (prefix != null && !prefix.endsWith("/") && !prefix.endsWith("\\")) {
 			fRelativePrefix += '/';
@@ -172,6 +175,13 @@ public class FileValidator implements IValidator {
 		fRelativeMax = maxSeverity;
 		fIgnoreRelative = false;
 		fStatus = null;
+	}
+	
+	public void setRequireWorkspace(final boolean require, final boolean wsPath) {
+		fRequireWorkspace = require;
+		if (require) {
+			fAsWorkspacePath = wsPath;
+		}
 	}
 	
 	/**
@@ -279,38 +289,66 @@ public class FileValidator implements IValidator {
 			if (s.length() == 0) {
 				return createStatus(fOnEmpty, Messages.Resource_error_NoInput_message, null);
 			}
-			final IPath path = new Path(s);
-			if (!path.isAbsolute()) {
-				fRelativePath = path;
-				if (fRelativeMax >= 0 && fRelativeMax < fCurrentMax) {
-					fCurrentMax = fRelativeMax;
-				}
-				if (fIgnoreRelative) {
-					return Status.OK_STATUS;
-				}
-				if (fRelativePrefix != null) {
-					s = fRelativePrefix + s;
-				}
-			}
-			
-			// search efs reference
-			try {
-				fFileStore = FileUtil.getFileStore(s);
-				if (fFileStore == null) {
-					return createStatus(IStatus.ERROR, Messages.Resource_error_NoValidSpecification_message, null);
+			{	final IPath path = new Path(s);
+				if (!path.isAbsolute()) {
+					fRelativePath = path;
+					if (fRelativeMax >= 0 && fRelativeMax < fCurrentMax) {
+						fCurrentMax = fRelativeMax;
+					}
+					if (fIgnoreRelative) {
+						return Status.OK_STATUS;
+					}
+					if (fRelativePrefix != null) {
+						s = fRelativePrefix + s;
+					}
 				}
 			}
-			catch (final CoreException e) {
-				return createStatus(IStatus.ERROR, Messages.Resource_error_NoValidSpecification_message, e.getStatus().getMessage());
+			final IWorkspace workspace = ResourcesPlugin.getWorkspace();
+			if (fAsWorkspacePath) {
+				final int typeMask = ((fOnFile < IStatus.ERROR) ? IResource.FILE : 0) |
+						((fOnDirectory < IStatus.ERROR) ? (IResource.PROJECT | IResource.FOLDER) : 0);
+				final IStatus status = workspace.validatePath(s, typeMask);
+				if (!status.isOK()) {
+					return status;
+				}
+				final IPath path = new Path(s);
+				fWorkspaceResource = workspace.getRoot().findMember(path, true);
+				if (fWorkspaceResource == null) {
+					final IResource project = workspace.getRoot().findMember(path.segment(0), true);
+					if (project == null) {
+						return createStatus(IStatus.ERROR, Messages.Resource_error_NotInWorkspace_message, null);
+					}
+					if (path.segmentCount() == 1 && fOnDirectory < IStatus.ERROR) {
+						fWorkspaceResource = project;
+					}
+					else if (fOnDirectory < fOnFile){
+						fWorkspaceResource = workspace.getRoot().getFolder(path);
+					}
+					else {
+						fWorkspaceResource = workspace.getRoot().getFile(path);
+					}
+				}
 			}
-			
-			// search file in workspace 
-			if (fFileStore != null) {
-				final IResource[] resources = (fFileStore.fetchInfo().isDirectory()) ? 
-						ResourcesPlugin.getWorkspace().getRoot().findContainersForLocationURI(fFileStore.toURI()) :
-						ResourcesPlugin.getWorkspace().getRoot().findFilesForLocationURI(fFileStore.toURI());
-				if (resources.length > 0) {
-					fWorkspaceResource = resources[0];
+			else {
+				// search efs reference
+				try {
+					fFileStore = FileUtil.getFileStore(s);
+					if (fFileStore == null) {
+						return createStatus(IStatus.ERROR, Messages.Resource_error_NoValidSpecification_message, null);
+					}
+				}
+				catch (final CoreException e) {
+					return createStatus(IStatus.ERROR, Messages.Resource_error_NoValidSpecification_message, e.getStatus().getMessage());
+				}
+				
+				// search file in workspace 
+				if (fFileStore != null) {
+					final IResource[] resources = (fFileStore.fetchInfo().isDirectory()) ? 
+							workspace.getRoot().findContainersForLocationURI(fFileStore.toURI()) :
+							workspace.getRoot().findFilesForLocationURI(fFileStore.toURI());
+					if (resources.length > 0) {
+						fWorkspaceResource = resources[0];
+					}
 				}
 			}
 		}
@@ -322,11 +360,14 @@ public class FileValidator implements IValidator {
 			fWorkspaceResource = (IResource) value;
 		}
 		
-		if (fFileStore != null) {
+		if (!fRequireWorkspace && fFileStore != null) {
 			return validateFileStore();
 		}
 		else if (fWorkspaceResource != null) {
 			return validateWorkspaceResource();
+		}
+		else if (fRequireWorkspace) {
+			return createStatus(IStatus.ERROR, Messages.Resource_error_NotInWorkspace_message, null);
 		}
 		else {
 			throw new IllegalArgumentException();

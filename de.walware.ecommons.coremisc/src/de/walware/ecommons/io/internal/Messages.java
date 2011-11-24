@@ -29,6 +29,7 @@ public class Messages {
 	public static String Resource_error_IsFile_message;
 	public static String Resource_error_IsDirectory_message;
 	public static String Resource_error_NotLocal_message;
+	public static String Resource_error_NotInWorkspace_message;
 	
 	public static String FileType_Local_name;
 	public static String FileType_Workspace_name;

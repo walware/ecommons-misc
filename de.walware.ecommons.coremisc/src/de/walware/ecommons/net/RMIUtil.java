@@ -280,7 +280,9 @@ public class RMIUtil {
 					try {
 						final RMIAddress rmiAddress = new RMIAddress(RMIAddress.LOOPBACK, port, null);
 						if (this.embeddedStartSeparate) {
-							status = startSeparateRegistry(rmiAddress, false, StopRule.ALWAYS, this.embeddedClasspathEntries);
+							status = startSeparateRegistry(rmiAddress, false,
+									(this.embeddedPortFrom == this.embeddedPortTo),
+									StopRule.ALWAYS, this.embeddedClasspathEntries );
 							if (status.getSeverity() < IStatus.ERROR) {
 								r = this.registries.get(new Port(port));
 							}
@@ -391,7 +393,12 @@ public class RMIUtil {
 	}
 	
 	
-	public IStatus startSeparateRegistry(RMIAddress address, boolean allowExisting,
+	public IStatus startSeparateRegistry(final RMIAddress address, final boolean allowExisting,
+			final StopRule stopRule, final List<String> classpathEntries) {
+		return startSeparateRegistry(address, allowExisting, false, stopRule, classpathEntries);
+	}
+	private IStatus startSeparateRegistry(RMIAddress address, final boolean allowExisting,
+			final boolean noCheck,
 			final StopRule stopRule, final List<String> classpathEntries) {
 		if (allowExisting && classpathEntries != null && !classpathEntries.isEmpty()) {
 			throw new IllegalArgumentException("allow existing not valid in combination with classpath entries");
@@ -405,30 +412,30 @@ public class RMIUtil {
 				address = new RMIAddress(address, null);
 			} catch (final MalformedURLException e) {}
 		}
-		
-		try {
-			checkRegistryAccess(address);
-			if (allowExisting) {
-				try {
-					final Registry registry = LocateRegistry.getRegistry(address.getHost(), address.getPortNum());
-					registry.list();
-					final Port key = new Port(address.getPortNum());
-					synchronized (this) {
-						if (!this.registries.containsKey(key)) {
-							final ManagedRegistry r = new ManagedRegistry(new RMIRegistry(address, registry, false), StopRule.NEVER);
-							this.registries.put(key, r);
+		if (!noCheck) {
+			try {
+				checkRegistryAccess(address);
+				if (allowExisting) {
+					try {
+						final Registry registry = LocateRegistry.getRegistry(address.getHost(), address.getPortNum());
+						registry.list();
+						final Port key = new Port(address.getPortNum());
+						synchronized (this) {
+							if (!this.registries.containsKey(key)) {
+								final ManagedRegistry r = new ManagedRegistry(new RMIRegistry(address, registry, false), StopRule.NEVER);
+								this.registries.put(key, r);
+							}
 						}
+						return new Status(IStatus.INFO, ECommons.PLUGIN_ID,
+								MessageFormat.format(Messages.RMI_status_RegistryAlreadyStarted_message, address.getPort()) );
 					}
-					return new Status(IStatus.INFO, ECommons.PLUGIN_ID,
-							MessageFormat.format(Messages.RMI_status_RegistryAlreadyStarted_message, address.getPort()) );
+					catch (final RemoteException e) {}
 				}
-				catch (final RemoteException e) {}
+				return new Status(IStatus.ERROR, ECommons.PLUGIN_ID,
+						MessageFormat.format(Messages.RMI_status_RegistryStartFailedPortAlreadyUsed_message, address.getPort()) );
 			}
-			return new Status(IStatus.ERROR, ECommons.PLUGIN_ID,
-					MessageFormat.format(Messages.RMI_status_RegistryStartFailedPortAlreadyUsed_message, address.getPort()) );
+			catch (final RemoteException e) {}
 		}
-		catch (final RemoteException e) {}
-		
 		final Process process;
 		try {
 			final List<String> command = new ArrayList<String>();

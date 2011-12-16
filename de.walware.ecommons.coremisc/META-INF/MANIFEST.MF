@@ -7,6 +7,9 @@ Bundle-Version: 1.1.2.qualifier
 Bundle-Activator: de.walware.ecommons.coreutils.internal.CoreMiscellanyPlugin
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Bundle-NativeCode: lib/win32/x86/ddeclient.dll;osname=win32;processor=x86,
+ lib/win32/x86_64/ddeclient.dll;osname=win32;processor=x86_64,
+ *
 Require-Bundle: org.eclipse.core.runtime;bundle-version="3.6.0",
  org.eclipse.core.filesystem;bundle-version="1.2.0";resolution:=optional,
  org.eclipse.core.resources;resolution:=optional,
@@ -14,9 +17,10 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.6.0",
  org.eclipse.core.databinding;bundle-version="1.2.0";resolution:=optional
 Import-Package: com.ibm.icu.text;version="4.0.1"
 Export-Package: de.walware.ecommons,
- de.walware.ecommons.databinding;version="0.10.0",
  de.walware.ecommons.collections;version="1.0.0",
+ de.walware.ecommons.databinding;version="0.10.0",
  de.walware.ecommons.io,
+ de.walware.ecommons.io.win;version="1.2.0",
  de.walware.ecommons.net;version="1.1.0",
  de.walware.ecommons.preferences,
  de.walware.ecommons.resources;version="0.10.0",

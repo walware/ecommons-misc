@@ -12,11 +12,16 @@
 package de.walware.ecommons.preferences;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
+
+import com.ibm.icu.text.Collator;
+import com.ibm.icu.text.RuleBasedCollator;
 
 import de.walware.ecommons.collections.ConstList;
 
@@ -73,6 +78,12 @@ public abstract class Preference<T> {
 	 */
 	public static final long LONG_DEFAULT_VALUE = 0L;
 	public static final Long LONG_DEFAULT_OBJECT = Long.valueOf(LONG_DEFAULT_VALUE);
+	
+	
+	private static Collator DEFAULT_COLLATOR = Collator.getInstance(Locale.ENGLISH);
+	static {
+		((RuleBasedCollator) DEFAULT_COLLATOR).setUpperCaseFirst(true);
+	}
 	
 	
 /*-- Definition --------------------------------------------------------------*/
@@ -360,7 +371,12 @@ public abstract class Preference<T> {
 			if (s == null || s.length() == 0) {
 				return null;
 			}
-			return Enum.valueOf(fEnumType, s);
+			try {
+				return Enum.valueOf(fEnumType, s);
+			}
+			catch (final IllegalArgumentException e) {
+				return null;
+			}
 		}
 		@Override
 		public String usage2Store(final E value) {
@@ -504,8 +520,8 @@ public abstract class Preference<T> {
 				return ""; //$NON-NLS-1$
 			}
 			final StringBuilder sb = new StringBuilder();
-			for (final String s : array) {
-				sb.append(s);
+			for (int i = 0; i < array.length; i++) {
+				sb.append(array[i]);
 				sb.append(fSeparator);
 			}
 			return sb.substring(0, sb.length()-1);
@@ -541,8 +557,25 @@ public abstract class Preference<T> {
 				return ""; //$NON-NLS-1$
 			}
 			final StringBuilder sb = new StringBuilder();
-			for (final String s : set) {
-				sb.append(s);
+			final String[] array = set.toArray(new String[set.size()]);
+			Arrays.sort(array, DEFAULT_COLLATOR);
+//			{	// Debug
+//				System.out.print(getKey());
+//				System.out.print(" = \"");
+//				int first = 0;
+//				for (int i = 0; i < array.length; i++) {
+//					int thisFirst = Character.toUpperCase(array[i].charAt(0));
+//					if (thisFirst != first) {
+//						first = thisFirst;
+//						System.out.print("\"\n//                  \"");
+//					}
+//					System.out.print(array[i]);
+//					System.out.print(',');
+//				}
+//				System.out.println("\"");
+//			}
+			for (int i = 0; i < array.length; i++) {
+				sb.append(array[i]);
 				sb.append(',');
 			}
 			return sb.substring(0, sb.length()-1);

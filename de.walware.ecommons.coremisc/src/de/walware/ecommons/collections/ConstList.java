@@ -14,6 +14,7 @@ package de.walware.ecommons.collections;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
@@ -32,39 +33,52 @@ import java.util.RandomAccess;
 public final class ConstList<E> implements List<E>, RandomAccess {
 	
 	
-	public static <T> ConstList<T> concat(final ConstList<T> l1, final ConstList<T> l2) {
+	public static <T> ConstList<T> concat(final List<T> l1, final List<T> l2) {
 		final Object[] a = new Object[l1.size() + l2.size()];
-		System.arraycopy(l1.fArray, 0, a, 0, l1.size());
-		System.arraycopy(l2.fArray, 0, a, l1.size(), l2.size());
+		System.arraycopy((l1 instanceof ConstList) ? ((ConstList<?>) l1).fArray : l1.toArray(), 0, a, 0, l1.size());
+		System.arraycopy((l2 instanceof ConstList) ? ((ConstList<?>) l2).fArray : l2.toArray(), 0, a, l1.size(), l2.size());
 		return new ConstList<T>((T[]) a);
 	}
 	
-	public static <T> ConstList<T> concat(final T e1, final ConstList<T> l2) {
+	public static <T> ConstList<T> concat(final List<T> l1, final List<T> l2, final List<T> l3) {
+		final Object[] a = new Object[l1.size() + l2.size() + l3.size()];
+		int n;
+		System.arraycopy((l1 instanceof ConstList) ? ((ConstList<?>) l1).fArray : l1.toArray(), 0, a, 0, l1.size());
+		System.arraycopy((l2 instanceof ConstList) ? ((ConstList<?>) l2).fArray : l2.toArray(), 0, a, n = l1.size(), l2.size());
+		System.arraycopy((l3 instanceof ConstList) ? ((ConstList<?>) l3).fArray : l3.toArray(), 0, a, n + l2.size(), l3.size());
+		return new ConstList<T>((T[]) a);
+	}
+	
+	public static <T> ConstList<T> concat(final T e1, final List<T> l2) {
 		final Object[] a = new Object[1 + l2.size()];
 		a[0] = e1;
-		System.arraycopy(l2.fArray, 0, a, 1, l2.size());
+		System.arraycopy((l2 instanceof ConstList) ? ((ConstList<?>) l2).fArray : l2.toArray(), 0, a, 1, l2.size());
 		return new ConstList<T>((T[]) a);
 	}
 	
-	public static <T> ConstList<T> concat(final ConstList<T> l1, final T e2) {
+	public static <T> ConstList<T> concat(final List<T> l1, final T e2) {
 		final Object[] a = new Object[l1.size() + 1];
-		System.arraycopy(l1.fArray, 0, a, 0, l1.size());
+		System.arraycopy((l1 instanceof ConstList) ? ((ConstList<?>) l1).fArray : l1.toArray(), 0, a, 0, l1.size());
 		a[l1.size()] = e2;
 		return new ConstList<T>((T[]) a);
 	}
 	
-	public static <T> ConstList<T> concat(final Object[] a1, final ConstList<T> l2) {
+	public static <T> ConstList<T> concat(final Object[] a1, final List<T> l2) {
 		final Object[] a = new Object[a1.length + l2.size()];
 		System.arraycopy(a1, 0, a, 0, a1.length);
-		System.arraycopy(l2.fArray, 0, a, a1.length, l2.size());
+		System.arraycopy((l2 instanceof ConstList) ? ((ConstList<?>) l2).fArray : l2.toArray(), 0, a, a1.length, l2.size());
 		return new ConstList<T>((T[]) a);
 	}
 	
-	public static <T> ConstList<T> concat(final ConstList<T> l1, final Object[] a2) {
+	public static <T> ConstList<T> concat(final List<T> l1, final Object[] a2) {
 		final Object[] a = new Object[l1.size() + a2.length];
-		System.arraycopy(l1.fArray, 0, a, 0, l1.size());
+		System.arraycopy((l1 instanceof ConstList) ? ((ConstList<?>) l1).fArray : l1.toArray(), 0, a, 0, l1.size());
 		System.arraycopy(a2, 0, a, l1.size(), a2.length);
 		return new ConstList<T>((T[]) a);
+	}
+	
+	public static <T> void sort(final ConstList<T> list, final Comparator<? super T> comparator) {
+		Arrays.sort(list.fArray, comparator);
 	}
 	
 	

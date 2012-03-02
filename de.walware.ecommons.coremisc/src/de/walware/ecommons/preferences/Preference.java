@@ -161,12 +161,15 @@ public abstract class Preference<T> {
 	 * Default separator for list preferences
 	 */
 	public static final char LIST_SEPARATOR_CHAR = ',';
-	private static final Pattern LIST_SEPARATOR_PATTERN = Pattern.compile(","); //$NON-NLS-1$
+	protected static final Pattern LIST_SEPARATOR_PATTERN = Pattern.compile(","); //$NON-NLS-1$
 	/**
 	 * Separator for file list preferences
 	 */
 	public static final char IS2_SEPARATOR_CHAR = '\u001e';
-	private static final Pattern IS2_SEPARATOR_PATTERN = Pattern.compile("\u001e"); //$NON-NLS-1$ 
+	protected static final Pattern IS2_SEPARATOR_PATTERN = Pattern.compile("\u001e"); //$NON-NLS-1$ 
+	
+	public static final char IS1_SEPARATOR_CHAR = '\u001f';
+	protected static final Pattern IS1_SEPARATOR_PATTERN = Pattern.compile("\u001f"); //$NON-NLS-1$ 
 	
 	
 	/**

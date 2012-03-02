@@ -12,6 +12,7 @@
 package de.walware.ecommons.preferences;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
@@ -84,9 +85,9 @@ public class PreferencesUtil {
 	private static class MapImpl implements IPreferenceAccess {
 		
 		
-		private final Map<Preference, Object> fPreferencesMap;
+		private final Map<Preference<?>, Object> fPreferencesMap;
 		
-		MapImpl(final Map<Preference, Object> preferencesMap) {
+		MapImpl(final Map<Preference<?>, Object> preferencesMap) {
 			fPreferencesMap = preferencesMap;
 		}
 		
@@ -136,7 +137,8 @@ public class PreferencesUtil {
 		return DEFAULT_PREFS;
 	}
 	
-	public static IPreferenceAccess createAccess(final Map<Preference, Object> preferencesMap) {
+	
+	public static IPreferenceAccess createAccess(final Map<Preference<?>, Object> preferencesMap) {
 		return new MapImpl(preferencesMap);
 	}
 	
@@ -145,7 +147,6 @@ public class PreferencesUtil {
 	}
 	
 	
-	@SuppressWarnings("unchecked")
 	public static <T> T getPrefValue(final IScopeContext[] contexts, final Preference<T> key) {
 		Object storedValue = null;
 		for (int i = 0; i < contexts.length && storedValue == null; i++) {
@@ -194,13 +195,13 @@ public class PreferencesUtil {
 		setPrefValue(node, key, value);
 	}
 	
-	@SuppressWarnings("unchecked")
-	public static void setPrefValues(final IScopeContext context, final Map<Preference, Object> preferencesMap) {
-		for (final Map.Entry<Preference, Object> pref : preferencesMap.entrySet()) {
-			setPrefValue(context, pref.getKey(), pref.getValue());
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public static void setPrefValues(final IScopeContext context, final Map<Preference<?>, Object> preferencesMap) {
+		for (final Map.Entry<Preference<?>, Object> pref : preferencesMap.entrySet()) {
+			setPrefValue(context, (Preference) pref.getKey(), pref.getValue());
 		}
 	}
-		
+	
 	private static <T> void setPrefValue(final IEclipsePreferences node, final Preference<T> key, final T value) {
 		if (value == null) {
 			node.remove(key.getKey());

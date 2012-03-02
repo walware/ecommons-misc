@@ -50,15 +50,15 @@ public abstract class AbstractPreferencesModelObject extends AbstractSettingsMod
 	 * @param map
 	 * @return the same map.
 	 */
-	public abstract Map<Preference, Object> deliverToPreferencesMap(Map<Preference, Object> map);
+	public abstract Map<Preference<?>, Object> deliverToPreferencesMap(Map<Preference<?>, Object> map);
 	
 	/**
 	 * Return map with all preferences (definition and settings)
 	 * 
 	 * @return new created map.
 	 */
-	public Map<Preference, Object> toPreferencesMap() {
-		return deliverToPreferencesMap(new HashMap<Preference, Object>());
+	public Map<Preference<?>, Object> toPreferencesMap() {
+		return deliverToPreferencesMap(new HashMap<Preference<?>, Object>());
 	}
 	
 }

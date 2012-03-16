@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009-2012 WalWare/StatET-Project (www.walware.de/goto/statet)
+ * Copyright (c) 2007-2012 WalWare/StatET-Project (www.walware.de/goto/statet)
  * and others. All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,42 +11,39 @@
 
 package de.walware.ecommons.databinding;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 import org.eclipse.core.databinding.validation.IValidator;
 import org.eclipse.core.databinding.validation.ValidationStatus;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.osgi.util.NLS;
 
 
 /**
- * Simple validator to make sure the string value is not empty
+ * Validator for URLs.
  */
-public class NotEmptyValidator implements IValidator {
+public class URLValidator implements IValidator {
 	
 	
-	private final String fMessage;
-	
-	private final IValidator fNested;
+	private final String fLabel;
 	
 	
-	public NotEmptyValidator(final String message) {
-		fMessage = message;
-		fNested = null;
-	}
-	
-	public NotEmptyValidator(final String label, final IValidator validator) {
-		fMessage = NLS.bind("{0} is missing.", label);
-		fNested = validator;
+	public URLValidator(final String label) {
+		fLabel = label;
 	}
 	
 	
 	public IStatus validate(final Object value) {
 		if (value instanceof String) {
-			final String s = ((String) value).trim();
-			if (s.length() > 0) {
-				return (fNested != null) ? fNested.validate(value) : ValidationStatus.ok();
+			try {
+				new URL((String) value);
+				return ValidationStatus.ok();
+			}
+			catch (final MalformedURLException e) {
+				return ValidationStatus.error(fLabel + " is invalid: " + e.getLocalizedMessage());
 			}
 		}
-		return ValidationStatus.error(fMessage);
+		throw new IllegalStateException("Unsupported value type: " + value.getClass().toString());
 	}
 	
 }

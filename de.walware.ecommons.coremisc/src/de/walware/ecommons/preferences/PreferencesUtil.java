@@ -202,7 +202,7 @@ public class PreferencesUtil {
 		}
 	}
 	
-	private static <T> void setPrefValue(final IEclipsePreferences node, final Preference<T> key, final T value) {
+	public static <T> void setPrefValue(final IEclipsePreferences node, final Preference<T> key, final T value) {
 		if (value == null) {
 			node.remove(key.getKey());
 			return;

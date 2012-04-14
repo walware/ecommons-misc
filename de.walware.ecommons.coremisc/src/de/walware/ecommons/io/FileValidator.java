@@ -73,6 +73,8 @@ public class FileValidator implements IValidator {
 	private boolean fAsWorkspacePath;
 	private Map<Pattern, Integer> fOnPattern;
 	
+	private IValidator fFileStoreValidator;
+	
 	private int fCurrentMax;
 	
 	
@@ -209,6 +211,10 @@ public class FileValidator implements IValidator {
 		return -1;
 	}
 	
+	public void setFileStoreValidator(IValidator validator) {
+		fFileStoreValidator = validator;
+	}
+	
 	public void setResourceLabel(final String label) {
 		fResourceLabel = " '" + label + "' "; //$NON-NLS-1$ //$NON-NLS-2$
 	}
@@ -228,7 +234,7 @@ public class FileValidator implements IValidator {
 	
 	public IStatus validate(final Object value) {
 		if (!checkExplicit()) {
-			doValidate(value);
+			doValidateChecked(value);
 		}
 		return fStatus;
 	}
@@ -236,18 +242,25 @@ public class FileValidator implements IValidator {
 	private boolean checkExplicit() {
 		if (fExplicitObject != null) {
 			if (fStatus == null) {
-				doValidate(fExplicitObject);
+				doValidateChecked(fExplicitObject);
 			}
 			return true;
 		}
 		return false;
 	}
 	
-	private void doValidate(final Object value) {
+	private void doValidateChecked(final Object value) {
 		if (!fInCheck) {
 			fInCheck = true;
 			try {
-				fStatus = doValidate1(value);
+				IStatus status = doValidate1(value);
+				if (status.getSeverity() < IStatus.ERROR && fFileStoreValidator != null) {
+					IStatus status2 = fFileStoreValidator.validate(getFileStore());
+					if (status2 != null && status2.getSeverity() > status.getSeverity()) {
+						status = status2;
+					}
+				}
+				fStatus = status;
 			}
 			catch (final Exception e) {
 				CoreMiscellanyPlugin.getDefault().log(new Status(IStatus.ERROR, ECommons.PLUGIN_ID, -1,

@@ -6,6 +6,7 @@ Bundle-SymbolicName: de.walware.ecommons.coremisc;singleton:=true
 Bundle-Version: 1.2.0.qualifier
 Bundle-Activator: de.walware.ecommons.coreutils.internal.CoreMiscellanyPlugin
 Bundle-ActivationPolicy: lazy
+Bundle-Localization: plugin
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Bundle-NativeCode: lib/win32/x86/ddeclient.dll;osname=win32;processor=x86,
  lib/win32/x86_64/ddeclient.dll;osname=win32;processor=x86_64,

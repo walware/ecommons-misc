@@ -19,4 +19,14 @@
          name="Classpath contributions for an application RMI registry"
          schema="schema/net.rmi.eRegistryClasspath.exsd"/>
    
+   <extension
+         point="org.eclipse.core.variables.valueVariables">
+      <variable
+            name="user_home"
+            description="%variables_UserHome_description"
+            initializerClass="de.walware.ecommons.variables.internal.UserHomeVariableInitializer"
+            readOnly="true">
+      </variable>
+   </extension>
+   
 </plugin>

@@ -11,7 +11,9 @@
 
 package de.walware.ecommons.variables.core;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.variables.IDynamicVariable;
+import org.eclipse.core.variables.IDynamicVariableResolver;
 import org.eclipse.core.variables.IStringVariable;
 
 
@@ -27,6 +29,73 @@ public abstract class DynamicVariable extends StringVariable implements IDynamic
 		public LocationVariable(final IStringVariable variable) {
 			super(variable);
 		}
+		
+	}
+	
+	public static class ResolverVariable extends DynamicVariable {
+		
+		
+		private final IDynamicVariableResolver fResolver;
+		
+		
+		public ResolverVariable(final IStringVariable variable, final IDynamicVariableResolver resolver) {
+			super(variable);
+			
+			fResolver = resolver;
+		}
+		
+		
+		public String getValue(final String argument) throws CoreException {
+			return fResolver.resolveValue(this, argument);
+		}
+		
+	}
+	
+	public static class StaticVariable extends DynamicVariable {
+		
+		
+		private final String fValue;
+		
+		
+		public StaticVariable(final IStringVariable variable, final String value) {
+			super(variable);
+			fValue = value;
+		}
+		
+		
+		@Override
+		public boolean supportsArgument() {
+			return false;
+		}
+		
+		public String getValue(final String argument) throws CoreException {
+			return fValue;
+		}
+		
+		
+	}
+	
+	public static class UnresolvedVariable extends DynamicVariable {
+		
+		
+		private final CoreException fException;
+		
+		
+		public UnresolvedVariable(final IStringVariable variable, final CoreException exception) {
+			super(variable);
+			fException = exception;
+		}
+		
+		
+		@Override
+		public boolean supportsArgument() {
+			return false;
+		}
+		
+		public String getValue(final String argument) throws CoreException {
+			throw fException;
+		}
+		
 		
 	}
 	

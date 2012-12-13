@@ -11,12 +11,14 @@
 
 package de.walware.ecommons.ts;
 
+import org.eclipse.core.runtime.IAdaptable;
+
 
 /**
  * Central handler for a tool.
  * It provides access to its properties and the queue.
  */
-public interface ITool {
+public interface ITool extends IAdaptable {
 	
 	/**
 	 * Constant for {@link #getLabel(int)} for the default label

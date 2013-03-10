@@ -3,7 +3,7 @@
 
 <target name="all">
 	<locations>
-		<location includeAllPlatforms="false" includeMode="slicer" includeSource="false"
+		<location includeAllPlatforms="false" includeMode="planner" includeConfigurePhase="false" includeSource="false"
 				type="InstallableUnit">
 			<repository location="http://download.eclipse.org/releases/helios"/>
 			<unit id="org.eclipse.platform.feature.group"

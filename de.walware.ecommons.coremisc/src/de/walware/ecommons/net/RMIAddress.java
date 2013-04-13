@@ -90,7 +90,7 @@ public class RMIAddress {
 	static {
 		InetAddress loopbackAddress;
 		try {
-			loopbackAddress = InetAddress.getByAddress("localhost", new byte[] { 127, 0, 0, 1 }); //$NON-NLS-1$
+			loopbackAddress = InetAddress.getByName(null);
 		}
 		catch (final UnknownHostException e) {
 			loopbackAddress = null;
@@ -207,14 +207,19 @@ public class RMIAddress {
 	}
 	
 	public boolean isLocalHost() {
-		InetAddress localhost;
+		if (this.hostAddress.isLoopbackAddress()) {
+			return true;
+		}
 		try {
-			localhost = InetAddress.getLocalHost();
+			final InetAddress localhost = InetAddress.getLocalHost();
+			if (this.hostAddress.equals(localhost)) {
+				return true;
+			}
 		}
-		catch (final UnknownHostException e) {
-			localhost = null;
-		}
-		return (this.hostAddress.isLoopbackAddress() || this.hostAddress.equals(localhost));
+		catch (final UnknownHostException e) {}
+		catch (final ArrayIndexOutOfBoundsException e) { /* JVM bug */ }
+		
+		return false;
 	}
 	
 	/**

@@ -1,24 +1,24 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!-- Schema file written by PDE -->
-<schema targetNamespace="de.walware.ecommons.coremisc" xmlns="http://www.w3.org/2001/XMLSchema">
+<schema targetNamespace="de.walware.ecommons.net" xmlns="http://www.w3.org/2001/XMLSchema">
 <annotation>
       <appinfo>
-         <meta.schema plugin="de.walware.ecommons.coremisc" id="de.walware.ecommons.net.rmi.eRegistryClasspath" name="Classpath contributions for an application RMI registry"/>
+         <meta.schema plugin="de.walware.ecommons.coremisc" id="de.walware.ecommons.net.rmi.eRegistry" name="Contributions for an application RMI registry"/>
       </appinfo>
       <documentation>
-         This extension-point allows contributions to the classpath of the RMI registry managed by the application.
+         This extension-point allows contributions to the codebase of the RMI registry managed by the application.
       </documentation>
    </annotation>
 
    <element name="extension">
       <annotation>
          <appinfo>
-            <meta.element deprecated="true" />
+            <meta.element />
          </appinfo>
       </annotation>
       <complexType>
          <choice minOccurs="1" maxOccurs="unbounded">
-            <element ref="plugin"/>
+            <element ref="codebaseEntry"/>
          </choice>
          <attribute name="point" type="string" use="required">
             <annotation>
@@ -47,10 +47,10 @@
       </complexType>
    </element>
 
-   <element name="plugin">
+   <element name="codebaseEntry">
       <annotation>
          <documentation>
-            Addition of a plug-in (jar or directory root) to the classpath
+            Addition of a plug-in (jar or directory root) to the codebase
          </documentation>
       </annotation>
       <complexType>
@@ -69,7 +69,7 @@
          <meta.section type="since"/>
       </appinfo>
       <documentation>
-         1.1
+         1.5
       </documentation>
    </annotation>
 

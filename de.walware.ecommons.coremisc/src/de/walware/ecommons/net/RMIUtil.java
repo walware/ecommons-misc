@@ -123,6 +123,7 @@ public class RMIUtil {
 	private static final int EMBEDDED_PORT_TO_DEFAULT = EMBEDDED_PORT_FROM_DEFAULT + 100;
 	
 	private static final String CLASSPATH_EXTENSIONPOINT_ID = "de.walware.ecommons.net.rmi.eRegistryClasspath"; //$NON-NLS-1$
+	private static final String EXTENSIONPOINT_ID = "de.walware.ecommons.net.rmi.eRegistry"; //$NON-NLS-1$
 	
 	public static final RMIUtil INSTANCE = new RMIUtil(true);
 	
@@ -136,8 +137,8 @@ public class RMIUtil {
 	private boolean embeddedSSL = false;
 	private ManagedRegistry embeddedRegistry;
 	private final List<ManagedRegistry> embeddedRegistries = new ArrayList<RMIUtil.ManagedRegistry>(4);
-	private List<String> embeddedClasspathEntries;
-	private boolean embeddedClasspathLoadContrib;
+	private List<String> embeddedCodebaseEntries;
+	private boolean embeddedCodebaseLoadContrib;
 	
 	
 	private RMIUtil() {
@@ -150,8 +151,8 @@ public class RMIUtil {
 		embeddedPortFrom = EMBEDDED_PORT_FROM_DEFAULT;
 		embeddedPortTo = EMBEDDED_PORT_TO_DEFAULT;
 		if (instance) {
-			embeddedClasspathLoadContrib = true;
-			String s = System.getProperty("de.walware.ecommons.net.rmi.eRegistryPortrange");
+			embeddedCodebaseLoadContrib = true;
+			String s = System.getProperty("de.walware.ecommons.net.rmi.eRegistryPortrange"); //$NON-NLS-1$
 			if (s != null && s.length() > 0) {
 				final String from;
 				final String to;
@@ -265,14 +266,33 @@ public class RMIUtil {
 		}
 	}
 	
-	public void addEmbeddedClasspathEntry(final String entry) {
-		synchronized (this.embeddedLock) {
-			if (this.embeddedClasspathEntries == null) {
-				this.embeddedClasspathEntries = new ArrayList<String>();
+	@Deprecated
+	public void addEmbeddedClasspathEntry(String entry) {
+		if (entry.isEmpty()) {
+			return;
+		}
+		if (!entry.startsWith("file:")) { //$NON-NLS-1$
+			if (entry.charAt(0) == '/') {
+				entry = "file://" + entry; //$NON-NLS-1$
 			}
-			if (!this.embeddedClasspathEntries.contains(entry)) {
+			else {
+				entry = "file:///" + entry; //$NON-NLS-1$
+			}
+		}
+		addEmbeddedCodebaseEntry(entry);
+	}
+	
+	public void addEmbeddedCodebaseEntry(final String entry) {
+		if (entry.indexOf(':') < 0) {
+			throw new IllegalArgumentException("entry: missing schema"); //$NON-NLS-1$
+		}
+		synchronized (this.embeddedLock) {
+			if (this.embeddedCodebaseEntries == null) {
+				this.embeddedCodebaseEntries = new ArrayList<String>();
+			}
+			if (!this.embeddedCodebaseEntries.contains(entry)) {
 				this.embeddedRegistry = null;
-				this.embeddedClasspathEntries.add(entry);
+				this.embeddedCodebaseEntries.add(entry);
 			}
 		}
 	}
@@ -306,8 +326,8 @@ public class RMIUtil {
 				
 				monitor.beginTask("Starting registry (RMI)...", IProgressMonitor.UNKNOWN);
 				
-				if (this.embeddedClasspathLoadContrib && this.embeddedStartSeparate) {
-					loadClasspathContrib();
+				if (this.embeddedCodebaseLoadContrib && this.embeddedStartSeparate) {
+					loadCodebaseContrib();
 				}
 				
 				int loop = 1;
@@ -321,7 +341,7 @@ public class RMIUtil {
 						if (this.embeddedStartSeparate) {
 							status = startSeparateRegistry(rmiAddress, false,
 									(this.embeddedPortFrom == this.embeddedPortTo),
-									StopRule.ALWAYS, this.embeddedClasspathEntries );
+									StopRule.ALWAYS, this.embeddedCodebaseEntries );
 							if (status.getSeverity() < IStatus.ERROR) {
 								r = this.registries.get(new Port(port));
 							}
@@ -387,51 +407,58 @@ public class RMIUtil {
 		}
 	}
 	
-	private void loadClasspathContrib() {
-		final IConfigurationElement[] elements = RegistryFactory.getRegistry()
-					.getConfigurationElementsFor(CLASSPATH_EXTENSIONPOINT_ID);
+	private void loadCodebaseContrib() {
 		final List<String> pluginIds = new ArrayList<String>();
+		collectPluginIds(EXTENSIONPOINT_ID, "codebaseEntry", pluginIds); //$NON-NLS-1$
+		collectPluginIds(CLASSPATH_EXTENSIONPOINT_ID, "plugin", pluginIds); //$NON-NLS-1$
+		
+		if (this.embeddedCodebaseEntries == null) {
+			this.embeddedCodebaseEntries = new ArrayList<String>(pluginIds.size()+2);
+		}
+		for (final String pluginId : pluginIds) {
+			final Bundle pluginBundle = Platform.getBundle(pluginId);
+			if (pluginBundle != null) {
+				addCodebasePath(pluginBundle, this.embeddedCodebaseEntries);
+				final Bundle[] fragments = Platform.getFragments(pluginBundle);
+				if (fragments != null) {
+					for (final Bundle fragmentBundle : fragments) {
+						addCodebasePath(fragmentBundle, this.embeddedCodebaseEntries);
+					}
+				}
+			}
+		}
+		this.embeddedCodebaseLoadContrib = false;
+	}
+	
+	private void collectPluginIds(final String extensionPointId, final String entryId,
+			final List<String> pluginIds) {
+		final IConfigurationElement[] elements = RegistryFactory.getRegistry()
+				.getConfigurationElementsFor(extensionPointId);
 		for (IConfigurationElement element : elements) {
-			if (element.getName().equals("plugin")) {
-				final String pluginId = element.getAttribute("pluginId");
+			if (element.getName().equals(entryId)) {
+				final String pluginId = element.getAttribute("pluginId"); //$NON-NLS-1$
 				if (pluginId != null && pluginId.length() > 0
 						&& !pluginIds.contains(pluginId)) {
 					pluginIds.add(pluginId);
 				}
 			}
 		}
-		if (this.embeddedClasspathEntries == null) {
-			this.embeddedClasspathEntries = new ArrayList<String>(pluginIds.size()+2);
-		}
-		for (final String pluginId : pluginIds) {
-			final Bundle pluginBundle = Platform.getBundle(pluginId);
-			if (pluginBundle != null) {
-				addPath(pluginBundle, this.embeddedClasspathEntries);
-				final Bundle[] fragments = Platform.getFragments(pluginBundle);
-				if (fragments != null) {
-					for (final Bundle fragmentBundle : fragments) {
-						addPath(fragmentBundle, this.embeddedClasspathEntries);
-					}
-				}
-			}
-		}
-		this.embeddedClasspathLoadContrib = false;
 	}
 	
-	private static void addPath(final Bundle bundle, final List<String> classpath) {
+	private static void addCodebasePath(final Bundle bundle, final List<String> entries) {
 		try {
-			String s = FileLocator.resolve(bundle.getEntry("/")).toExternalForm();
-			if (s.startsWith("jar:") && s.endsWith("!/")) {
+			String s = FileLocator.resolve(bundle.getEntry("/")).toExternalForm(); //$NON-NLS-1$
+			if (s.startsWith("jar:") && s.endsWith("!/")) { //$NON-NLS-1$ //$NON-NLS-2$
 				s = s.substring(4, s.length()-2);
 			}
-			if (s.startsWith("file:")) {
-				s = s.substring(5);
+			if (Platform.inDevelopmentMode() && s.endsWith("/")) { //$NON-NLS-1$
+				final String bin = s + "bin/"; //$NON-NLS-1$
+				if (!entries.contains(bin)) {
+					entries.add(bin);
+				}
 			}
-			if (Platform.inDevelopmentMode() && s.endsWith("/") && !classpath.contains(s+"bin/")) {
-				classpath.add(s+"bin/");
-			}
-			if (!classpath.contains(s)) {
-				classpath.add(s);
+			if (!entries.contains(s)) {
+				entries.add(s);
 			}
 			return;
 		}
@@ -442,18 +469,18 @@ public class RMIUtil {
 	
 	
 	public IStatus startSeparateRegistry(final RMIAddress address, final boolean allowExisting,
-			final StopRule stopRule, final List<String> classpathEntries) {
-		return startSeparateRegistry(address, allowExisting, false, stopRule, classpathEntries);
+			final StopRule stopRule, final List<String> codebaseEntries) {
+		return startSeparateRegistry(address, allowExisting, false, stopRule, codebaseEntries);
 	}
 	private IStatus startSeparateRegistry(RMIAddress address, final boolean allowExisting,
 			final boolean noCheck,
-			final StopRule stopRule, final List<String> classpathEntries) {
-		if (allowExisting && classpathEntries != null && !classpathEntries.isEmpty()) {
-			throw new IllegalArgumentException("allow existing not valid in combination with classpath entries");
+			final StopRule stopRule, final List<String> codebaseEntries) {
+		if (allowExisting && codebaseEntries != null && !codebaseEntries.isEmpty()) {
+			throw new IllegalArgumentException("allow existing not valid in combination with codebase entries");
 		}
 		final InetAddress hostAddress = address.getHostAddress();
 		if (!(hostAddress.isLinkLocalAddress() || hostAddress.isLoopbackAddress())) {
-			throw new IllegalArgumentException("address not local");
+			throw new IllegalArgumentException("address: not local"); //$NON-NLS-1$
 		}
 		if (address.getName() != null) {
 			try {
@@ -494,20 +521,19 @@ public class RMIUtil {
 			sb.append(File.separator).append("rmiregistry"); //$NON-NLS-1$
 			command.add(sb.toString());
 			command.add(address.getPort());
-			if (classpathEntries != null && !classpathEntries.isEmpty()) {
-				command.add("-J-classpath");
+			if (codebaseEntries != null && !codebaseEntries.isEmpty()) {
 				sb.setLength(0);
-				sb.append("-J");
-				sb.append(classpathEntries.get(0));
-				for (int i = 1; i < classpathEntries.size(); i++) {
-					sb.append(File.pathSeparatorChar);
-					sb.append(classpathEntries.get(i));
+				sb.append("-J-Djava.rmi.server.codebase="); //$NON-NLS-1$
+				sb.append(codebaseEntries.get(0));
+				for (int i = 1; i < codebaseEntries.size(); i++) {
+					sb.append(' ');
+					sb.append(codebaseEntries.get(i));
 				}
 				command.add(sb.toString());
 			}
 			if (address.getHost() != null) {
 				sb.setLength(0);
-				sb.append("-J-Djava.rmi.server.hostname=");
+				sb.append("-J-Djava.rmi.server.hostname="); //$NON-NLS-1$
 				sb.append(address.getHost());
 				command.add(sb.toString());
 			}

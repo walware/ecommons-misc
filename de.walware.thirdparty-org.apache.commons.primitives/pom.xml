@@ -7,7 +7,7 @@
 	<parent>
 		<groupId>de.walware.ecommons</groupId>
 		<artifactId>ecommons-coremisc</artifactId>
-		<version>1.4-SNAPSHOT</version>
+		<version>1.5-SNAPSHOT</version>
 		<relativePath>../de.walware.ecommons.coremisc-build</relativePath>
 	</parent>
 	

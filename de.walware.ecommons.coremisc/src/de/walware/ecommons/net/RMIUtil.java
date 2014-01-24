@@ -1,13 +1,13 @@
-/*******************************************************************************
- * Copyright (c) 2009-2013 WalWare/StatET-Project (www.walware.de/goto/statet)
- * and others. All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- * 
- * Contributors:
- *     Stephan Wahlbrink - initial API and implementation
- *******************************************************************************/
+/*=============================================================================#
+ # Copyright (c) 2009-2014 Stephan Wahlbrink (WalWare.de) and others.
+ # All rights reserved. This program and the accompanying materials
+ # are made available under the terms of the Eclipse Public License v1.0
+ # which accompanies this distribution, and is available at
+ # http://www.eclipse.org/legal/epl-v10.html
+ # 
+ # Contributors:
+ #     Stephan Wahlbrink - initial API and implementation
+ #=============================================================================*/
 
 package de.walware.ecommons.net;
 
@@ -152,7 +152,7 @@ public class RMIUtil {
 		embeddedPortTo = EMBEDDED_PORT_TO_DEFAULT;
 		if (instance) {
 			embeddedCodebaseLoadContrib = true;
-			String s = System.getProperty("de.walware.ecommons.net.rmi.eRegistryPortrange"); //$NON-NLS-1$
+			final String s = System.getProperty("de.walware.ecommons.net.rmi.eRegistryPortrange"); //$NON-NLS-1$
 			if (s != null && s.length() > 0) {
 				final String from;
 				final String to;
@@ -183,6 +183,7 @@ public class RMIUtil {
 	
 	protected void initDispose() {
 		ECommons.getEnv().addStoppingListener(new IDisposable() {
+			@Override
 			public void dispose() {
 				RMIUtil.this.dispose();
 			}
@@ -312,9 +313,9 @@ public class RMIUtil {
 				if (this.embeddedRegistry != null) {
 					return this.embeddedRegistry.registry;
 				}
-				for (Iterator<ManagedRegistry> iter = this.embeddedRegistries.iterator(); iter.hasNext();) {
+				for (final Iterator<ManagedRegistry> iter = this.embeddedRegistries.iterator(); iter.hasNext();) {
 					r = iter.next();
-					RMIAddress address = r.registry.getAddress();
+					final RMIAddress address = r.registry.getAddress();
 					if (address.getPortNum() >= this.embeddedPortFrom && address.getPortNum() <= this.embeddedPortTo
 							&& address.isSSL() == this.embeddedSSL
 							&& this.embeddedStartSeparate == (r.process != null) ) {
@@ -434,7 +435,7 @@ public class RMIUtil {
 			final List<String> pluginIds) {
 		final IConfigurationElement[] elements = RegistryFactory.getRegistry()
 				.getConfigurationElementsFor(extensionPointId);
-		for (IConfigurationElement element : elements) {
+		for (final IConfigurationElement element : elements) {
 			if (element.getName().equals(entryId)) {
 				final String pluginId = element.getAttribute("pluginId"); //$NON-NLS-1$
 				if (pluginId != null && pluginId.length() > 0
@@ -670,11 +671,11 @@ public class RMIUtil {
 	
 	static {
 		int timeout = 15000;
-		String s = System.getProperty("de.walware.ecommons.net.rmi.accessTimeout");
+		final String s = System.getProperty("de.walware.ecommons.net.rmi.accessTimeout");
 		if (s != null) {
 			try {
 				timeout = Integer.parseInt(s);
-			} catch (Exception e) {}
+			} catch (final Exception e) {}
 		}
 		ACCESS_TIMEOUT = timeout;
 	}

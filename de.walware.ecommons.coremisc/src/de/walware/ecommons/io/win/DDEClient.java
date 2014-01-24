@@ -1,14 +1,14 @@
-/*******************************************************************************
- * Copyright (c) 2004-2013 TeXlipse Project (texlipse.sourceforge.net)
- * and others. All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- * 
- * Contributors:
- *     Tor Arne Vestbø - initial API and implementation
- *     Stephan Wahlbrink - adapted to ECommons and OSGi
- *******************************************************************************/
+/*=============================================================================#
+ # Copyright (c) 2004-2014 TeXlipse Project (texlipse.sf.net) and others.
+ # All rights reserved. This program and the accompanying materials
+ # are made available under the terms of the Eclipse Public License v1.0
+ # which accompanies this distribution, and is available at
+ # http://www.eclipse.org/legal/epl-v10.html
+ # 
+ # Contributors:
+ #     Tor Arne Vestbø - initial API and implementation
+ #     Stephan Wahlbrink - adapted to ECommons and OSGi
+ #=============================================================================*/
 
 package de.walware.ecommons.io.win;
 

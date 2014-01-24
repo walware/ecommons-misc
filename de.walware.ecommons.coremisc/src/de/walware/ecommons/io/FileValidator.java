@@ -1,13 +1,13 @@
-/*******************************************************************************
- * Copyright (c) 2007-2013 WalWare/StatET-Project (www.walware.de/goto/statet)
- * and others. All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- * 
- * Contributors:
- *     Stephan Wahlbrink - initial API and implementation
- *******************************************************************************/
+/*=============================================================================#
+ # Copyright (c) 2007-2014 Stephan Wahlbrink (WalWare.de) and others.
+ # All rights reserved. This program and the accompanying materials
+ # are made available under the terms of the Eclipse Public License v1.0
+ # which accompanies this distribution, and is available at
+ # http://www.eclipse.org/legal/epl-v10.html
+ # 
+ # Contributors:
+ #     Stephan Wahlbrink - initial API and implementation
+ #=============================================================================*/
 
 package de.walware.ecommons.io;
 
@@ -211,7 +211,7 @@ public class FileValidator implements IValidator {
 		return -1;
 	}
 	
-	public void setFileStoreValidator(IValidator validator) {
+	public void setFileStoreValidator(final IValidator validator) {
 		fFileStoreValidator = validator;
 	}
 	
@@ -232,6 +232,7 @@ public class FileValidator implements IValidator {
 		fExplicitObject = value;
 	}
 	
+	@Override
 	public IStatus validate(final Object value) {
 		if (!checkExplicit()) {
 			doValidateChecked(value);
@@ -255,7 +256,7 @@ public class FileValidator implements IValidator {
 			try {
 				IStatus status = doValidate1(value);
 				if (status.getSeverity() < IStatus.ERROR && fFileStoreValidator != null) {
-					IStatus status2 = fFileStoreValidator.validate(getFileStore());
+					final IStatus status2 = fFileStoreValidator.validate(getFileStore());
 					if (status2 != null && status2.getSeverity() > status.getSeverity()) {
 						status = status2;
 					}

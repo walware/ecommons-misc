@@ -1,18 +1,17 @@
-/*******************************************************************************
- * Copyright (c) 2006-2013 WalWare/StatET-Project (www.walware.de/goto/statet)
- * and others. All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- * 
- * Contributors:
- *     Stephan Wahlbrink - initial API and implementation
- *******************************************************************************/
+/*=============================================================================#
+ # Copyright (c) 2006-2014 Stephan Wahlbrink (WalWare.de) and others.
+ # All rights reserved. This program and the accompanying materials
+ # are made available under the terms of the Eclipse Public License v1.0
+ # which accompanies this distribution, and is available at
+ # http://www.eclipse.org/legal/epl-v10.html
+ # 
+ # Contributors:
+ #     Stephan Wahlbrink - initial API and implementation
+ #=============================================================================*/
 
 package de.walware.ecommons.preferences;
 
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
@@ -34,10 +33,12 @@ public class PreferencesUtil {
 			fContexts = contexts;
 		}
 		
+		@Override
 		public <T> T getPreferenceValue(final Preference<T> key) {
 			return PreferencesUtil.getPrefValue(fContexts, key);
 		}
 		
+		@Override
 		public IEclipsePreferences[] getPreferenceNodes(final String nodeQualifier) {
 			final IEclipsePreferences[] nodes = new IEclipsePreferences[fContexts.length - 1];
 			for (int i = 0; i < nodes.length; i++) {
@@ -46,10 +47,12 @@ public class PreferencesUtil {
 			return nodes;
 		}
 		
+		@Override
 		public IScopeContext[] getPreferenceContexts() {
 			return fContexts;
 		}
 		
+		@Override
 		public void addPreferenceNodeListener(final String nodeQualifier, final IPreferenceChangeListener listener) {
 			int i = fContexts.length-1;
 			if (fContexts.length >= 0) {
@@ -65,6 +68,7 @@ public class PreferencesUtil {
 			}
 		}
 		
+		@Override
 		public void removePreferenceNodeListener(final String nodeQualifier, final IPreferenceChangeListener listener) {
 			int i = fContexts.length-1;
 			if (fContexts.length >= 0) {
@@ -91,14 +95,17 @@ public class PreferencesUtil {
 			fPreferencesMap = preferencesMap;
 		}
 		
+		@Override
 		public IScopeContext[] getPreferenceContexts() {
 			return new IScopeContext[0];
 		}
 		
+		@Override
 		public IEclipsePreferences[] getPreferenceNodes(final String nodeQualifier) {
 			return new IEclipsePreferences[0];
 		}
 		
+		@Override
 		@SuppressWarnings("unchecked")
 		public <T> T getPreferenceValue(final Preference<T> key) {
 			return (T) fPreferencesMap.get(key);
@@ -108,6 +115,7 @@ public class PreferencesUtil {
 		 * Not (yet) supported
 		 * @throws UnsupportedOperationException
 		 */
+		@Override
 		public void addPreferenceNodeListener(final String nodeQualifier, final IPreferenceChangeListener listener) {
 			throw new UnsupportedOperationException();
 		}
@@ -116,6 +124,7 @@ public class PreferencesUtil {
 		 * Not (yet) supported
 		 * @throws UnsupportedOperationException
 		 */
+		@Override
 		public void removePreferenceNodeListener(final String nodeQualifier, final IPreferenceChangeListener listener) {
 			throw new UnsupportedOperationException();
 		}

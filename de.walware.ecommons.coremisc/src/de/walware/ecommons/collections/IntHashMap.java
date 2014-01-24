@@ -1,13 +1,13 @@
-/*******************************************************************************
- * Copyright (c) 2011-2013 WalWare/StatET-Project (www.walware.de/goto/statet)
- * and others. All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- * 
- * Contributors:
- *     Stephan Wahlbrink - initial API and implementation
- *******************************************************************************/
+/*=============================================================================#
+ # Copyright (c) 2011-2014 Stephan Wahlbrink (WalWare.de) and others.
+ # All rights reserved. This program and the accompanying materials
+ # are made available under the terms of the Eclipse Public License v1.0
+ # which accompanies this distribution, and is available at
+ # http://www.eclipse.org/legal/epl-v10.html
+ # 
+ # Contributors:
+ #     Stephan Wahlbrink - initial API and implementation
+ #=============================================================================*/
 
 package de.walware.ecommons.collections;
 
@@ -44,18 +44,22 @@ public final class IntHashMap<V> implements IntMap<V> {
 		}
 		
 		
+		@Override
 		public int getIntKey() {
 			return this.key;
 		}
 		
+		@Override
 		public Integer getKey() {
 			return Integer.valueOf(this.key);
 		}
 		
+		@Override
 		public V getValue() {
 			return this.value;
 		}
 		
+		@Override
 		public V setValue(final V value) {
 			final V oldValue = this.value;
 			this.value = value;
@@ -97,10 +101,12 @@ public final class IntHashMap<V> implements IntMap<V> {
 			}
 		}
 		
+		@Override
 		public boolean hasNext() {
 			return (fNextEntry != null);
 		}
 		
+		@Override
 		public Entry<V> next() {
 			fCurrentEntry = fNextEntry;
 			if (fCurrentEntry == null) {
@@ -121,6 +127,7 @@ public final class IntHashMap<V> implements IntMap<V> {
 			return fCurrentEntry;
 		}
 		
+		@Override
 		public void remove() {
 			if (fCurrentEntry == null) {
 				throw new IllegalStateException();
@@ -173,14 +180,17 @@ public final class IntHashMap<V> implements IntMap<V> {
 		return ((compr ^ (compr >>> 7)) & 0x7fffffff) % fEntries.length;
 	}
 	
+	@Override
 	public boolean isEmpty() {
 		return (fSize == 0);
 	}
 	
+	@Override
 	public int size() {
 		return fSize;
 	}
 	
+	@Override
 	public boolean containsKey(final int key) {
 		for (Entry<V> e = fEntries[idxFor(key)]; e != null; e = e.next) {
 			if (e.key == key) {
@@ -190,11 +200,13 @@ public final class IntHashMap<V> implements IntMap<V> {
 		return false;
 	}
 	
+	@Override
 	public boolean containsKey(final Object key) {
 		return (key instanceof Integer
 				&& containsKey(((Integer) key).intValue()) );
 	}
 	
+	@Override
 	public boolean containsValue(final Object value) {
 		for (int i = fEntries.length-1; i >= 0; i--) {
 			for (Entry<V> e = fEntries[i]; e != null; e = e.next) {
@@ -206,6 +218,7 @@ public final class IntHashMap<V> implements IntMap<V> {
 		return false;
 	}
 	
+	@Override
 	public V get(final int key) {
 		for (Entry<V> e = fEntries[idxFor(key)]; e != null; e = e.next) {
 			if (e.key == key) {
@@ -215,6 +228,7 @@ public final class IntHashMap<V> implements IntMap<V> {
 		return null;
 	}
 	
+	@Override
 	public V get(final Object key) {
 		return (key instanceof Integer) ? get(((Integer) key).intValue()) : null;
 	}
@@ -236,6 +250,7 @@ public final class IntHashMap<V> implements IntMap<V> {
 		fThreshold = (int) (fEntries.length * fLoadFactor);
 	}
 	
+	@Override
 	public V put(final int key, final V value) {
 		for (Entry<V> e = fEntries[idxFor(key)]; e != null; e = e.next) {
 			if (e.key == key) {
@@ -254,10 +269,12 @@ public final class IntHashMap<V> implements IntMap<V> {
 		}
 	}
 	
+	@Override
 	public V put(final Integer key, final V value) {
 		return put(key.intValue(), value);
 	}
 	
+	@Override
 	public void putAll(final Map<? extends Integer, ? extends V> t) {
 		for (final java.util.Map.Entry<? extends Integer, ? extends V> entry : t.entrySet()) {
 			put(entry.getKey().intValue(), entry.getValue());
@@ -283,10 +300,12 @@ public final class IntHashMap<V> implements IntMap<V> {
 		return null;
 	}
 	
+	@Override
 	public V remove(final Object key) {
 		return (key instanceof Integer) ? remove(((Integer) key).intValue()) : null;
 	}
 	
+	@Override
 	public void clear() {
 		for (int i = fEntries.length-1; i >= 0; i--) {
 			fEntries[i] = null;
@@ -318,14 +337,17 @@ public final class IntHashMap<V> implements IntMap<V> {
 		});
 	}
 	
+	@Override
 	public Set<Integer> keySet() {
 		throw new UnsupportedOperationException();
 	}
 	
+	@Override
 	public Collection<V> values() {
 		throw new UnsupportedOperationException();
 	}
 	
+	@Override
 	public Set<java.util.Map.Entry<Integer, V>> entrySet() {
 		throw new UnsupportedAddressTypeException();
 	}

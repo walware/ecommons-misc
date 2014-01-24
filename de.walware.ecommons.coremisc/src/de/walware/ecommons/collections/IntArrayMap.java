@@ -1,13 +1,13 @@
-/*******************************************************************************
- * Copyright (c) 2009-2013 WalWare/StatET-Project (www.walware.de/goto/statet)
- * and others. All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- * 
- * Contributors:
- *     Stephan Wahlbrink - initial API and implementation
- *******************************************************************************/
+/*=============================================================================#
+ # Copyright (c) 2009-2014 Stephan Wahlbrink (WalWare.de) and others.
+ # All rights reserved. This program and the accompanying materials
+ # are made available under the terms of the Eclipse Public License v1.0
+ # which accompanies this distribution, and is available at
+ # http://www.eclipse.org/legal/epl-v10.html
+ # 
+ # Contributors:
+ #     Stephan Wahlbrink - initial API and implementation
+ #=============================================================================*/
 
 package de.walware.ecommons.collections;
 
@@ -16,6 +16,7 @@ import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+
 
 /**
  * An object that maps integer keys to values using the integer value as array index
@@ -43,22 +44,27 @@ public final class IntArrayMap<V> implements IntMap<V> {
 	}
 	
 	
+	@Override
 	public boolean isEmpty() {
 		return (fSize == 0);
 	}
 	
+	@Override
 	public int size() {
 		return fSize;
 	}
 	
+	@Override
 	public boolean containsKey(final int key) {
 		return (key < fArray.length && fArray[key] != null);
 	}
 	
+	@Override
 	public boolean containsKey(final Object key) {
 		return ((key instanceof Integer) && containsKey(((Integer) key).intValue()));
 	}
 	
+	@Override
 	public boolean containsValue(final Object value) {
 		for (int i = fArray.length-1; i >= 0; i--) {
 			if (fArray[i] != null && fArray[i].equals(value)) {
@@ -68,6 +74,7 @@ public final class IntArrayMap<V> implements IntMap<V> {
 		return false;
 	}
 	
+	@Override
 	public V get(final int key) {
 		if (key < fArray.length) {
 			return (V) fArray[key];
@@ -75,6 +82,7 @@ public final class IntArrayMap<V> implements IntMap<V> {
 		return null;
 	}
 	
+	@Override
 	public V get(final Object key) {
 		return (key instanceof Integer) ? get(((Integer) key).intValue()) : null;
 	}
@@ -86,6 +94,7 @@ public final class IntArrayMap<V> implements IntMap<V> {
 		fArray = newArray;
 	}
 	
+	@Override
 	public V put(final int key, final V value) {
 		if (key >= fArray.length) {
 			increase(key);
@@ -101,10 +110,12 @@ public final class IntArrayMap<V> implements IntMap<V> {
 		}
 	}
 	
+	@Override
 	public V put(final Integer key, final V value) {
 		return put(key.intValue(), value);
 	}
 	
+	@Override
 	public void putAll(final Map<? extends Integer, ? extends V> t) {
 		for (final java.util.Map.Entry<? extends Integer, ? extends V> entry : t.entrySet()) {
 			put(entry.getKey().intValue(), entry.getValue());
@@ -123,10 +134,12 @@ public final class IntArrayMap<V> implements IntMap<V> {
 		return null;
 	}
 	
+	@Override
 	public V remove(final Object key) {
 		return (key instanceof Integer) ? remove(((Integer) key).intValue()) : null;
 	}
 	
+	@Override
 	public void clear() {
 		if (fSize > 0) {
 			for (int i = fArray.length-1; i >= 0; i--) {
@@ -137,14 +150,17 @@ public final class IntArrayMap<V> implements IntMap<V> {
 	}
 	
 	
+	@Override
 	public Set<Integer> keySet() {
 		throw new UnsupportedOperationException();
 	}
 	
+	@Override
 	public Collection<V> values() {
 		throw new UnsupportedAddressTypeException();
 	}
 	
+	@Override
 	public Set<java.util.Map.Entry<Integer, V>> entrySet() {
 		throw new UnsupportedAddressTypeException();
 	}

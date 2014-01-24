@@ -1,13 +1,13 @@
-/*******************************************************************************
- * Copyright (c) 2007-2013 WalWare/StatET-Project (www.walware.de/goto/statet)
- * and others. All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- * 
- * Contributors:
- *     Stephan Wahlbrink - initial API and implementation
- *******************************************************************************/
+/*=============================================================================#
+ # Copyright (c) 2007-2014 Stephan Wahlbrink (WalWare.de) and others.
+ # All rights reserved. This program and the accompanying materials
+ # are made available under the terms of the Eclipse Public License v1.0
+ # which accompanies this distribution, and is available at
+ # http://www.eclipse.org/legal/epl-v10.html
+ # 
+ # Contributors:
+ #     Stephan Wahlbrink - initial API and implementation
+ #=============================================================================*/
 
 package de.walware.ecommons.preferences;
 
@@ -53,6 +53,7 @@ public class PreferencesManageListener implements SettingsChangeNotifier.ManageL
 		}
 	}
 	
+	@Override
 	public void beforeSettingsChangeNotification(final Set<String> groupIds) {
 		for (final String id : fGroupIds) {
 			if (groupIds.contains(id)) {
@@ -69,6 +70,7 @@ public class PreferencesManageListener implements SettingsChangeNotifier.ManageL
 		}
 	}
 	
+	@Override
 	public void afterSettingsChangeNotification(final Set<String> groupIds) {
 		fModel.resetDirty();
 	}

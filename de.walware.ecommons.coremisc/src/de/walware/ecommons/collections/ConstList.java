@@ -1,13 +1,13 @@
-/*******************************************************************************
- * Copyright (c) 2009-2013 WalWare/StatET-Project (www.walware.de/goto/statet)
- * and others. All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- * 
- * Contributors:
- *     Stephan Wahlbrink - initial API and implementation
- *******************************************************************************/
+/*=============================================================================#
+ # Copyright (c) 2009-2014 Stephan Wahlbrink (WalWare.de) and others.
+ # All rights reserved. This program and the accompanying materials
+ # are made available under the terms of the Eclipse Public License v1.0
+ # which accompanies this distribution, and is available at
+ # http://www.eclipse.org/legal/epl-v10.html
+ # 
+ # Contributors:
+ #     Stephan Wahlbrink - initial API and implementation
+ #=============================================================================*/
 
 package de.walware.ecommons.collections;
 
@@ -93,27 +93,33 @@ public final class ConstList<E> implements List<E>, RandomAccess {
 		}
 		
 		
+		@Override
 		public void set(final E o) {
 			throw new UnsupportedOperationException();
 		}
 		
+		@Override
 		public void add(final E o) {
 			throw new UnsupportedOperationException();
 		}
 		
+		@Override
 		public void remove() {
 			throw new UnsupportedOperationException();
 		}
 		
 		
+		@Override
 		public boolean hasNext() {
 			return (fCursor < fArray.length);
 		}
 		
+		@Override
 		public int nextIndex() {
 			return fCursor;
 		}
 		
+		@Override
 		public E next() {
 			if (fCursor >= fArray.length) {
 				throw new NoSuchElementException();
@@ -121,14 +127,17 @@ public final class ConstList<E> implements List<E>, RandomAccess {
 			return fArray[fCursor++];
 		}
 		
+		@Override
 		public boolean hasPrevious() {
 			return (fCursor > 0);
 		}
 		
+		@Override
 		public int previousIndex() {
 			return fCursor-1;
 		}
 		
+		@Override
 		public E previous() {
 			if (fCursor <= 0 || fArray.length <= 0) {
 				throw new NoSuchElementException();
@@ -152,27 +161,33 @@ public final class ConstList<E> implements List<E>, RandomAccess {
 			}
 			
 			
+			@Override
 			public void set(final E o) {
 				throw new UnsupportedOperationException();
 			}
 			
+			@Override
 			public void add(final E o) {
 				throw new UnsupportedOperationException();
 			}
 			
+			@Override
 			public void remove() {
 				throw new UnsupportedOperationException();
 			}
 			
 			
+			@Override
 			public boolean hasNext() {
 				return (fCursor < fSize);
 			}
 			
+			@Override
 			public int nextIndex() {
 				return fCursor;
 			}
 			
+			@Override
 			public E next() {
 				if (fCursor >= fSize) {
 					throw new NoSuchElementException();
@@ -180,14 +195,17 @@ public final class ConstList<E> implements List<E>, RandomAccess {
 				return fArray[fOffset+(fCursor++)];
 			}
 			
+			@Override
 			public boolean hasPrevious() {
 				return (fCursor > 0);
 			}
 			
+			@Override
 			public int previousIndex() {
 				return fCursor-1;
 			}
 			
+			@Override
 			public E previous() {
 				if (fCursor <= 0 || fSize <= 0) {
 					throw new NoSuchElementException();
@@ -211,59 +229,73 @@ public final class ConstList<E> implements List<E>, RandomAccess {
 		}
 		
 		
+		@Override
 		public E set(final int index, final E element) {
 			throw new UnsupportedOperationException();
 		}
 		
+		@Override
 		public boolean add(final E o) {
 			throw new UnsupportedOperationException();
 		}
 		
+		@Override
 		public void add(final int index, final E element) {
 			throw new UnsupportedOperationException();
 		}
 		
+		@Override
 		public boolean addAll(final Collection<? extends E> c) {
 			throw new UnsupportedOperationException();
 		}
 		
+		@Override
 		public boolean addAll(final int index, final Collection<? extends E> c) {
 			throw new UnsupportedOperationException();
 		}
 		
+		@Override
 		public boolean remove(final Object o) {
 			return false;
 		}
 		
+		@Override
 		public E remove(final int index) {
 			throw new UnsupportedOperationException();
 		}
 		
+		@Override
 		public boolean removeAll(final Collection<?> c) {
 			throw new UnsupportedOperationException();
 		}
 		
+		@Override
 		public void clear() {
 			throw new UnsupportedOperationException();
 		}
 		
+		@Override
 		public boolean retainAll(final Collection<?> c) {
 			throw new UnsupportedOperationException();
 		}
 		
 		
+		@Override
 		public int size() {
 			return fSize;
 		}
 		
+		@Override
 		public boolean isEmpty() {
 			return (fSize == 0);
 		}
 		
+		@Override
 		public boolean contains(final Object o) {
 			return (indexOf(o) >= 0);
 		}
 		
+		@Override
 		public boolean containsAll(final Collection<?> c) {
 			final Iterator<?> iter = c.iterator();
 			while(iter.hasNext()) {
@@ -274,6 +306,7 @@ public final class ConstList<E> implements List<E>, RandomAccess {
 			return true;
 		}
 		
+		@Override
 		public E get(final int index) {
 			if (index < 0 || index >= fSize) {
 				throw new ArrayIndexOutOfBoundsException();
@@ -281,6 +314,7 @@ public final class ConstList<E> implements List<E>, RandomAccess {
 			return fArray[fOffset+index];
 		}
 		
+		@Override
 		public int indexOf(final Object o) {
 			final int to = fOffset+fSize;
 			if (o == null) {
@@ -300,6 +334,7 @@ public final class ConstList<E> implements List<E>, RandomAccess {
 			return -1;
 		}
 		
+		@Override
 		public int lastIndexOf(final Object o) {
 			if (o == null) {
 				for (int i = fOffset+fSize-1; i >= fOffset; i--) {
@@ -319,14 +354,17 @@ public final class ConstList<E> implements List<E>, RandomAccess {
 		}
 		
 		
+		@Override
 		public Iterator<E> iterator() {
 			return new SubIter(0);
 		}
 		
+		@Override
 		public ListIterator<E> listIterator() {
 			return new SubIter(0);
 		}
 		
+		@Override
 		public ListIterator<E> listIterator(final int index) {
 			if (index < 0 || index > fSize) {
 				throw new IndexOutOfBoundsException();
@@ -335,6 +373,7 @@ public final class ConstList<E> implements List<E>, RandomAccess {
 		}
 		
 		
+		@Override
 		public List<E> subList(final int fromIndex, final int toIndex) {
 			if (fromIndex < 0 || toIndex > fSize) {
 				throw new IndexOutOfBoundsException();
@@ -345,12 +384,14 @@ public final class ConstList<E> implements List<E>, RandomAccess {
 			return new SubList(fOffset+fromIndex, fOffset+toIndex);
 		}
 		
+		@Override
 		public Object[] toArray() {
 			final Object[] a = new Object[fSize];
 			System.arraycopy(fArray, fOffset, a, 0, fSize);
 			return a;
 		}
 		
+		@Override
 		public <T> T[] toArray(final T[] a) {
 			System.arraycopy(fArray, fOffset, a, 0, fSize);
 			return a;
@@ -427,59 +468,73 @@ public final class ConstList<E> implements List<E>, RandomAccess {
 	}
 	
 	
+	@Override
 	public E set(final int index, final E element) {
 		throw new UnsupportedOperationException();
 	}
 	
+	@Override
 	public boolean add(final E o) {
 		throw new UnsupportedOperationException();
 	}
 	
+	@Override
 	public void add(final int index, final E element) {
 		throw new UnsupportedOperationException();
 	}
 	
+	@Override
 	public boolean addAll(final Collection<? extends E> c) {
 		throw new UnsupportedOperationException();
 	}
 	
+	@Override
 	public boolean addAll(final int index, final Collection<? extends E> c) {
 		throw new UnsupportedOperationException();
 	}
 	
+	@Override
 	public boolean remove(final Object o) {
 		throw new UnsupportedOperationException();
 	}
 	
+	@Override
 	public E remove(final int index) {
 		throw new UnsupportedOperationException();
 	}
 	
+	@Override
 	public boolean removeAll(final Collection<?> c) {
 		throw new UnsupportedOperationException();
 	}
 	
+	@Override
 	public void clear() {
 		throw new UnsupportedOperationException();
 	}
 	
+	@Override
 	public boolean retainAll(final Collection<?> c) {
 		throw new UnsupportedOperationException();
 	}
 	
 	
+	@Override
 	public int size() {
 		return fArray.length;
 	}
 	
+	@Override
 	public boolean isEmpty() {
 		return (fArray.length == 0);
 	}
 	
+	@Override
 	public boolean contains(final Object o) {
 		return (indexOf(o) >= 0);
 	}
 	
+	@Override
 	public boolean containsAll(final Collection<?> c) {
 		final Iterator<?> e = c.iterator();
 		while (e.hasNext()) {
@@ -490,10 +545,12 @@ public final class ConstList<E> implements List<E>, RandomAccess {
 		return true;
 	}
 	
+	@Override
 	public E get(final int index) {
 		return fArray[index];
 	}
 	
+	@Override
 	public int indexOf(final Object o) {
 		if (o == null) {
 			for (int i = 0; i < fArray.length; i++) {
@@ -512,6 +569,7 @@ public final class ConstList<E> implements List<E>, RandomAccess {
 		return -1;
 	}
 	
+	@Override
 	public int lastIndexOf(final Object o) {
 		if (o == null) {
 			for (int i = fArray.length-1; i >= 0; i--) {
@@ -531,14 +589,17 @@ public final class ConstList<E> implements List<E>, RandomAccess {
 	}
 	
 	
+	@Override
 	public Iterator<E> iterator() {
 		return new Iter(0);
 	}
 	
+	@Override
 	public ListIterator<E> listIterator() {
 		return new Iter(0);
 	}
 	
+	@Override
 	public ListIterator<E> listIterator(final int index) {
 		if (index < 0 || index > fArray.length) {
 			throw new IndexOutOfBoundsException();
@@ -547,6 +608,7 @@ public final class ConstList<E> implements List<E>, RandomAccess {
 	}
 	
 	
+	@Override
 	public List<E> subList(final int fromIndex, final int toIndex) {
 		if (fromIndex < 0 || toIndex > fArray.length) {
 			throw new IndexOutOfBoundsException();
@@ -557,12 +619,14 @@ public final class ConstList<E> implements List<E>, RandomAccess {
 		return new SubList(fromIndex, toIndex);
 	}
 	
+	@Override
 	public Object[] toArray() {
 		final Object[] a = new Object[fArray.length];
 		System.arraycopy(fArray, 0, a, 0, fArray.length);
 		return a;
 	}
 	
+	@Override
 	public <T> T[] toArray(T[] a) {
 		if (a.length < fArray.length) {
 			a = (T[]) Array.newInstance(a.getClass().getComponentType(), fArray.length);

@@ -1,13 +1,13 @@
-/*******************************************************************************
- * Copyright (c) 2007-2013 WalWare/StatET-Project (www.walware.de/goto/statet)
- * and others. All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- * 
- * Contributors:
- *     Stephan Wahlbrink - initial API and implementation
- *******************************************************************************/
+/*=============================================================================#
+ # Copyright (c) 2007-2014 Stephan Wahlbrink (WalWare.de) and others.
+ # All rights reserved. This program and the accompanying materials
+ # are made available under the terms of the Eclipse Public License v1.0
+ # which accompanies this distribution, and is available at
+ # http://www.eclipse.org/legal/epl-v10.html
+ # 
+ # Contributors:
+ #     Stephan Wahlbrink - initial API and implementation
+ #=============================================================================*/
 
 package de.walware.ecommons.databinding;
 
@@ -42,6 +42,7 @@ public class DirtyTracker implements IValueChangeListener, IChangeListener {
 			track((Binding) obj, true);
 		}
 		dbc.getBindings().addListChangeListener(new IListChangeListener() {
+			@Override
 			public void handleListChange(final ListChangeEvent event) {
 				for (final ListDiffEntry diff : event.diff.getDifferences()) {
 					track((Binding) diff.getElement(), diff.isAddition());
@@ -87,10 +88,12 @@ public class DirtyTracker implements IValueChangeListener, IChangeListener {
 		}
 	}
 	
+	@Override
 	public void handleValueChange(final ValueChangeEvent event) {
-		handleChange((ObservableEvent) event);
+		handleChange(event);
 	}
 	
+	@Override
 	public void handleChange(final ChangeEvent event) {
 		handleChange((ObservableEvent) event);
 	}

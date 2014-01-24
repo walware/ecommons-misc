@@ -1,13 +1,13 @@
-/*******************************************************************************
- * Copyright (c) 2004-2013 TeXlipse Project (texlipse.sourceforge.net)
- * and others. All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- * 
- * Contributors:
- *     Tor Arne Vestbø - initial API and implementation
- *******************************************************************************/
+/*=============================================================================#
+ # Copyright (c) 2004-2014 TeXlipse-Project (texlipse.sf.net) and others.
+ # All rights reserved. This program and the accompanying materials
+ # are made available under the terms of the Eclipse Public License v1.0
+ # which accompanies this distribution, and is available at
+ # http://www.eclipse.org/legal/epl-v10.html
+ # 
+ # Contributors:
+ #     Tor Arne Vestbø - initial API and implementation
+ #=============================================================================*/
 
 // Compile with cl -I$jdk\include -I$jdk\include\win32 -LD DDEClient.cpp -Fddeclient.dll User32.lib
 

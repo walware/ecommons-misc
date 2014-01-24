@@ -1,13 +1,13 @@
-/*******************************************************************************
- * Copyright (c) 2004-2013 IBM Corporation and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- * 
- * Contributors:
- *     IBM Corporation - initial API and implementation
- *******************************************************************************/
+/*=============================================================================#
+ # Copyright (c) 2004-2014 IBM Corporation and others.
+ # All rights reserved. This program and the accompanying materials
+ # are made available under the terms of the Eclipse Public License v1.0
+ # which accompanies this distribution, and is available at
+ # http://www.eclipse.org/legal/epl-v10.html
+ # 
+ # Contributors:
+ #     IBM Corporation - initial API and implementation
+ #=============================================================================*/
 
 package de.walware.ecommons.io;
 
@@ -32,6 +32,7 @@ public class TextContentDescriber implements ITextContentDescriber {
 	/**
 	 * {@inheritDoc}
 	 */
+	@Override
 	public QualifiedName[] getSupportedOptions() {
 		return SUPPORTED_OPTIONS;
 	}
@@ -39,6 +40,7 @@ public class TextContentDescriber implements ITextContentDescriber {
 	/**
 	 * {@inheritDoc}
 	 */
+	@Override
 	public int describe(final Reader contents, final IContentDescription description) throws IOException {
 		// we want to be pretty loose on detecting the text content type  
 		return INDETERMINATE;
@@ -47,6 +49,7 @@ public class TextContentDescriber implements ITextContentDescriber {
 	/**
 	 * {@inheritDoc}
 	 */
+	@Override
 	public int describe(final InputStream contents, final IContentDescription description) throws IOException {
 		if (description == null || !description.isRequested(IContentDescription.BYTE_ORDER_MARK)) {
 			return INDETERMINATE;

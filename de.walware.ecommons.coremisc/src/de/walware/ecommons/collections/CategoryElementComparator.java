@@ -11,16 +11,29 @@
 
 package de.walware.ecommons.collections;
 
-import java.util.List;
+import java.util.Comparator;
 
 
-/**
- * Constant list.
- * 
- * <p>The list is unmodifiable by clients and, if not otherwise documented, the client can assume
- * that the elements of list do not change.
- * </p>
- */
-public interface ConstList<E> extends List<E> {
+public abstract class CategoryElementComparator<C, E> implements Comparator<E> {
+	
+	
+	protected CategoryElementComparator() {
+	}
+	
+	
+	@Override
+	public final int compare(final E o1, final E o2) {
+		final int d= compareCategory(getCategory(o1), getCategory(o2));
+		if (d != 0) {
+			return d;
+		}
+		return compareElement(o1, o2);
+	}
+	
+	public abstract C getCategory(E element);
+	
+	public abstract int compareCategory(C category1, C category2);
+	
+	public abstract int compareElement(E element1, E element2);
 	
 }

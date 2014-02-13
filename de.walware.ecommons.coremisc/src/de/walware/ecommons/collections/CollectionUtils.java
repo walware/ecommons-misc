@@ -11,6 +11,7 @@
 
 package de.walware.ecommons.collections;
 
+import java.util.Collection;
 import java.util.List;
 
 
@@ -18,6 +19,33 @@ import java.util.List;
  * @since 1.5
  */
 public class CollectionUtils {
+	
+	
+	@SuppressWarnings({ "rawtypes" })
+	private static final ConstList EMPTY_CONST_LIST= new ConstArrayList<Object>();
+	
+	
+	/**
+	 * @since 1.1
+	 */
+	@SuppressWarnings("unchecked")
+	public static <E> ConstList<E> emptyConstList() {
+		return EMPTY_CONST_LIST;
+	}
+	
+	/**
+	 * @since 1.1
+	 */
+	@SuppressWarnings("unchecked")
+	public static <E> ConstList<E> asConstList(final Collection<E> c) {
+		if (c instanceof ConstList) {
+			return (ConstList<E>) c;
+		}
+		if (c.isEmpty()) {
+			return EMPTY_CONST_LIST;
+		}
+		return new ConstArrayList<E>(c);
+	}
 	
 	
 	public static String toString(final List<?> list, final String sep) {

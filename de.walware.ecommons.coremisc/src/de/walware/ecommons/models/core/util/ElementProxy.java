@@ -14,7 +14,7 @@ package de.walware.ecommons.models.core.util;
 import org.eclipse.core.runtime.IAdaptable;
 
 
-public class ElementProxy implements IAdaptable {
+public class ElementProxy implements IElementProxy {
 	
 	
 	private final IAdaptable element;
@@ -24,10 +24,11 @@ public class ElementProxy implements IAdaptable {
 		if (element == null) {
 			throw new NullPointerException("element"); //$NON-NLS-1$
 		}
-		this.element = element;
+		this.element= element;
 	}
 	
 	
+	@Override
 	public IAdaptable getElement() {
 		return this.element;
 	}

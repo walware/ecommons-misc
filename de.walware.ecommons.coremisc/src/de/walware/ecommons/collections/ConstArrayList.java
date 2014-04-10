@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.RandomAccess;
+import java.util.Set;
 
 
 /**
@@ -28,7 +29,7 @@ import java.util.RandomAccess;
  * 
  * @since 1.0
  */
-public final class ConstArrayList<E> extends AbstractConstList<E> implements RandomAccess {
+public final class ConstArrayList<E> extends AbstractConstList<E> implements Set<E>, RandomAccess {
 	
 	
 	private static void copyList(final List<?> src, final Object[] dest, final int destPos, final int length) {
@@ -559,7 +560,7 @@ public final class ConstArrayList<E> extends AbstractConstList<E> implements Ran
 		if (this.array.length != other.size()) {
 			return false;
 		}
-		final ListIterator<?> otherIter= other.listIterator();
+		final Iterator<?> otherIter= other.iterator();
 		for (int i= 0; i < this.array.length; i++) {
 			if (!((this.array[i] == null) ?
 					(null == otherIter.next()) :

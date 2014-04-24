@@ -16,7 +16,6 @@
 		
 		<module>../de.walware.3rdparty-org.apache.commons.pool</module>
 		<module>../de.walware.thirdparty-org.apache.commons.primitives</module>
-		<module>../de.walware.thirdparty-org.apache.lucene</module>
 	</modules>
 	
 	<prerequisites>

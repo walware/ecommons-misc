@@ -19,6 +19,8 @@ import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -40,6 +42,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.RegistryFactory;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.osgi.util.NLS;
 import org.osgi.framework.Bundle;
 
 import de.walware.ecommons.ECommons;
@@ -267,25 +270,14 @@ public class RMIUtil {
 		}
 	}
 	
-	@Deprecated
-	public void addEmbeddedClasspathEntry(String entry) {
-		if (entry.isEmpty()) {
-			return;
-		}
-		if (!entry.startsWith("file:")) { //$NON-NLS-1$
-			if (entry.charAt(0) == '/') {
-				entry = "file://" + entry; //$NON-NLS-1$
-			}
-			else {
-				entry = "file:///" + entry; //$NON-NLS-1$
-			}
-		}
-		addEmbeddedCodebaseEntry(entry);
-	}
-	
 	public void addEmbeddedCodebaseEntry(final String entry) {
 		if (entry.indexOf(':') < 0) {
 			throw new IllegalArgumentException("entry: missing schema"); //$NON-NLS-1$
+		}
+		final String path= encodeCodebaseEntry(entry);
+		if (path == null) {
+			throw new IllegalArgumentException(NLS.bind(
+					"entry: unsupported schema ''{0}''", entry.substring(0, entry.indexOf(':')) )); //$NON-NLS-1$
 		}
 		synchronized (this.embeddedLock) {
 			if (this.embeddedCodebaseEntries == null) {
@@ -408,6 +400,25 @@ public class RMIUtil {
 		}
 	}
 	
+	private static String encodeCodebaseEntry(String path) {
+		if (path == null || path.isEmpty()) {
+			return null;
+		}
+		URI uri= null;
+		try {
+			if (path.startsWith("file:")) {
+				path= path.substring(5);
+				uri= new URI("file", null, path, null);
+			}
+		}
+		catch (final URISyntaxException e) {
+		}
+		if (uri != null) {
+			return uri.toString();
+		}
+		return null;
+	}
+	
 	private void loadCodebaseContrib() {
 		final List<String> pluginIds = new ArrayList<String>();
 		collectPluginIds(EXTENSIONPOINT_ID, "codebaseEntry", pluginIds); //$NON-NLS-1$
@@ -448,18 +459,24 @@ public class RMIUtil {
 	
 	private static void addCodebasePath(final Bundle bundle, final List<String> entries) {
 		try {
-			String s = FileLocator.resolve(bundle.getEntry("/")).toExternalForm(); //$NON-NLS-1$
-			if (s.startsWith("jar:") && s.endsWith("!/")) { //$NON-NLS-1$ //$NON-NLS-2$
-				s = s.substring(4, s.length()-2);
+			String path= FileLocator.resolve(bundle.getEntry("/")).toExternalForm(); //$NON-NLS-1$
+			if (path.startsWith("jar:") && path.endsWith("!/")) { //$NON-NLS-1$ //$NON-NLS-2$
+				path= path.substring(4, path.length()-2);
 			}
-			if (Platform.inDevelopmentMode() && s.endsWith("/")) { //$NON-NLS-1$
-				final String bin = s + "bin/"; //$NON-NLS-1$
+			path= encodeCodebaseEntry(path);
+			if (path == null) {
+				return;
+			}
+			
+			if (Platform.inDevelopmentMode() && path.endsWith("/")) { //$NON-NLS-1$
+				final String bin = path + "bin/"; //$NON-NLS-1$
 				if (!entries.contains(bin)) {
 					entries.add(bin);
 				}
 			}
-			if (!entries.contains(s)) {
-				entries.add(s);
+			
+			if (!entries.contains(path)) {
+				entries.add(path);
 			}
 			return;
 		}

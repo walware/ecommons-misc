@@ -29,16 +29,17 @@ import java.util.Set;
  * 
  * @since 1.0
  */
-public final class ConstArrayList<E> extends AbstractConstList<E> implements Set<E>, RandomAccess {
+@Deprecated
+public final class ConstArrayList<E> extends AbstractImList<E> implements ConstList<E>, Set<E>, RandomAccess {
+	
+	
+	@SuppressWarnings({ "rawtypes" })
+	static final ConstList EMPTY_CONST_LIST= new ConstArrayList<Object>();
 	
 	
 	private static void copyList(final List<?> src, final Object[] dest, final int destPos, final int length) {
-		if (src instanceof ConstArrayList) {
-			System.arraycopy(((ConstArrayList<?>) src).array, 0, dest, destPos, length);
-		}
-		else if (src instanceof ConstArrayList.SubList) {
-			final ConstArrayList<?>.SubList l= (ConstArrayList<?>.SubList) src;
-			System.arraycopy(l.superList().array, l.offset, dest, destPos, length);
+		if (src instanceof AbstractImList<?>) {
+			((AbstractImList<?>) src).copyTo(dest, destPos);
 		}
 		else {
 			System.arraycopy(src.toArray(), 0, dest, destPos, length);
@@ -102,7 +103,7 @@ public final class ConstArrayList<E> extends AbstractConstList<E> implements Set
 	}
 	
 	
-	private class Iter extends AbstractConstListIter<E> {
+	private class Iter extends AbstractImListIter<E> {
 		
 		
 		private int cursor;
@@ -147,242 +148,6 @@ public final class ConstArrayList<E> extends AbstractConstList<E> implements Set
 				throw new NoSuchElementException();
 			}
 			return ConstArrayList.this.array[--this.cursor];
-		}
-		
-	}
-	
-	private class SubList extends AbstractConstList<E> implements RandomAccess {
-		
-		
-		private class SubIter extends AbstractConstListIter<E> {
-			
-			
-			private int cursor;
-			
-			
-			SubIter(final int index) {
-				this.cursor= index;
-			}
-			
-			
-			@Override
-			public boolean hasNext() {
-				return (this.cursor < SubList.this.size);
-			}
-			
-			@Override
-			public int nextIndex() {
-				return this.cursor;
-			}
-			
-			@Override
-			public E next() {
-				if (this.cursor >= SubList.this.size) {
-					throw new NoSuchElementException();
-				}
-				return ConstArrayList.this.array[SubList.this.offset + (this.cursor++)];
-			}
-			
-			@Override
-			public boolean hasPrevious() {
-				return (this.cursor > 0);
-			}
-			
-			@Override
-			public int previousIndex() {
-				return this.cursor-1;
-			}
-			
-			@Override
-			public E previous() {
-				if (this.cursor <= 0 || SubList.this.size <= 0) {
-					throw new NoSuchElementException();
-				}
-				return ConstArrayList.this.array[SubList.this.offset + (--this.cursor)];
-			}
-			
-		}
-		
-		
-		private final int offset;
-		private final int size;
-		
-		
-		public SubList(final int fromIndex, final int toIndex) {
-			this.offset= fromIndex;
-			this.size= toIndex-fromIndex;
-		}
-		
-		
-		private ConstArrayList<E> superList() {
-			return ConstArrayList.this;
-		}
-		
-		private void checkIndex(final int index) {
-			if (index < 0 || index >= this.size) {
-				throw new ArrayIndexOutOfBoundsException("index= " + index + ", size= " + this.size); //$NON-NLS-1$ //$NON-NLS-2$
-			}
-		}
-		
-		@Override
-		public int size() {
-			return this.size;
-		}
-		
-		@Override
-		public boolean isEmpty() {
-			return (this.size == 0);
-		}
-		
-		@Override
-		public boolean contains(final Object o) {
-			return (indexOf(o) >= 0);
-		}
-		
-		@Override
-		public boolean containsAll(final Collection<?> c) {
-			final Iterator<?> iter= c.iterator();
-			while(iter.hasNext()) {
-				if (indexOf(iter.next()) < 0) {
-					return false;
-				}
-			}
-			return true;
-		}
-		
-		@Override
-		public E get(final int index) {
-			checkIndex(index);
-			return ConstArrayList.this.array[this.offset + index];
-		}
-		
-		@Override
-		public int indexOf(final Object o) {
-			if (o == null) {
-				final int toIndex= this.offset + this.size;
-				for (int i= this.offset; i < toIndex; i++) {
-					if (null == ConstArrayList.this.array[i]) {
-						return i - this.offset;
-					}
-				}
-			}
-			else {
-				final int toIndex= this.offset + this.size;
-				for (int i= this.offset; i < toIndex; i++) {
-					if (o.equals(ConstArrayList.this.array[i])) {
-						return i - this.offset;
-					}
-				}
-			}
-			return -1;
-		}
-		
-		@Override
-		public int lastIndexOf(final Object o) {
-			if (o == null) {
-				for (int i= this.offset + this.size - 1; i >= this.offset; i--) {
-					if (null == ConstArrayList.this.array[i]) {
-						return i - this.offset;
-					}
-				}
-			}
-			else {
-				for (int i= this.offset + this.size - 1; i >= this.offset; i--) {
-					if (o.equals(ConstArrayList.this.array[i])) {
-						return i - this.offset;
-					}
-				}
-			}
-			return -1;
-		}
-		
-		
-		@Override
-		public Iterator<E> iterator() {
-			return new SubIter(0);
-		}
-		
-		@Override
-		public ListIterator<E> listIterator() {
-			return new SubIter(0);
-		}
-		
-		@Override
-		public ListIterator<E> listIterator(final int index) {
-			checkIndex(index);
-			return new SubIter(index);
-		}
-		
-		
-		@Override
-		public List<E> subList(final int fromIndex, final int toIndex) {
-			if (fromIndex < 0 || toIndex > this.size) {
-				throw new IndexOutOfBoundsException("fromIndex= " + fromIndex + ", toIndex= " + toIndex + ", size= " + this.size); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-			}
-			if (fromIndex > toIndex) {
-				throw new IllegalArgumentException("fromIndex > toIndex: fromIndex= " + fromIndex + ", toIndex= " + toIndex); //$NON-NLS-1$ //$NON-NLS-2$
-			}
-			return new SubList(this.offset + fromIndex, this.offset + toIndex);
-		}
-		
-		@Override
-		public Object[] toArray() {
-			final Object[] a= new Object[this.size];
-			System.arraycopy(ConstArrayList.this.array, this.offset, a, 0, this.size);
-			return a;
-		}
-		
-		@Override
-		public <T> T[] toArray(final T[] a) {
-			final int s= ConstArrayList.this.array.length;
-			if (a.length < s) {
-				return Arrays.<T, E>copyOf(ConstArrayList.this.array, s, (Class<T[]>) a.getClass());
-			}
-			System.arraycopy(ConstArrayList.this.array, 0, a, 0, s);
-			if (a.length > s) {
-				a[s]= null;
-			}
-			return a;
-		}
-		
-		
-		@Override
-		public int hashCode() {
-			int hashCode= 1;
-			final int toIndex= this.offset + this.size;
-			for (int i= this.offset; i < toIndex; i++) {
-				hashCode= 31 * hashCode + ((ConstArrayList.this.array[i] == null) ? 0 : ConstArrayList.this.array[i].hashCode());
-			}
-			return hashCode;
-		}
-		
-		@Override
-		public boolean equals(final Object obj) {
-			if (obj == this) {
-				return true;
-			}
-			if (!(obj instanceof List)) {
-				return false;
-			}
-			final List<?> other= (List<?>) obj;
-			if (this.size != other.size()) {
-				return false;
-			}
-			final ListIterator<?> otherIter= other.listIterator();
-			final int toIndex= this.offset + this.size;
-			for (int i= this.offset; i < toIndex; i++) {
-				if (!((ConstArrayList.this.array[i] == null) ?
-						(null == otherIter.next()) :
-						ConstArrayList.this.array[i].equals(otherIter.next()) )) {
-					return false;
-				}
-			}
-			return true;
-		}
-		
-		@Override
-		public String toString() {
-			return Arrays.toString(toArray());
 		}
 		
 	}
@@ -501,41 +266,63 @@ public final class ConstArrayList<E> extends AbstractConstList<E> implements Set
 	@Override
 	public ListIterator<E> listIterator(final int index) {
 		if (index < 0 || index > this.array.length) {
-			throw new IndexOutOfBoundsException();
+			throw new IndexOutOfBoundsException("index= " + index); //$NON-NLS-1$
 		}
 		return new Iter(index);
 	}
 	
 	
 	@Override
-	public List<E> subList(final int fromIndex, final int toIndex) {
+	public ImList<E> subList(final int fromIndex, final int toIndex) {
 		if (fromIndex < 0 || toIndex > this.array.length) {
 			throw new IndexOutOfBoundsException("fromIndex= " + fromIndex + ", toIndex= " + toIndex + ", size= " + this.array.length); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		}
 		if (fromIndex > toIndex) {
 			throw new IllegalArgumentException("fromIndex > toIndex: fromIndex= " + fromIndex + ", toIndex= " + toIndex); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		return new SubList(fromIndex, toIndex);
+		final int l= toIndex - fromIndex;
+		if (l == this.array.length) {
+			return this;
+		}
+		else if (l == 0){
+			return ImEmptyList.INSTANCE;
+		}
+		else if (l == 1) {
+			return new ImSingletonList<E>(this.array[fromIndex]);
+		}
+		else {
+			return new ImArraySubList<E>(this.array, fromIndex, toIndex);
+		}
 	}
 	
 	@Override
 	public Object[] toArray() {
-		final Object[] a= new Object[this.array.length];
-		System.arraycopy(this.array, 0, a, 0, this.array.length);
-		return a;
+		final Object[] dest= new Object[this.array.length];
+		System.arraycopy(this.array, 0, dest, 0, this.array.length);
+		return dest;
 	}
 	
 	@Override
-	public <T> T[] toArray(final T[] a) {
-		final int s= this.array.length;
-		if (a.length < s) {
-			return Arrays.<T, E>copyOf(this.array, s, (Class<T[]>) a.getClass());
+	public <T> T[] toArray(final T[] dest) {
+		final int n= this.array.length;
+		if (dest.length < n) {
+			return Arrays.<T, E>copyOf(this.array, n, (Class<T[]>) dest.getClass());
 		}
-		System.arraycopy(this.array, 0, a, 0, s);
-		if (a.length > s) {
-			a[s]= null;
+		System.arraycopy(this.array, 0, dest, 0, n);
+		if (dest.length > n) {
+			dest[n]= null;
 		}
-		return a;
+		return dest;
+	}
+	
+	@Override
+	void copyTo(final Object[] dest, final int destPos) {
+		System.arraycopy(this.array, 0, dest, destPos, this.array.length);
+	}
+	
+	@Override
+	void copyTo(final int srcPos, final Object[] dest, final int destPos, final int length) {
+		System.arraycopy(this.array, srcPos, dest, destPos, length);
 	}
 	
 	
@@ -543,7 +330,7 @@ public final class ConstArrayList<E> extends AbstractConstList<E> implements Set
 	public int hashCode() {
 		int hashCode= 1;
 		for (int i= 0; i < this.array.length; i++) {
-			hashCode= 31 * hashCode + ((this.array[i] == null) ? 0 : this.array[i].hashCode());
+			hashCode= 31 * hashCode + ((this.array[i] != null) ? this.array[i].hashCode() : 0);
 		}
 		return hashCode;
 	}
@@ -562,9 +349,9 @@ public final class ConstArrayList<E> extends AbstractConstList<E> implements Set
 		}
 		final Iterator<?> otherIter= other.iterator();
 		for (int i= 0; i < this.array.length; i++) {
-			if (!((this.array[i] == null) ?
-					(null == otherIter.next()) :
-					this.array[i].equals(otherIter.next()) )) {
+			if (!((this.array[i] != null) ?
+					this.array[i].equals(otherIter.next()) :
+					(null == otherIter.next()) )) {
 				return false;
 			}
 		}

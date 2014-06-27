@@ -11,16 +11,22 @@
 
 package de.walware.ecommons.collections;
 
+import java.util.List;
+
 
 /**
- * Constant list.
+ * Immutable list.
  * 
  * <p>The list is unmodifiable by clients and, if not otherwise documented, the client can assume
  * that the elements of list do not change.
  * </p>
+ * 
+ * @since 1.2
  */
-@Deprecated
-public interface ConstList<E> extends ImList<E> {
+public interface ImList<E> extends List<E> {
 	
+	
+	@Override
+	ImList<E> subList(int fromIndex, int toIndex);
 	
 }

@@ -15,13 +15,13 @@ import java.util.Collection;
 import java.util.ListIterator;
 
 
-public abstract class AbstractConstList<E> implements ConstList<E> {
+public abstract class AbstractImList<E> implements ImList<E> {
 	
 	
-	protected static abstract class AbstractConstListIter<E> implements ListIterator<E> {
+	protected static abstract class AbstractImListIter<E> implements ListIterator<E> {
 		
 		
-		public AbstractConstListIter() {
+		public AbstractImListIter() {
 		}
 		
 		
@@ -43,7 +43,7 @@ public abstract class AbstractConstList<E> implements ConstList<E> {
 	}
 	
 	
-	public AbstractConstList() {
+	public AbstractImList() {
 	}
 	
 	
@@ -96,5 +96,10 @@ public abstract class AbstractConstList<E> implements ConstList<E> {
 	public boolean retainAll(final Collection<?> c) {
 		throw new UnsupportedOperationException();
 	}
+	
+	
+	abstract void copyTo(Object[] dest, int destPos);
+	
+	abstract void copyTo(int srcPos, Object[] dest, int destPos, int length);
 	
 }

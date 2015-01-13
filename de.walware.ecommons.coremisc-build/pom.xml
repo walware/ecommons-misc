@@ -14,7 +14,6 @@
 		
 		<module>../de.walware.ecommons.coremisc</module>
 		
-		<module>../de.walware.3rdparty-org.apache.commons.pool</module>
 		<module>../de.walware.thirdparty-org.apache.commons.primitives</module>
 	</modules>
 	

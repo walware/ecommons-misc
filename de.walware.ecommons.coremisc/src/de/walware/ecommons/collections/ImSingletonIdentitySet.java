@@ -14,20 +14,19 @@ package de.walware.ecommons.collections;
 import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.RandomAccess;
+import java.util.Set;
 
 
 /**
- * Immutable list implementation for a single element.
+ * Immutable set implementation for a single element.
  * <p>
  * Comparable to <code>Collections.unmodifiableList(Collections.singletonList(...))</code>.</p>
  * 
- * @since 1.2
+ * @since 1.5
  */
-final class ImSingletonList<E> extends AbstractImList<E> implements ImList<E>,
+final class ImSingletonIdentitySet<E> extends AbstractImList<E> implements ImIdentitySet<E>,
 		RandomAccess {
 	
 	
@@ -58,7 +57,7 @@ final class ImSingletonList<E> extends AbstractImList<E> implements ImList<E>,
 				throw new NoSuchElementException();
 			}
 			this.cursor++;
-			return ImSingletonList.this.e;
+			return ImSingletonIdentitySet.this.e;
 		}
 		
 		@Override
@@ -77,7 +76,7 @@ final class ImSingletonList<E> extends AbstractImList<E> implements ImList<E>,
 				throw new NoSuchElementException();
 			}
 			this.cursor--;
-			return ImSingletonList.this.e;
+			return ImSingletonIdentitySet.this.e;
 		}
 		
 	}
@@ -91,7 +90,7 @@ final class ImSingletonList<E> extends AbstractImList<E> implements ImList<E>,
 	 * 
 	 * @param e the element the list will contain.
 	 */
-	public ImSingletonList(final E e) {
+	public ImSingletonIdentitySet(final E e) {
 		this.e= e;
 	}
 	
@@ -108,7 +107,7 @@ final class ImSingletonList<E> extends AbstractImList<E> implements ImList<E>,
 	
 	@Override
 	public boolean contains(final Object o) {
-		return ((this.e != null) ? this.e.equals(o) : (null == o));
+		return (this.e == o);
 	}
 	
 	@Override
@@ -132,12 +131,12 @@ final class ImSingletonList<E> extends AbstractImList<E> implements ImList<E>,
 	
 	@Override
 	public int indexOf(final Object o) {
-		return ((this.e != null) ? this.e.equals(o) : (null == o)) ? 0 : -1;
+		return (this.e == o) ? 0 : -1;
 	}
 	
 	@Override
 	public int lastIndexOf(final Object o) {
-		return ((this.e != null) ? this.e.equals(o) : (null == o)) ? 0 : -1;
+		return (this.e == o) ? 0 : -1;
 	}
 	
 	
@@ -146,35 +145,6 @@ final class ImSingletonList<E> extends AbstractImList<E> implements ImList<E>,
 		return new Iter(0);
 	}
 	
-	@Override
-	public ListIterator<E> listIterator() {
-		return new Iter(0);
-	}
-	
-	@Override
-	public ListIterator<E> listIterator(final int index) {
-		if (index < 0 || index > 1) {
-			throw new IndexOutOfBoundsException("index= " + index); //$NON-NLS-1$
-		}
-		return new Iter(index);
-	}
-	
-	
-	@Override
-	public ImList<E> subList(final int fromIndex, final int toIndex) {
-		if (fromIndex < 0 || toIndex > 1) {
-			throw new IndexOutOfBoundsException("fromIndex= " + fromIndex + ", toIndex= " + toIndex + ", size= " + 1); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-		}
-		if (fromIndex > toIndex) {
-			throw new IllegalArgumentException("fromIndex > toIndex: fromIndex= " + fromIndex + ", toIndex= " + toIndex); //$NON-NLS-1$ //$NON-NLS-2$
-		}
-		if (toIndex - fromIndex == 1) {
-			return this;
-		}
-		else {
-			return ImEmptyList.INSTANCE;
-		}
-	}
 	
 	@Override
 	public Object[] toArray() {
@@ -206,7 +176,7 @@ final class ImSingletonList<E> extends AbstractImList<E> implements ImList<E>,
 	
 	@Override
 	ImList<E> toImList() {
-		return this;
+		return new ImSingletonList<>(this.e);
 	}
 	
 	@Override
@@ -217,9 +187,7 @@ final class ImSingletonList<E> extends AbstractImList<E> implements ImList<E>,
 	
 	@Override
 	public int hashCode() {
-		int hashCode= 1;
-		hashCode= 31 * hashCode + ((this.e != null) ? this.e.hashCode() : 0);
-		return hashCode;
+		return (this.e != null) ? this.e.hashCode() : 0;
 	}
 	
 	@Override
@@ -227,10 +195,10 @@ final class ImSingletonList<E> extends AbstractImList<E> implements ImList<E>,
 		if (obj == this) {
 			return true;
 		}
-		if (obj instanceof List) {
-			final List<?> other= (List<?>) obj;
+		if (obj instanceof IdentitySet) {
+			final Set<?> other= (Set<?>) obj;
 			return (1 == other.size()
-					&& ((this.e != null) ? this.e.equals(other.get(0)) : (null == other.get(0))) );
+					&& contains(other.iterator().next()) );
 		}
 		return false;
 	}

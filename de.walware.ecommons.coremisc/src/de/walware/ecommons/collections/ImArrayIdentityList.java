@@ -25,9 +25,9 @@ import java.util.RandomAccess;
  * <p>
  * Comparable to <code>Collections.unmodifiableList(Array.asList(...))</code>.</p>
  * 
- * @since 1.2
+ * @since 1.5
  */
-final class ImArrayList<E> extends AbstractImList<E> implements ImList<E>,
+final class ImArrayIdentityList<E> extends AbstractImList<E> implements ImIdentityList<E>,
 		RandomAccess {
 	
 	
@@ -44,7 +44,7 @@ final class ImArrayList<E> extends AbstractImList<E> implements ImList<E>,
 		
 		@Override
 		public boolean hasNext() {
-			return (this.cursor < ImArrayList.this.array.length);
+			return (this.cursor < ImArrayIdentityList.this.array.length);
 		}
 		
 		@Override
@@ -54,10 +54,10 @@ final class ImArrayList<E> extends AbstractImList<E> implements ImList<E>,
 		
 		@Override
 		public E next() {
-			if (this.cursor >= ImArrayList.this.array.length) {
+			if (this.cursor >= ImArrayIdentityList.this.array.length) {
 				throw new NoSuchElementException();
 			}
-			return ImArrayList.this.array[this.cursor++];
+			return ImArrayIdentityList.this.array[this.cursor++];
 		}
 		
 		@Override
@@ -72,10 +72,10 @@ final class ImArrayList<E> extends AbstractImList<E> implements ImList<E>,
 		
 		@Override
 		public E previous() {
-			if (this.cursor <= 0 || ImArrayList.this.array.length <= 0) {
+			if (this.cursor <= 0 || ImArrayIdentityList.this.array.length <= 0) {
 				throw new NoSuchElementException();
 			}
-			return ImArrayList.this.array[--this.cursor];
+			return ImArrayIdentityList.this.array[--this.cursor];
 		}
 		
 	}
@@ -92,7 +92,7 @@ final class ImArrayList<E> extends AbstractImList<E> implements ImList<E>,
 	 * 
 	 * @param a the array by which the list will be backed.
 	 */
-	public ImArrayList(final E[] a) {
+	public ImArrayIdentityList(final E[] a) {
 		this.array= a;
 	}
 	
@@ -130,42 +130,22 @@ final class ImArrayList<E> extends AbstractImList<E> implements ImList<E>,
 	
 	@Override
 	public int indexOf(final Object o) {
-		if (o == null) {
-			for (int i= 0; i < this.array.length; i++) {
-				if (null == this.array[i]) {
-					return i;
-				}
+		for (int i= 0; i < this.array.length; i++) {
+			if (o == this.array[i]) {
+				return i;
 			}
-			return -1;
 		}
-		else {
-			for (int i= 0; i < this.array.length; i++) {
-				if (o.equals(this.array[i])) {
-					return i;
-				}
-			}
-			return -1;
-		}
+		return -1;
 	}
 	
 	@Override
 	public int lastIndexOf(final Object o) {
-		if (o == null) {
-			for (int i= this.array.length - 1; i >= 0; i--) {
-				if (null == this.array[i]) {
-					return i;
-				}
+		for (int i= this.array.length - 1; i >= 0; i--) {
+			if (o == this.array[i]) {
+				return i;
 			}
-			return -1;
 		}
-		else {
-			for (int i= this.array.length - 1; i >= 0; i--) {
-				if (o.equals(this.array[i])) {
-					return i;
-				}
-			}
-			return -1;
-		}
+		return -1;
 	}
 	
 	
@@ -189,7 +169,7 @@ final class ImArrayList<E> extends AbstractImList<E> implements ImList<E>,
 	
 	
 	@Override
-	public ImList<E> subList(final int fromIndex, final int toIndex) {
+	public ImIdentityList<E> subList(final int fromIndex, final int toIndex) {
 		if (fromIndex < 0 || toIndex > this.array.length) {
 			throw new IndexOutOfBoundsException("fromIndex= " + fromIndex + ", toIndex= " + toIndex + ", size= " + this.array.length); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		}
@@ -201,13 +181,13 @@ final class ImArrayList<E> extends AbstractImList<E> implements ImList<E>,
 			return this;
 		}
 		else if (l == 0){
-			return ImEmptyList.INSTANCE;
+			return ImEmptyIdentityList.INSTANCE;
 		}
 		else if (l == 1) {
-			return new ImSingletonList<>(this.array[fromIndex]);
+			return new ImSingletonIdentityList<>(this.array[fromIndex]);
 		}
 		else {
-			return new ImArraySubList<>(this.array, fromIndex, toIndex);
+			return new ImArrayIdentitySubList<>(this.array, fromIndex, toIndex);
 		}
 	}
 	
@@ -243,12 +223,12 @@ final class ImArrayList<E> extends AbstractImList<E> implements ImList<E>,
 	
 	@Override
 	ImList<E> toImList() {
-		return this;
+		return new ImArrayList<>(this.array);
 	}
 	
 	@Override
 	ImIdentityList<E> toImIdentityList() {
-		return new ImArrayIdentityList<>(this.array);
+		return this;
 	}
 	
 	
@@ -266,22 +246,20 @@ final class ImArrayList<E> extends AbstractImList<E> implements ImList<E>,
 		if (obj == this) {
 			return true;
 		}
-		if (obj instanceof List) {
-			final List<?> other= (List<?>) obj;
-			if (this.array.length == other.size()) {
+		if (!(obj instanceof IdentityList)) {
+			return false;
+		}
+		final List<?> other= (List<?>) obj;
+		if (this.array.length != other.size()) {
+			return false;
+		}
+		final Iterator<?> otherIter= other.iterator();
+		for (int i= 0; i < this.array.length; i++) {
+			if (this.array[i] != otherIter.next()) {
 				return false;
 			}
-			final Iterator<?> otherIter= other.iterator();
-			for (int i= 0; i < this.array.length; i++) {
-				if (!((this.array[i] != null) ?
-						this.array[i].equals(otherIter.next()) :
-						(null == otherIter.next()) )) {
-					return false;
-				}
-			}
-			return true;
 		}
-		return false;
+		return true;
 	}
 	
 	@Override
@@ -291,7 +269,7 @@ final class ImArrayList<E> extends AbstractImList<E> implements ImList<E>,
 	
 }
 
-final class ImArraySubList<E> extends AbstractImList<E> implements ImList<E>,
+final class ImArrayIdentitySubList<E> extends AbstractImList<E> implements ImIdentityList<E>,
 		RandomAccess {
 	
 	
@@ -308,7 +286,7 @@ final class ImArraySubList<E> extends AbstractImList<E> implements ImList<E>,
 		
 		@Override
 		public boolean hasNext() {
-			return (this.cursor < ImArraySubList.this.size);
+			return (this.cursor < ImArrayIdentitySubList.this.size);
 		}
 		
 		@Override
@@ -318,10 +296,10 @@ final class ImArraySubList<E> extends AbstractImList<E> implements ImList<E>,
 		
 		@Override
 		public E next() {
-			if (this.cursor >= ImArraySubList.this.size) {
+			if (this.cursor >= ImArrayIdentitySubList.this.size) {
 				throw new NoSuchElementException();
 			}
-			return ImArraySubList.this.array[ImArraySubList.this.offset + (this.cursor++)];
+			return ImArrayIdentitySubList.this.array[ImArrayIdentitySubList.this.offset + (this.cursor++)];
 		}
 		
 		@Override
@@ -336,10 +314,10 @@ final class ImArraySubList<E> extends AbstractImList<E> implements ImList<E>,
 		
 		@Override
 		public E previous() {
-			if (this.cursor <= 0 || ImArraySubList.this.size <= 0) {
+			if (this.cursor <= 0 || ImArrayIdentitySubList.this.size <= 0) {
 				throw new NoSuchElementException();
 			}
-			return ImArraySubList.this.array[ImArraySubList.this.offset + (--this.cursor)];
+			return ImArrayIdentitySubList.this.array[ImArrayIdentitySubList.this.offset + (--this.cursor)];
 		}
 		
 	}
@@ -350,7 +328,7 @@ final class ImArraySubList<E> extends AbstractImList<E> implements ImList<E>,
 	private final int size;
 	
 	
-	public ImArraySubList(final E[] array, final int fromIndex, final int toIndex) {
+	public ImArrayIdentitySubList(final E[] array, final int fromIndex, final int toIndex) {
 		this.array= array;
 		this.offset= fromIndex;
 		this.size= toIndex - fromIndex;
@@ -393,44 +371,23 @@ final class ImArraySubList<E> extends AbstractImList<E> implements ImList<E>,
 	
 	@Override
 	public int indexOf(final Object o) {
-		if (o == null) {
-			final int toIndex= this.offset + this.size;
-			for (int i= this.offset; i < toIndex; i++) {
-				if (null == this.array[i]) {
-					return i - this.offset;
-				}
+		final int toIndex= this.offset + this.size;
+		for (int i= this.offset; i < toIndex; i++) {
+			if (o == this.array[i]) {
+				return i - this.offset;
 			}
-			return -1;
 		}
-		else {
-			final int toIndex= this.offset + this.size;
-			for (int i= this.offset; i < toIndex; i++) {
-				if (o.equals(this.array[i])) {
-					return i - this.offset;
-				}
-			}
-			return -1;
-		}
+		return -1;
 	}
 	
 	@Override
 	public int lastIndexOf(final Object o) {
-		if (o == null) {
-			for (int i= this.offset + this.size - 1; i >= this.offset; i--) {
-				if (null == this.array[i]) {
-					return i - this.offset;
-				}
+		for (int i= this.offset + this.size - 1; i >= this.offset; i--) {
+			if (o == this.array[i]) {
+				return i - this.offset;
 			}
-			return -1;
 		}
-		else {
-			for (int i= this.offset + this.size - 1; i >= this.offset; i--) {
-				if (o.equals(this.array[i])) {
-					return i - this.offset;
-				}
-			}
-			return -1;
-		}
+		return -1;
 	}
 	
 	
@@ -454,7 +411,7 @@ final class ImArraySubList<E> extends AbstractImList<E> implements ImList<E>,
 	
 	
 	@Override
-	public ImList<E> subList(final int fromIndex, final int toIndex) {
+	public ImIdentityList<E> subList(final int fromIndex, final int toIndex) {
 		if (fromIndex < 0 || toIndex > this.size) {
 			throw new IndexOutOfBoundsException("fromIndex= " + fromIndex + ", toIndex= " + toIndex + ", size= " + this.size); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		}
@@ -466,13 +423,13 @@ final class ImArraySubList<E> extends AbstractImList<E> implements ImList<E>,
 			return this;
 		}
 		else if (l == 0) {
-			return ImEmptyList.INSTANCE;
+			return ImEmptyIdentityList.INSTANCE;
 		}
 		else if (l == 1) {
-			return new ImSingletonList<>(this.array[this.offset + fromIndex]);
+			return new ImSingletonIdentityList<>(this.array[this.offset + fromIndex]);
 		}
 		else {
-			return new ImArraySubList<>(this.array, this.offset + fromIndex, this.offset + toIndex);
+			return new ImArrayIdentitySubList<>(this.array, this.offset + fromIndex, this.offset + toIndex);
 		}
 	}
 	
@@ -508,12 +465,12 @@ final class ImArraySubList<E> extends AbstractImList<E> implements ImList<E>,
 	
 	@Override
 	ImList<E> toImList() {
-		return this;
+		return new ImArraySubList<>(this.array, this.offset, this.offset + this.size);
 	}
 	
 	@Override
 	ImIdentityList<E> toImIdentityList() {
-		return new ImArrayIdentitySubList<>(this.array, this.offset, this.offset + this.size);
+		return this;
 	}
 	
 	
@@ -532,23 +489,21 @@ final class ImArraySubList<E> extends AbstractImList<E> implements ImList<E>,
 		if (obj == this) {
 			return true;
 		}
-		if (obj instanceof List) {
-			final List<?> other= (List<?>) obj;
-			if (this.size != other.size()) {
+		if (!(obj instanceof IdentityList)) {
+			return false;
+		}
+		final List<?> other= (List<?>) obj;
+		if (this.size != other.size()) {
+			return false;
+		}
+		final ListIterator<?> otherIter= other.listIterator();
+		final int toIndex= this.offset + this.size;
+		for (int i= this.offset; i < toIndex; i++) {
+			if (this.array[i] != otherIter.next()) {
 				return false;
 			}
-			final ListIterator<?> otherIter= other.listIterator();
-			final int toIndex= this.offset + this.size;
-			for (int i= this.offset; i < toIndex; i++) {
-				if (!((this.array[i] != null) ?
-						this.array[i].equals(otherIter.next()) :
-						(null == otherIter.next()) )) {
-					return false;
-				}
-			}
-			return true;
 		}
-		return false;
+		return true;
 	}
 	
 	@Override

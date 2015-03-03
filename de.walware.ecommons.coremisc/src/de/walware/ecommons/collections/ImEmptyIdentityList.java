@@ -24,14 +24,14 @@ import java.util.RandomAccess;
  * <p>
  * Comparable to <code>Collections.emptyList()</code>.</p>
  * 
- * @since 1.2
+ * @since 1.5
  */
-final class ImEmptyList<E> extends AbstractImList<E> implements ImList<E>,
+final class ImEmptyIdentityList<E> extends AbstractImList<E> implements ImIdentityList<E>,
 		RandomAccess {
 	
 	
 	@SuppressWarnings("rawtypes")
-	static final ImEmptyList INSTANCE= new ImEmptyList();
+	static final ImEmptyIdentityList INSTANCE= new ImEmptyIdentityList();
 	
 	
 	private final static Object[] ARRAY= new Object[0];
@@ -71,7 +71,7 @@ final class ImEmptyList<E> extends AbstractImList<E> implements ImList<E>,
 	};
 	
 	
-	public ImEmptyList() {
+	public ImEmptyIdentityList() {
 	}
 	
 	
@@ -131,7 +131,7 @@ final class ImEmptyList<E> extends AbstractImList<E> implements ImList<E>,
 	
 	
 	@Override
-	public ImList<E> subList(final int fromIndex, final int toIndex) {
+	public ImIdentityList<E> subList(final int fromIndex, final int toIndex) {
 		if (fromIndex < 0 || toIndex > 0) {
 			throw new IndexOutOfBoundsException("fromIndex= " + fromIndex + ", toIndex= " + toIndex + ", size= " + 1); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		}
@@ -165,12 +165,12 @@ final class ImEmptyList<E> extends AbstractImList<E> implements ImList<E>,
 	
 	@Override
 	ImList<E> toImList() {
-		return this;
+		return ImEmptyList.INSTANCE;
 	}
 	
 	@Override
 	ImIdentityList<E> toImIdentityList() {
-		return ImEmptyIdentityList.INSTANCE;
+		return this;
 	}
 	
 	
@@ -184,7 +184,7 @@ final class ImEmptyList<E> extends AbstractImList<E> implements ImList<E>,
 		if (obj == this) {
 			return true;
 		}
-		if (obj instanceof List) {
+		if (obj instanceof IdentityList) {
 			final List<?> other= (List<?>) obj;
 			return (other.isEmpty());
 		}

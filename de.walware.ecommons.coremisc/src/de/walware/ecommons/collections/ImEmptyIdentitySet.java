@@ -13,25 +13,25 @@ package de.walware.ecommons.collections;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.RandomAccess;
+import java.util.Set;
 
 
 /**
- * Empty list implementation.
+ * Empty set implementation.
  * <p>
- * Comparable to <code>Collections.emptyList()</code>.</p>
+ * Comparable to <code>Collections.emptySet()</code>.</p>
  * 
- * @since 1.2
+ * @since 1.5
  */
-final class ImEmptyList<E> extends AbstractImList<E> implements ImList<E>,
+final class ImEmptyIdentitySet<E> extends AbstractImList<E> implements ImIdentitySet<E>,
 		RandomAccess {
 	
 	
 	@SuppressWarnings("rawtypes")
-	static final ImEmptyList INSTANCE= new ImEmptyList();
+	static final ImEmptyIdentitySet INSTANCE= new ImEmptyIdentitySet();
 	
 	
 	private final static Object[] ARRAY= new Object[0];
@@ -71,7 +71,7 @@ final class ImEmptyList<E> extends AbstractImList<E> implements ImList<E>,
 	};
 	
 	
-	public ImEmptyList() {
+	public ImEmptyIdentitySet() {
 	}
 	
 	
@@ -116,30 +116,6 @@ final class ImEmptyList<E> extends AbstractImList<E> implements ImList<E>,
 		return this.iterator;
 	}
 	
-	@Override
-	public ListIterator<E> listIterator() {
-		return this.iterator;
-	}
-	
-	@Override
-	public ListIterator<E> listIterator(final int index) {
-		if (index != 0) {
-			throw new IndexOutOfBoundsException("index= " + index); //$NON-NLS-1$
-		}
-		return this.iterator;
-	}
-	
-	
-	@Override
-	public ImList<E> subList(final int fromIndex, final int toIndex) {
-		if (fromIndex < 0 || toIndex > 0) {
-			throw new IndexOutOfBoundsException("fromIndex= " + fromIndex + ", toIndex= " + toIndex + ", size= " + 1); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-		}
-		if (fromIndex > toIndex) {
-			throw new IllegalArgumentException("fromIndex > toIndex: fromIndex= " + fromIndex + ", toIndex= " + toIndex); //$NON-NLS-1$ //$NON-NLS-2$
-		}
-		return this;
-	}
 	
 	@Override
 	public Object[] toArray() {
@@ -165,7 +141,7 @@ final class ImEmptyList<E> extends AbstractImList<E> implements ImList<E>,
 	
 	@Override
 	ImList<E> toImList() {
-		return this;
+		return ImEmptyList.INSTANCE;
 	}
 	
 	@Override
@@ -176,7 +152,7 @@ final class ImEmptyList<E> extends AbstractImList<E> implements ImList<E>,
 	
 	@Override
 	public int hashCode() {
-		return 1;
+		return 0;
 	}
 	
 	@Override
@@ -184,8 +160,8 @@ final class ImEmptyList<E> extends AbstractImList<E> implements ImList<E>,
 		if (obj == this) {
 			return true;
 		}
-		if (obj instanceof List) {
-			final List<?> other= (List<?>) obj;
+		if (obj instanceof IdentitySet) {
+			final Set<?> other= (Set<?>) obj;
 			return (other.isEmpty());
 		}
 		return false;

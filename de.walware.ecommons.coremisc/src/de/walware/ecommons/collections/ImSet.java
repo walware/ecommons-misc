@@ -11,22 +11,19 @@
 
 package de.walware.ecommons.collections;
 
-import java.util.List;
+import java.util.Set;
 
 
 /**
- * Immutable list.
+ * Immutable set.
  * 
- * <p>The list is unmodifiable by clients and, if not otherwise documented, the client can assume
- * that the elements of the list do not change.
+ * <p>The set is unmodifiable by clients and, if not otherwise documented, the client can assume
+ * that the elements of the set do not change.
  * </p>
  * 
- * @since 1.2
+ * @since 1.5
  */
-public interface ImList<E> extends List<E> {
+public interface ImSet<E> extends Set<E> {
 	
-	
-	@Override
-	ImList<E> subList(int fromIndex, int toIndex);
 	
 }

@@ -325,6 +325,16 @@ public final class ConstArrayList<E> extends AbstractImList<E> implements ConstL
 		System.arraycopy(this.array, srcPos, dest, destPos, length);
 	}
 	
+	@Override
+	ImList<E> toImList() {
+		return ImCollections.newList(this.array);
+	}
+	
+	@Override
+	ImIdentityList<E> toImIdentityList() {
+		return ImCollections.newIdentityList(this.array);
+	}
+	
 	
 	@Override
 	public int hashCode() {

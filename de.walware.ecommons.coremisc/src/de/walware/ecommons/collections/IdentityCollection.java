@@ -1,5 +1,5 @@
 /*=============================================================================#
- # Copyright (c) 2014-2015 Stephan Wahlbrink (WalWare.de) and others.
+ # Copyright (c) 2015 Stephan Wahlbrink (WalWare.de) and others.
  # All rights reserved. This program and the accompanying materials
  # are made available under the terms of the Eclipse Public License v1.0
  # which accompanies this distribution, and is available at
@@ -11,22 +11,14 @@
 
 package de.walware.ecommons.collections;
 
-import java.util.List;
+import java.util.Collection;
 
 
 /**
- * Immutable list.
+ * Collection using object identity for comparisons of items.
  * 
- * <p>The list is unmodifiable by clients and, if not otherwise documented, the client can assume
- * that the elements of the list do not change.
- * </p>
- * 
- * @since 1.2
+ * @since 1.5
  */
-public interface ImList<E> extends List<E> {
-	
-	
-	@Override
-	ImList<E> subList(int fromIndex, int toIndex);
+public interface IdentityCollection<E> extends Collection<E> {
 	
 }

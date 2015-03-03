@@ -15,18 +15,11 @@ import java.util.List;
 
 
 /**
- * Immutable list.
+ * List using object identity for comparisons of items.
  * 
- * <p>The list is unmodifiable by clients and, if not otherwise documented, the client can assume
- * that the elements of the list do not change.
- * </p>
- * 
- * @since 1.2
+ * @since 1.5
  */
-public interface ImList<E> extends List<E> {
+public interface IdentityList<E> extends List<E>, IdentityCollection<E> {
 	
-	
-	@Override
-	ImList<E> subList(int fromIndex, int toIndex);
 	
 }

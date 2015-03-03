@@ -98,4 +98,27 @@ public class CollectionUtils {
 		}
 	}
 	
+	
+	public static ImIdentityList<String> toIdentifierList(final String[] array) {
+		int count= 0;
+		for (int i= 0; i < array.length; i++) {
+			final String s= array[i];
+			if (s != null && !s.isEmpty()) {
+				array[count++]= s.intern();
+			}
+		}
+		return ImCollections.newIdentityList(array, 0, count);
+	}
+	
+	public static ImIdentitySet<String> toIdentifierSet(final String[] array) {
+		int count= 0;
+		for (int i= 0; i < array.length; i++) {
+			final String s= array[i];
+			if (s != null && !s.isEmpty()) {
+				array[count++]= s.intern();
+			}
+		}
+		return ImCollections.newIdentitySet(array, 0, count);
+	}
+	
 }

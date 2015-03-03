@@ -15,7 +15,7 @@ import java.util.Collection;
 import java.util.ListIterator;
 
 
-public abstract class AbstractImList<E> implements ImList<E> {
+public abstract class AbstractImList<E> {
 	
 	
 	protected static abstract class AbstractImListIter<E> implements ListIterator<E> {
@@ -26,17 +26,17 @@ public abstract class AbstractImList<E> implements ImList<E> {
 		
 		
 		@Override
-		public void set(final E o) {
+		public final void set(final E o) {
 			throw new UnsupportedOperationException();
 		}
 		
 		@Override
-		public void add(final E o) {
+		public final void add(final E o) {
 			throw new UnsupportedOperationException();
 		}
 		
 		@Override
-		public void remove() {
+		public final void remove() {
 			throw new UnsupportedOperationException();
 		}
 		
@@ -47,59 +47,59 @@ public abstract class AbstractImList<E> implements ImList<E> {
 	}
 	
 	
-	@Override
-	public E set(final int index, final E element) {
+	public final E set(final int index, final E element) {
 		throw new UnsupportedOperationException();
 	}
 	
-	@Override
-	public boolean add(final E o) {
+	public final boolean add(final E o) {
 		throw new UnsupportedOperationException();
 	}
 	
-	@Override
-	public void add(final int index, final E element) {
+	public final void add(final int index, final E element) {
 		throw new UnsupportedOperationException();
 	}
 	
-	@Override
-	public boolean addAll(final Collection<? extends E> c) {
+	public final boolean addAll(final Collection<? extends E> c) {
 		throw new UnsupportedOperationException();
 	}
 	
-	@Override
-	public boolean addAll(final int index, final Collection<? extends E> c) {
+	public final boolean addAll(final int index, final Collection<? extends E> c) {
 		throw new UnsupportedOperationException();
 	}
 	
-	@Override
-	public boolean remove(final Object o) {
+	public final boolean remove(final Object o) {
 		throw new UnsupportedOperationException();
 	}
 	
-	@Override
-	public E remove(final int index) {
+	public final E remove(final int index) {
 		throw new UnsupportedOperationException();
 	}
 	
-	@Override
-	public boolean removeAll(final Collection<?> c) {
+	public final boolean removeAll(final Collection<?> c) {
 		throw new UnsupportedOperationException();
 	}
 	
-	@Override
-	public void clear() {
+	public final void clear() {
 		throw new UnsupportedOperationException();
 	}
 	
-	@Override
-	public boolean retainAll(final Collection<?> c) {
+	public final boolean retainAll(final Collection<?> c) {
 		throw new UnsupportedOperationException();
 	}
+	
+	
+	public abstract E get(final int index);
+	
+	public abstract int indexOf(final Object o);
+	
+	public abstract int lastIndexOf(final Object o);
 	
 	
 	abstract void copyTo(Object[] dest, int destPos);
 	
 	abstract void copyTo(int srcPos, Object[] dest, int destPos, int length);
+	
+	abstract ImList<E> toImList();
+	abstract ImIdentityList<E> toImIdentityList();
 	
 }

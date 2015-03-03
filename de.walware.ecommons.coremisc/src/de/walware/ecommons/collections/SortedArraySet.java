@@ -353,7 +353,7 @@ public class SortedArraySet<E> extends AbstractList<E> implements SortedListSet<
 	 * @param comparator comparator used to sort the elements or <code>null</code>
 	 *     to use the natural order of comparable elements
 	 */
-	public SortedArraySet(final E[] array, int size, final Comparator<? super E> comparator) {
+	public SortedArraySet(final E[] array, final int size, final Comparator<? super E> comparator) {
 		this.arrayClass= (Class<E[]>) array.getClass();
 		if (comparator == null && !Comparable.class.isAssignableFrom(this.arrayClass.getComponentType())) {
 			throw new NullPointerException("comparator"); //$NON-NLS-1$

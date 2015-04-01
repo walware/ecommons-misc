@@ -25,62 +25,86 @@ import org.eclipse.core.databinding.observable.list.ListDiffEntry;
 public class DataBindingSubContext {
 	
 	
-	private final DataBindingContext fDbc;
+	private final DataBindingContext dbc;
 	
-	private final ArrayList<Binding> fBindings;
-	private final ArrayList<IObservable> fObservables;
+	private final ArrayList<Binding> bindings;
+	private final ArrayList<IObservable> observables;
+	
+	private boolean enabled= true;
 	
 	
 	public DataBindingSubContext(final DataBindingContext dbc) {
-		fDbc = dbc;
-		fBindings = new ArrayList<Binding>(8);
-		fObservables = new ArrayList<IObservable>(8);
+		this.dbc= dbc;
+		this.bindings= new ArrayList<>(8);
+		this.observables= new ArrayList<>(8);
 	}
 	
 	
 	public DataBindingContext getDataBindingContext() {
-		return fDbc;
+		return this.dbc;
 	}
 	
 	public void run(final Runnable runnable) {
-		final IListChangeListener listener = new IListChangeListener() {
+		final IListChangeListener listener= new IListChangeListener() {
 			@Override
 			public void handleListChange(final ListChangeEvent event) {
 				for (final ListDiffEntry diff : event.diff.getDifferences()) {
 					if (diff.isAddition()) {
-						fBindings.add((Binding) diff.getElement());
+						DataBindingSubContext.this.bindings.add((Binding) diff.getElement());
+					}
+					else {
+						DataBindingSubContext.this.bindings.remove(diff.getElement());
 					}
 				}
 			}
 		};
 		
-		fDbc.getBindings().addListChangeListener(listener);
+		this.dbc.getBindings().addListChangeListener(listener);
 		try {
-			final IObservable[] observables = ObservableTracker.runAndCollect(runnable);
-			fObservables.ensureCapacity(fObservables.size() + observables.length);
-			for (int i = 0; i < observables.length; i++) {
-				fObservables.add(observables[i]);
+			final IObservable[] observables= ObservableTracker.runAndCollect(runnable);
+			this.observables.ensureCapacity(this.observables.size() + observables.length);
+			for (int i= 0; i < observables.length; i++) {
+				this.observables.add(observables[i]);
 			}
 		}
 		finally {
-			fDbc.getBindings().removeListChangeListener(listener);
+			this.dbc.getBindings().removeListChangeListener(listener);
+		}
+	}
+	
+	public void setEnabled(final boolean enabled) {
+		if (enabled == this.enabled) {
+			return;
+		}
+		
+		this.enabled= enabled;
+		
+		if (this.enabled) {
+			for (final Binding binding : this.bindings) {
+				this.dbc.addBinding(binding);
+			}
+		}
+		else {
+			for (final Binding binding : this.bindings) {
+				this.dbc.removeBinding(binding);
+			}
 		}
 	}
 	
 	public void dispose() {
-		for (final Binding binding : fBindings) {
+		for (final Binding binding : this.bindings) {
 			if (!binding.isDisposed()) {
 				binding.dispose();
 			}
 		}
-		fBindings.clear();
+		this.bindings.clear();
 		
-		for (final IObservable observable : fObservables) {
+		for (final IObservable observable : this.observables) {
 			if (!observable.isDisposed()) {
 				observable.dispose();
 			}
 		}
-		fObservables.clear();
+		this.observables.clear();
 	}
 	
 }

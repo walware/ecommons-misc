@@ -21,52 +21,51 @@ import org.eclipse.core.databinding.observable.value.AbstractObservableValue;
 /**
  * 
  */
-public abstract class ComputedOnChangeValue extends AbstractObservableValue {
+public abstract class ComputedOnChangeValue extends AbstractObservableValue 
+		implements IChangeListener {
 	
 	
-	private final Object fValueType;
+	private final Object valueType;
 	
-	private final IObservable[] fDependencies;
-	private final IChangeListener fListener;
+	private final IObservable[] dependencies;
 	
-	private boolean fSetting;
+	private boolean setting;
 	
-	private Object fValue;
+	private Object value;
 	
 	
 	public ComputedOnChangeValue(final Object valueType, final IObservable... dependencies) {
 		super(dependencies[0].getRealm());
-		fValueType = valueType;
-		fDependencies = dependencies;
-		fListener = new IChangeListener() {
-			@Override
-			public void handleChange(final ChangeEvent event) {
-				if (!fSetting) {
-					final Object newValue = calculate();
-					final Object oldValue = fValue;
-					if ((oldValue != null) ? !oldValue.equals(newValue) : null != newValue) {
-						fireValueChange(Diffs.createValueDiff(oldValue, newValue));
-					}
-				}
-			}
-		};
+		this.valueType= valueType;
+		this.dependencies= dependencies;
 		for (final IObservable obs : dependencies) {
-			obs.addChangeListener(fListener);
+			obs.addChangeListener(this);
 		}
 	}
 	
 	@Override
 	public synchronized void dispose() {
-		for (final IObservable obs : fDependencies) {
-			obs.removeChangeListener(fListener);
+		for (final IObservable obs : this.dependencies) {
+			obs.removeChangeListener(this);
 		}
 		super.dispose();
 	}
 	
 	
 	@Override
+	public void handleChange(final ChangeEvent event) {
+		if (!this.setting) {
+			final Object newValue= calculate();
+			final Object oldValue= this.value;
+			if ((oldValue != null) ? !oldValue.equals(newValue) : null != newValue) {
+				fireValueChange(Diffs.createValueDiff(oldValue, this.value= newValue));
+			}
+		}
+	}
+	
+	@Override
 	public Object getValueType() {
-		return fValueType;
+		return this.valueType;
 	}
 	
 	@Override
@@ -76,12 +75,13 @@ public abstract class ComputedOnChangeValue extends AbstractObservableValue {
 	
 	@Override
 	protected final void doSetValue(final Object value) {
-		fSetting = true;
+		this.setting= true;
 		try {
 			extractAndSet(value);
+			this.value= value;
 		}
 		finally {
-			fSetting = false;
+			this.setting= false;
 		}
 	}
 	

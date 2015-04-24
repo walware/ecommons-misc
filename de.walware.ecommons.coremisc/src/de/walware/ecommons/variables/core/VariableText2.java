@@ -157,6 +157,10 @@ public class VariableText2 {
 		this.extraVariables= (variables != null) ? variables : Collections.<String, IStringVariable>emptyMap();
 	}
 	
+	public VariableText2() {
+		this(null);
+	}
+	
 	
 	public final Map<String, IStringVariable> getExtraVariables() {
 		return this.extraVariables;

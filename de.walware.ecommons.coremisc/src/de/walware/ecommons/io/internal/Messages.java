@@ -22,14 +22,23 @@ public class Messages {
 	public static String CoreUtility_Build_ProjectTask_name;
 	
 	public static String Resource_error_NoInput_message;
+	public static String Resource_error_NoInput_message_0;
 	public static String Resource_error_DoesNotExists_message;
+	public static String Resource_error_DoesNotExists_message_0;
 	public static String Resource_error_AlreadyExists_message;
+	public static String Resource_error_AlreadyExists_message_0;
 	public static String Resource_error_NoValidSpecification_message;
+	public static String Resource_error_NoValidSpecification_message_0;
 	public static String Resource_error_Other_message;
+	public static String Resource_error_Other_message_0;
 	public static String Resource_error_IsFile_message;
+	public static String Resource_error_IsFile_message_0;
 	public static String Resource_error_IsDirectory_message;
+	public static String Resource_error_IsDirectory_message_0;
 	public static String Resource_error_NotLocal_message;
+	public static String Resource_error_NotLocal_message_0;
 	public static String Resource_error_NotInWorkspace_message;
+	public static String Resource_error_NotInWorkspace_message_0;
 	
 	public static String FileType_Local_name;
 	public static String FileType_Workspace_name;

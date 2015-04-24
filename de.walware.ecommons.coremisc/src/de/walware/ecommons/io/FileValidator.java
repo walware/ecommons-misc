@@ -31,6 +31,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.variables.IStringVariable;
 import org.eclipse.core.variables.IStringVariableManager;
 import org.eclipse.core.variables.VariablesPlugin;
 import org.eclipse.osgi.util.NLS;
@@ -39,6 +40,8 @@ import de.walware.ecommons.ECommons;
 import de.walware.ecommons.StatusUtil;
 import de.walware.ecommons.coreutils.internal.CoreMiscellanyPlugin;
 import de.walware.ecommons.io.internal.Messages;
+import de.walware.ecommons.variables.core.VariableText2;
+import de.walware.ecommons.variables.core.VariableUtils;
 
 
 /**
@@ -53,20 +56,25 @@ public class FileValidator implements IValidator {
 	
 	private Object fExplicitObject;
 	private boolean fInCheck = false;
+	
 	private IResource fWorkspaceResource;
 	private IFileStore fFileStore;
-	private IStatus fStatus;
 	
-	private String fResourceLabel = " "; //$NON-NLS-1$
+	private IStatus status;
+	
+	private String fResourceLabel;
+	
+	private VariableText2 variableResolver;
+	
 	private int fOnEmpty;
 	private int fOnNotExisting;
 	private int fOnExisting;
-	private int fOnLateResolve;
+	private VariableText2.Severities onVariableProblems;
 	private int fOnFile;
 	private int fOnDirectory;
 	private int fOnNotLocal;
 	private boolean fIgnoreRelative;
-	private String fRelativePrefix;
+	private IStringVariable fRelativePrefix;
 	private int fRelativeMax = -1;
 	private IPath fRelativePath;
 	private boolean fRequireWorkspace;
@@ -85,7 +93,7 @@ public class FileValidator implements IValidator {
 		fOnNotExisting = IStatus.OK;
 		fOnExisting = IStatus.OK;
 		fOnEmpty = IStatus.ERROR;
-		fOnLateResolve = IStatus.ERROR;
+		this.onVariableProblems= VariableText2.Severities.RESOLVE;
 		fOnFile = IStatus.OK;
 		fOnDirectory = IStatus.OK;
 		fOnNotLocal = IStatus.ERROR;
@@ -107,82 +115,123 @@ public class FileValidator implements IValidator {
 	}
 	
 	
+	void checkVariable(final IStringVariable variable) {
+	}
+	
+	
 	public void setOnEmpty(final int severity) {
 		fOnEmpty = severity;
-		fStatus = null;
+		resetResolution();
 	}
 	public int getOnEmpty() {
 		return fOnEmpty;
 	}
 	
 	public void setOnExisting(final int severity) {
-		fStatus = null;
 		fOnExisting = severity;
+		resetResolution();
 	}
 	public int getOnExisting() {
 		return fOnExisting;
 	}
 	
 	public void setOnNotExisting(final int severity) {
-		fStatus = null;
 		fOnNotExisting = severity;
+		resetResolution();
 	}
 	public int getOnNotExisting() {
 		return fOnNotExisting;
 	}
 	
 	public void setOnLateResolve(final int severity) {
-		fStatus = null;
-		fOnLateResolve = severity;
+		if (severity != this.onVariableProblems.getUnresolved()) {
+			this.onVariableProblems= new VariableText2.Severities(IStatus.ERROR, severity);
+		}
+		resetResolution();
 	}
 	public int getOnLateResolve() {
-		return fOnLateResolve;
+		return this.onVariableProblems.getUnresolved();
 	}
 	
 	public void setOnFile(final int severity) {
-		fStatus = null;
 		fOnFile = severity;
+		resetResolution();
 	}
 	public int getOnFile() {
 		return fOnFile;
 	}
 	
 	public void setOnDirectory(final int severity) {
-		fStatus = null;
 		fOnDirectory = severity;
+		resetResolution();
 	}
 	public int getOnDirectory() {
 		return fOnDirectory;
 	}
 	
 	public void setOnNotLocal(final int severity) {
-		fStatus = null;
 		fOnNotLocal = severity;
+		resetResolution();
 	}
 	public int getOnNotLocal() {
 		return fOnNotLocal;
 	}
 	public void setIgnoreRelative(final boolean ignore) {
-		fRelativePrefix = null;
 		fRelativeMax = -1;
 		fIgnoreRelative = ignore;
-		fStatus = null;
+		resetResolution();
 	}
 	
-	public void setRelative(final String prefix, final int maxSeverity) {
+	public void setRelative(final IStringVariable prefix, final int maxSeverity) {
 		fRelativePrefix = prefix;
-		if (prefix != null && !prefix.endsWith("/") && !prefix.endsWith("\\")) {
-			fRelativePrefix += '/';
-		}
 		fRelativeMax = maxSeverity;
 		fIgnoreRelative = false;
-		fStatus = null;
+		
+		checkVariable(prefix);
+		resetResolution();
+	}
+	
+	protected String getRelativePrefix() {
+		String prefix= null;
+		if (fRelativePrefix != null) {
+			try {
+				prefix= VariableUtils.getValue(fRelativePrefix);
+			}
+			catch (final CoreException e) {
+			}
+		}
+		if (prefix != null && !prefix.endsWith("/") && !prefix.endsWith("\\")) { //$NON-NLS-1$ //$NON-NLS-2$
+			prefix+= '/';
+		}
+		return prefix;
 	}
 	
 	public void setRequireWorkspace(final boolean require, final boolean wsPath) {
 		fRequireWorkspace = require;
 		if (require) {
 			fAsWorkspacePath = wsPath;
+		}
+		resetResolution();
+	}
+	
+	public void setVariableResolver(final VariableText2 variableResolver) {
+		this.variableResolver= variableResolver;
+		
+		if (variableResolver.getExtraVariables() != null) {
+			for (final IStringVariable aVariable : variableResolver.getExtraVariables().values()) {
+				checkVariable(aVariable);
+			}
+		}
+		updateVariableResolution();
+	}
+	
+	public VariableText2 getVariableResolver() {
+		return this.variableResolver;
+	}
+	
+	public void updateVariableResolution() {
+		if (fExplicitObject instanceof String || fRelativePrefix != null) {
+			resetResolution();
 		}
 	}
 	
@@ -192,7 +241,7 @@ public class FileValidator implements IValidator {
 	 */
 	public void setOnPattern(final Pattern pattern, final int severity) {
 		if (fOnPattern == null) {
-			fOnPattern = new LinkedHashMap<Pattern, Integer>();
+			fOnPattern = new LinkedHashMap<>();
 		}
 		if (severity >= 0) {
 			fOnPattern.put(pattern, severity);
@@ -216,8 +265,9 @@ public class FileValidator implements IValidator {
 	}
 	
 	public void setResourceLabel(final String label) {
-		fResourceLabel = " '" + label + "' "; //$NON-NLS-1$ //$NON-NLS-2$
+		fResourceLabel= label;
 	}
+	
 	
 	/**
 	 * Sets explicitly the object to validate.
@@ -228,8 +278,18 @@ public class FileValidator implements IValidator {
 	public void setExplicit(final Object value) {
 		fFileStore = null;
 		fWorkspaceResource = null;
-		fStatus = null;
 		fExplicitObject = value;
+		setStatus(null);
+	}
+	
+	private void resetResolution() {
+		fFileStore = null;
+		fWorkspaceResource = null;
+		setStatus(null);
+	}
+	
+	protected void setStatus(final IStatus status) {
+		this.status= status;
 	}
 	
 	@Override
@@ -237,12 +297,12 @@ public class FileValidator implements IValidator {
 		if (!checkExplicit()) {
 			doValidateChecked(value);
 		}
-		return fStatus;
+		return this.status;
 	}
 	
-	private boolean checkExplicit() {
+	boolean checkExplicit() {
 		if (fExplicitObject != null) {
-			if (fStatus == null) {
+			if (this.status == null) {
 				doValidateChecked(fExplicitObject);
 			}
 			return true;
@@ -261,7 +321,7 @@ public class FileValidator implements IValidator {
 						status = status2;
 					}
 				}
-				fStatus = status;
+				setStatus(status);
 			}
 			catch (final Exception e) {
 				CoreMiscellanyPlugin.getDefault().log(new Status(IStatus.ERROR, ECommons.PLUGIN_ID, -1,
@@ -286,7 +346,9 @@ public class FileValidator implements IValidator {
 		if (value instanceof String) {
 			String s = (String) value;
 			if (s.length() == 0) {
-				return createStatus(fOnEmpty, Messages.Resource_error_NoInput_message, null);
+				return createStatus(fOnEmpty,
+						Messages.Resource_error_NoInput_message, Messages.Resource_error_NoInput_message_0,
+						null );
 			}
 			if (fOnPattern != null && !fOnPattern.isEmpty()) {
 				for (final Entry<Pattern, Integer> entry : fOnPattern.entrySet()) {
@@ -298,10 +360,14 @@ public class FileValidator implements IValidator {
 			try {
 				s = resolveExpression(s);
 			} catch (final CoreException e) {
-				return createStatus(e.getStatus().getSeverity(), Messages.Resource_error_Other_message, e.getStatus().getMessage());
+				return createStatus(e.getStatus().getSeverity(),
+						Messages.Resource_error_Other_message, Messages.Resource_error_Other_message_0,
+						e.getStatus().getMessage() );
 			}
 			if (s.length() == 0) {
-				return createStatus(fOnEmpty, Messages.Resource_error_NoInput_message, null);
+				return createStatus(fOnEmpty,
+						Messages.Resource_error_NoInput_message, Messages.Resource_error_NoInput_message_0,
+						null );
 			}
 			{	final IPath path = new Path(s);
 				if (!path.isAbsolute()) {
@@ -309,11 +375,12 @@ public class FileValidator implements IValidator {
 					if (fRelativeMax >= 0 && fRelativeMax < fCurrentMax) {
 						fCurrentMax = fRelativeMax;
 					}
-					if (fIgnoreRelative) {
-						return Status.OK_STATUS;
+					final String prefix= getRelativePrefix();
+					if (prefix != null) {
+						s= prefix + s;
 					}
-					if (fRelativePrefix != null) {
-						s = fRelativePrefix + s;
+					else if (fIgnoreRelative) {
+						return Status.OK_STATUS;
 					}
 				}
 			}
@@ -323,14 +390,18 @@ public class FileValidator implements IValidator {
 						((fOnDirectory < IStatus.ERROR) ? (IResource.PROJECT | IResource.FOLDER) : 0);
 				final IStatus status = workspace.validatePath(s, typeMask);
 				if (!status.isOK()) {
-					return status;
+					return createStatus(status.getSeverity(),
+							Messages.Resource_error_Other_message, Messages.Resource_error_Other_message_0,
+							status.getMessage() );
 				}
 				final IPath path = new Path(s);
 				fWorkspaceResource = workspace.getRoot().findMember(path, true);
 				if (fWorkspaceResource == null) {
 					final IResource project = workspace.getRoot().findMember(path.segment(0), true);
 					if (project == null) {
-						return createStatus(IStatus.ERROR, Messages.Resource_error_NotInWorkspace_message, null);
+						return createStatus(IStatus.ERROR,
+								Messages.Resource_error_NotInWorkspace_message, Messages.Resource_error_NotInWorkspace_message_0,
+								null );
 					}
 					if (path.segmentCount() == 1 && fOnDirectory < IStatus.ERROR) {
 						fWorkspaceResource = project;
@@ -348,11 +419,15 @@ public class FileValidator implements IValidator {
 				try {
 					fFileStore = FileUtil.getFileStore(s);
 					if (fFileStore == null) {
-						return createStatus(IStatus.ERROR, Messages.Resource_error_NoValidSpecification_message, null);
+						return createStatus(IStatus.ERROR,
+								Messages.Resource_error_NoValidSpecification_message, Messages.Resource_error_NoValidSpecification_message_0,
+								null );
 					}
 				}
 				catch (final CoreException e) {
-					return createStatus(IStatus.ERROR, Messages.Resource_error_NoValidSpecification_message, e.getStatus().getMessage());
+					return createStatus(IStatus.ERROR,
+							Messages.Resource_error_NoValidSpecification_message, Messages.Resource_error_NoValidSpecification_message_0,
+							e.getStatus().getMessage() );
 				}
 				
 				// search file in workspace 
@@ -381,7 +456,9 @@ public class FileValidator implements IValidator {
 			return validateWorkspaceResource();
 		}
 		else if (fRequireWorkspace) {
-			return createStatus(IStatus.ERROR, Messages.Resource_error_NotInWorkspace_message, null);
+			return createStatus(IStatus.ERROR,
+					Messages.Resource_error_NotInWorkspace_message, Messages.Resource_error_NotInWorkspace_message_0,
+					null );
 		}
 		else {
 			throw new IllegalArgumentException();
@@ -389,13 +466,18 @@ public class FileValidator implements IValidator {
 	}
 	
 	protected String resolveExpression(final String expression) throws CoreException {
+		if (this.variableResolver != null) {
+			return this.variableResolver.performStringSubstitution(expression,
+					this.onVariableProblems );
+		}
+		
 		final IStringVariableManager manager = VariablesPlugin.getDefault().getStringVariableManager();
 		try {
 			return manager.performStringSubstitution(expression);
 		}
 		catch (final CoreException e) {
 			manager.validateStringVariables(expression); // throws invalid variable
-			throw new CoreException(new Status(fOnLateResolve, e.getStatus().getPlugin(), e.getStatus().getMessage())); // throws runtime variable
+			throw new CoreException(new Status(getOnLateResolve(), e.getStatus().getPlugin(), e.getStatus().getMessage())); // throws runtime variable
 		}
 	}
 	
@@ -419,7 +501,9 @@ public class FileValidator implements IValidator {
 		IStatus status = Status.OK_STATUS;
 		if (fOnNotLocal != IStatus.OK) {
 			if (!isLocalFile()) {
-				status = createStatus(fOnNotLocal, Messages.Resource_error_NotLocal_message, null);
+				status = createStatus(fOnNotLocal,
+						Messages.Resource_error_NotLocal_message, Messages.Resource_error_NotLocal_message_0,
+						null );
 			}
 			if (status.getSeverity() == IStatus.ERROR) {
 				return status;
@@ -436,7 +520,9 @@ public class FileValidator implements IValidator {
 		IStatus status = Status.OK_STATUS;
 		if (fOnNotLocal != IStatus.OK) {
 			if (!isLocalFile()) {
-				status = createStatus(fOnNotLocal, Messages.Resource_error_NotLocal_message, null);
+				status = createStatus(fOnNotLocal,
+						Messages.Resource_error_NotLocal_message, Messages.Resource_error_NotLocal_message_0,
+						null );
 			}
 			if (status.getSeverity() == IStatus.ERROR) {
 				return status;
@@ -452,21 +538,30 @@ public class FileValidator implements IValidator {
 	
 	private IStatus createExistsStatus(final boolean exists, final boolean isDirectory) {
 		if (exists) {
-			IStatus status = createStatus(fOnExisting, Messages.Resource_error_AlreadyExists_message, null);
+			IStatus status = createStatus(fOnExisting,
+					Messages.Resource_error_AlreadyExists_message, Messages.Resource_error_AlreadyExists_message_0,
+					null );
 			if (status.getSeverity() < fOnDirectory && isDirectory) {
-				status = createStatus(fOnDirectory, Messages.Resource_error_IsDirectory_message, null);
+				status = createStatus(fOnDirectory,
+						Messages.Resource_error_IsDirectory_message, Messages.Resource_error_IsDirectory_message_0,
+						null );
 			}
 			if (status.getSeverity() < fOnFile && !isDirectory) {
-				status = createStatus(fOnFile, Messages.Resource_error_IsFile_message, null);
+				status = createStatus(fOnFile,
+						Messages.Resource_error_IsFile_message, Messages.Resource_error_IsFile_message_0,
+						null );
 			}
 			return status;
 		}
 		else {
-			return createStatus(fOnNotExisting, Messages.Resource_error_DoesNotExists_message, null);
+			return createStatus(fOnNotExisting,
+					Messages.Resource_error_DoesNotExists_message, Messages.Resource_error_DoesNotExists_message_0,
+					null );
 		}
 	}
 	
-	protected IStatus createStatus(int severity, final String message, String detail) {
+	protected IStatus createStatus(int severity, final String message, String message0,
+			String detail) {
 		if (severity == IStatus.OK) {
 			return Status.OK_STATUS;
 		}
@@ -476,7 +571,9 @@ public class FileValidator implements IValidator {
 		if (detail == null) {
 			detail = ""; //$NON-NLS-1$
 		}
-		return new Status(severity, ECommons.PLUGIN_ID, NLS.bind(message, fResourceLabel, detail));
+		return new Status(severity, ECommons.PLUGIN_ID, (fResourceLabel != null) ?
+				NLS.bind(message, fResourceLabel, detail) :
+				NLS.bind(message0, detail) );
 	}
 	
 	
@@ -517,7 +614,7 @@ public class FileValidator implements IValidator {
 	
 	public IStatus getStatus() {
 		checkExplicit();
-		return fStatus;
+		return this.status;
 	}
 	
 }

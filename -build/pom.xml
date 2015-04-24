@@ -14,6 +14,7 @@
 		<module>targetplatform</module>
 		
 		<module>../de.walware.ecommons.coremisc</module>
+		<module>../de.walware.ecommons.debug.core</module>
 		
 		<module>../de.walware.thirdparty-org.apache.commons.primitives</module>
 	</modules>

@@ -24,7 +24,7 @@
       <variable
             name="user_home"
             description="%variables_UserHome_description"
-            initializerClass="de.walware.ecommons.variables.internal.UserHomeVariableInitializer"
+            initializerClass="de.walware.ecommons.variables.internal.core.UserHomeVariableInitializer"
             readOnly="true">
       </variable>
    </extension>

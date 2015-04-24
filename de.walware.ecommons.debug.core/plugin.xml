@@ -14,4 +14,38 @@
 
 <plugin>
    
+   <extension
+         point="org.eclipse.core.variables.dynamicVariables">
+      <variable
+            name="file_name_base"
+            description="%variables_FileNameBase_description"
+            resolver="de.walware.ecommons.variables.core.ide.ResourceVariableResolver"
+            supportsArgument="true">
+      </variable>
+      <variable
+            name="file_name_ext"
+            description="%variables_FileNameExt_description"
+            resolver="de.walware.ecommons.variables.core.ide.ResourceVariableResolver"
+            supportsArgument="true">
+      </variable>
+      <variable
+            name="resource_enc"
+            description="%variables_ResourceEnc_description"
+            resolver="de.walware.ecommons.variables.core.ide.ResourceVariableResolver"
+            supportsArgument="true">
+      </variable>
+      <variable
+            name="container_enc"
+            description="%variables_ContainerEnc_description"
+            resolver="de.walware.ecommons.variables.core.ide.ResourceVariableResolver"
+            supportsArgument="true">
+      </variable>
+      <variable
+            name="project_enc"
+            description="%variables_ProjectEnc_description"
+            resolver="de.walware.ecommons.variables.core.ide.ResourceVariableResolver"
+            supportsArgument="true">
+      </variable>
+   </extension>
+   
 </plugin>

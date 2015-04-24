@@ -20,6 +20,11 @@ public class Messages extends NLS {
 	public static String LaunchDelegate_LaunchingTask_label;
 	public static String LaunchDelegate_Init_subtask;
 	
+	public static String ResourceVariable_error_Resource_EmptySelection_message;
+	public static String ResourceVariable_error_Resource_InvalidPath_message;
+	public static String ResourceVariable_error_Resource_NonExisting_message;
+	public static String ResourceVariable_error_Resource_LocationFailed_message;
+	
 	
 	static {
 		NLS.initializeMessages(Messages.class.getName(), Messages.class);

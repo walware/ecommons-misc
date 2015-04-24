@@ -12,6 +12,8 @@
 package de.walware.ecommons.variables.core;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.variables.IDynamicVariable;
 import org.eclipse.core.variables.IDynamicVariableResolver;
 import org.eclipse.core.variables.IStringVariable;
@@ -20,9 +22,10 @@ import org.eclipse.core.variables.IStringVariable;
 /**
  * Dynamic variable to provide easily variable resolving for a given string variable.
  */
-public abstract class DynamicVariable extends StringVariable implements IDynamicVariable {
+public class DynamicVariable extends StringVariable implements IDynamicVariable {
 	
 	
+	@Deprecated
 	public static abstract class LocationVariable extends DynamicVariable implements ILocationVariable {
 		
 		
@@ -35,82 +38,67 @@ public abstract class DynamicVariable extends StringVariable implements IDynamic
 	public static class ResolverVariable extends DynamicVariable {
 		
 		
-		private final IDynamicVariableResolver fResolver;
+		private final IDynamicVariableResolver resolver;
 		
 		
-		public ResolverVariable(final IStringVariable variable, final IDynamicVariableResolver resolver) {
+		public ResolverVariable(final String name, final String description,
+				final boolean supportsArgument, final IDynamicVariableResolver resolver) {
+			super(name, description, supportsArgument);
+			
+			if (resolver == null) {
+				throw new NullPointerException("resolver"); //$NON-NLS-1$
+			}
+			
+			this.resolver= resolver;
+		}
+		
+		public ResolverVariable(final IStringVariable variable,
+				final IDynamicVariableResolver resolver) {
 			super(variable);
 			
-			fResolver = resolver;
+			if (resolver == null) {
+				throw new NullPointerException("resolver"); //$NON-NLS-1$
+			}
+			
+			this.resolver= resolver;
 		}
 		
 		
 		@Override
 		public String getValue(final String argument) throws CoreException {
-			return fResolver.resolveValue(this, argument);
+			return this.resolver.resolveValue(this, argument);
 		}
 		
 	}
 	
-	public static class StaticVariable extends DynamicVariable {
-		
-		
-		private final String fValue;
-		
-		
-		public StaticVariable(final IStringVariable variable, final String value) {
-			super(variable);
-			fValue = value;
-		}
-		
-		
-		@Override
-		public boolean supportsArgument() {
-			return false;
-		}
-		
-		@Override
-		public String getValue(final String argument) throws CoreException {
-			return fValue;
-		}
-		
-		
-	}
 	
-	public static class UnresolvedVariable extends DynamicVariable {
-		
-		
-		private final CoreException fException;
-		
-		
-		public UnresolvedVariable(final IStringVariable variable, final CoreException exception) {
-			super(variable);
-			fException = exception;
-		}
-		
-		
-		@Override
-		public boolean supportsArgument() {
-			return false;
-		}
-		
-		@Override
-		public String getValue(final String argument) throws CoreException {
-			throw fException;
-		}
-		
-		
-	}
+	private final boolean isArgumentSupported;
 	
+	
+	public DynamicVariable(final String name, final String description, final boolean
+			supportsArgument) {
+		super(name, description);
+		
+		this.isArgumentSupported= supportsArgument;
+	}
 	
 	public DynamicVariable(final IStringVariable variable) {
 		super(variable.getName(), variable.getDescription());
+		
+		this.isArgumentSupported= (variable instanceof IDynamicVariable
+				&& ((IDynamicVariable) variable).supportsArgument() );
 	}
 	
 	
 	@Override
 	public boolean supportsArgument() {
-		return false;
+		return this.isArgumentSupported;
+	}
+	
+	@Override
+	public String getValue(final String argument) throws CoreException {
+		throw new CoreException(new Status(IStatus.ERROR, ECommonsVariablesCore.PLUGIN_ID,
+				"At the moment not resolvable." ));
 	}
 	
 }

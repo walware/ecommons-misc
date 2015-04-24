@@ -29,8 +29,6 @@ import org.eclipse.core.variables.IStringVariableManager;
 import org.eclipse.core.variables.VariablesPlugin;
 import org.eclipse.osgi.util.NLS;
 
-import de.walware.ecommons.ECommons;
-
 
 /**
  * Allows string substitution of special variables with manual replacement strings
@@ -142,8 +140,9 @@ public class VariableText {
 							break;
 						}
 					default:
-						throw new CoreException(new Status(IStatus.ERROR, ECommons.PLUGIN_ID,
-								NLS.bind("Malformed variable expression: variable ''{0}'' not closed.", variableName)));
+						throw new CoreException(new Status(IStatus.ERROR, ECommonsVariablesCore.PLUGIN_ID,
+								NLS.bind("Malformed variable expression: variable ''{0}'' not closed.",
+										variableName )));
 					}
 					fUnresolvedSpecial.add(variableName);
 					final int[] region = new int[] { offset, offset + length };
@@ -236,8 +235,9 @@ public class VariableText {
 						break;
 					case ':':
 						if (!variable.supportsArgument()) {
-							throw new CoreException(new Status(IStatus.ERROR, ECommons.PLUGIN_ID,
-									NLS.bind("Malformed variable expression: variable ''{0}'' doesn't support arguments.", variable.getName())));
+							throw new CoreException(new Status(IStatus.ERROR, ECommonsVariablesCore.PLUGIN_ID,
+									NLS.bind("Malformed variable expression: variable ''{0}'' doesn't support arguments.",
+											variable.getName() )));
 						}
 						length = text.indexOf('}', offset + pattern.length()) - offset + 1;
 						value = variable.getValue(
@@ -256,7 +256,8 @@ public class VariableText {
 	
 	public void performFinalStringSubstitution(final LocationProcessor locationProcessor) throws CoreException {
 		if (!fUnresolvedSpecial.isEmpty()) {
-			throw new CoreException(new Status(IStatus.ERROR, ECommons.PLUGIN_ID, "Unresolved variable(s): " + fUnresolvedSpecial.toString() + "."));
+			throw new CoreException(new Status(IStatus.ERROR, ECommonsVariablesCore.PLUGIN_ID,
+					"Unresolved variable(s): " + fUnresolvedSpecial.toString() + "." ));
 		}
 		if (fState == 1) {
 			performInitialStringSubstitution(true);

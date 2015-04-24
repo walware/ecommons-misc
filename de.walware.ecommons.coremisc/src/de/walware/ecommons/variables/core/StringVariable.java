@@ -20,8 +20,8 @@ import org.eclipse.core.variables.IStringVariable;
 public class StringVariable implements IStringVariable {
 	
 	
-	private final String fName;
-	private final String fDescription;
+	private final String name;
+	private final String description;
 	
 	
 	/**
@@ -31,8 +31,8 @@ public class StringVariable implements IStringVariable {
 	 * @param description
 	 */
 	public StringVariable(final String name, final String description) {
-		fName = name;
-		fDescription = description;
+		this.name= name;
+		this.description= description;
 	}
 	
 	
@@ -41,7 +41,7 @@ public class StringVariable implements IStringVariable {
 	 */
 	@Override
 	public String getName() {
-		return fName;
+		return this.name;
 	}
 	
 	/**
@@ -49,7 +49,7 @@ public class StringVariable implements IStringVariable {
 	 */
 	@Override
 	public String getDescription() {
-		return fDescription;
+		return this.description;
 	}
 	
 }

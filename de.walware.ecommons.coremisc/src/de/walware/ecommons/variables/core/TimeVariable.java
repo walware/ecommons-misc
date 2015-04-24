@@ -15,7 +15,6 @@ import com.ibm.icu.text.DateFormat;
 import com.ibm.icu.text.SimpleDateFormat;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.variables.IDynamicVariable;
 import org.eclipse.core.variables.IStringVariable;
 
 
@@ -28,25 +27,20 @@ import org.eclipse.core.variables.IStringVariable;
  * 
  * @see SimpleDateFormat
  */
-public abstract class TimeVariable extends StringVariable implements IDynamicVariable {
+public class TimeVariable extends DynamicVariable {
 	
 	
 	public TimeVariable(final String name, final String description) {
-		super(name, description);
+		super(name, description, true);
 	}
 	
 	public TimeVariable(final IStringVariable variable) {
-		super(variable.getName(), variable.getDescription());
+		super(variable);
 	}
 	
 	
 	protected long getTimestamp() {
 		return System.currentTimeMillis();
-	}
-	
-	@Override
-	public boolean supportsArgument() {
-		return true;
 	}
 	
 	@Override

@@ -9,7 +9,7 @@
  #     Stephan Wahlbrink - initial API and implementation
  #=============================================================================*/
 
-package de.walware.ecommons.variables.internal;
+package de.walware.ecommons.variables.internal.core;
 
 import org.eclipse.osgi.util.NLS;
 

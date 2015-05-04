@@ -37,9 +37,9 @@ import org.eclipse.core.variables.VariablesPlugin;
 import org.eclipse.osgi.util.NLS;
 
 import de.walware.ecommons.ECommons;
-import de.walware.ecommons.StatusUtil;
 import de.walware.ecommons.coreutils.internal.CoreMiscellanyPlugin;
 import de.walware.ecommons.io.internal.Messages;
+import de.walware.ecommons.runtime.core.utils.StatusUtils;
 import de.walware.ecommons.variables.core.VariableText2;
 import de.walware.ecommons.variables.core.VariableUtils;
 
@@ -510,7 +510,7 @@ public class FileValidator implements IValidator {
 			}
 		}
 		if (fOnExisting != IStatus.OK || fOnNotExisting != IStatus.OK || fOnFile != IStatus.OK || fOnDirectory != IStatus.OK) {
-			status = StatusUtil.getMoreSevere(status,
+			status = StatusUtils.getMoreSevere(status,
 					createExistsStatus(fWorkspaceResource.exists(), (fWorkspaceResource instanceof IContainer)) );
 		}
 		return status;
@@ -530,7 +530,7 @@ public class FileValidator implements IValidator {
 		}
 		if (fOnExisting != IStatus.OK || fOnNotExisting != IStatus.OK) {
 			final IFileInfo info = fFileStore.fetchInfo();
-			status = StatusUtil.getMoreSevere(status,
+			status = StatusUtils.getMoreSevere(status,
 					createExistsStatus(info.exists(), info.isDirectory()) );
 		}
 		return status;

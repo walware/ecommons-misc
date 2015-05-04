@@ -9,7 +9,7 @@
  #     IBM Corporation - initial API and implementation
  #=============================================================================*/
 
-package de.walware.ecommons;
+package de.walware.ecommons.runtime.core.utils;
 
 import org.eclipse.core.runtime.IStatus;
 
@@ -17,7 +17,7 @@ import org.eclipse.core.runtime.IStatus;
 /**
  * A utility class to work with IStatus.
  */
-public class StatusUtil {
+public class StatusUtils {
 	
 	/**
 	 * Compares two instances of <code>IStatus</code>. The more severe is returned:

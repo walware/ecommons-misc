@@ -30,6 +30,7 @@ Export-Package: de.walware.ecommons,
  de.walware.ecommons.preferences,
  de.walware.ecommons.resources;version="0.10.0",
  de.walware.ecommons.runtime.core.utils,
+ de.walware.ecommons.string,
  de.walware.ecommons.ts;version="1.1.0",
  de.walware.ecommons.ts.util;version="1.1.0",
  de.walware.ecommons.variables.core

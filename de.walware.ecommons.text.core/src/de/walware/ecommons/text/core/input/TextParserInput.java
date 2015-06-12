@@ -153,6 +153,26 @@ public abstract class TextParserInput {
 		return this.currentIndex;
 	}
 	
+	/**
+	 * Returns the index in the source text for the character at the specified offset.
+	 * 
+	 * @return the index in the source
+	 */
+	public int getIndex(final int offset) {
+		return this.currentIndex + offset;
+	}
+	
+	/**
+	 * Returns the length in source text of the content from the current index to the specified
+	 * offset (exclusive).
+	 * 
+	 * @param offset the end offset in the content
+	 * @return the length in the source
+	 */
+	public int getLengthInSource(final int offset) {
+		return offset;
+	}
+	
 	
 	/**
 	 * Returns the character at the specified offset in the content.
@@ -231,17 +251,6 @@ public abstract class TextParserInput {
 		return true;
 	}
 	
-	
-	/**
-	 * Returns the length in source text of the content from the current index to the specified
-	 * offset (exclusive).
-	 * 
-	 * @param offset the end offset in the content
-	 * @return the length in the source
-	 */
-	public int getLengthInSource(final int offset) {
-		return offset;
-	}
 	
 	/**
 	 * Forwards the current index to the specified offset.
@@ -338,19 +347,46 @@ public abstract class TextParserInput {
 	}
 	
 	
-	public final String getString(final int offset, final int length) {
-		return new String(this.buffer, this.currentIdx + offset, length);
-	}
-	
 	protected final CharArrayString getTmpString(final int offset, final int length) {
 		this.tmpCharString.set(this.buffer, this.currentIdx + offset, length);
 		return this.tmpCharString;
+	}
+	
+	public final String getString(final int offset, final int length) {
+		return new String(this.buffer, this.currentIdx + offset, length);
 	}
 	
 	public final String getString(final int offset, final int length, final IStringFactory factory) {
 		this.tmpCharString.set(this.buffer, this.currentIdx + offset, length);
 		return factory.get(this.tmpCharString);
 	}
+	
+	public final void appendTo(final int offset, final int length, final StringBuilder dst) {
+		switch (length) {
+		case 0:
+			return;
+		case 1:
+			dst.append(this.buffer[this.currentIdx + offset]);
+			return;
+		default:
+			dst.append(this.buffer, this.currentIdx + offset, length);
+			return;
+		}
+	}
+	
+	public final void insertInto(final int offset, final int length, final StringBuilder dst, final int dstOffset) {
+		switch (length) {
+		case 0:
+			return;
+		case 1:
+			dst.insert(dstOffset, this.buffer[this.currentIdx + offset]);
+			return;
+		default:
+			dst.insert(dstOffset, this.buffer, this.currentIdx + offset, length);
+			return;
+		}
+	}
+	
 	
 	@Override
 	public String toString() {

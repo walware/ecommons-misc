@@ -81,12 +81,18 @@ public abstract class FilterParserInput extends TextParserInput {
 	
 	
 	@Override
-	public int getLengthInSource(final int offset) {
+	public final int getIndex(final int offset) {
+		final int currentIdx= getIndexIdx();
+		return this.bufferBeginIndexes[currentIdx + offset];
+	}
+	
+	@Override
+	public final int getLengthInSource(final int offset) {
 		if (offset == 0) {
 			return 0;
 		}
-		final int indexIdx= getIndexIdx();
-		return this.bufferEndIndexes[indexIdx + offset - 1] - this.bufferBeginIndexes[indexIdx];
+		final int currentIdx= getIndexIdx();
+		return this.bufferEndIndexes[currentIdx + offset - 1] - this.bufferBeginIndexes[currentIdx];
 	}
 	
 	@Override
@@ -94,11 +100,13 @@ public abstract class FilterParserInput extends TextParserInput {
 		if (offset == 0) {
 			return;
 		}
+		int currentIdx= getIndexIdx();
 		{	// we need bufferIndex for offset
-			final int lastOffset= getEndIdx() - getIndexIdx() - 1;
+			final int lastOffset= getEndIdx() - currentIdx - 1;
 			if (offset > lastOffset) {
 				if (lastOffset > 0x10) {
-					setConsume(lastOffset, this.bufferBeginIndexes[getIndexIdx() + lastOffset]);
+					setConsume(lastOffset, this.bufferBeginIndexes[currentIdx + lastOffset]);
+					currentIdx= getIndexIdx();
 					offset-= lastOffset;
 				}
 				if (!updateBuffer(offset + 1)) {
@@ -111,7 +119,7 @@ public abstract class FilterParserInput extends TextParserInput {
 				}
 			}
 		}
-		setConsume(offset, this.bufferBeginIndexes[getIndexIdx() + offset]);
+		setConsume(offset, this.bufferBeginIndexes[currentIdx + offset]);
 	}
 	
 	
@@ -121,13 +129,13 @@ public abstract class FilterParserInput extends TextParserInput {
 		final int reused= copyBuffer0(buffer);
 		final int[] begins= (buffer == getBuffer()) ? this.bufferBeginIndexes : new int[buffer.length + 1];
 		final int[] ends= (buffer == getBuffer()) ? this.bufferEndIndexes : new int[buffer.length];
-		final int indexIdx= getIndexIdx();
+		final int currentIdx= getIndexIdx();
 		if (reused > 0) {
-			System.arraycopy(this.bufferBeginIndexes, indexIdx, begins, 0, reused + 1);
-			System.arraycopy(this.bufferEndIndexes, indexIdx, ends, 0, reused);
+			System.arraycopy(this.bufferBeginIndexes, currentIdx, begins, 0, reused + 1);
+			System.arraycopy(this.bufferEndIndexes, currentIdx, ends, 0, reused);
 		}
 		else {
-			begins[0]= this.bufferBeginIndexes[indexIdx];
+			begins[0]= this.bufferBeginIndexes[currentIdx];
 		}
 		
 		final int end= read(this.source, buffer, begins, ends, reused, requiredLength, recommendLength);

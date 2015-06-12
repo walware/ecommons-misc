@@ -10,6 +10,9 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Require-Bundle: org.eclipse.core.runtime;bundle-version="3.8.0",
  org.eclipse.text;visibility:=reexport
 Import-Package: com.ibm.icu.text;version="4.4.2.2",
- de.walware.ecommons.collections
+ de.walware.ecommons.collections,
+ de.walware.ecommons.string
 Export-Package: de.walware.ecommons.text.core,
- de.walware.ecommons.text.core.treepartitioner
+ de.walware.ecommons.text.core.input,
+ de.walware.ecommons.text.core.treepartitioner,
+ de.walware.ecommons.text.core.util

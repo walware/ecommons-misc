@@ -35,21 +35,14 @@ public class TestPartitionNodeType extends AbstractPartitionNodeType {
 	
 	private final String type;
 	
-	private final int priority;
-	
 	
 	public TestPartitionNodeType(final String type, final int priority) {
 		this.type= type;
-		this.priority= priority;
 	}
 	
 	@Override
 	public String getPartitionType() {
 		return this.type;
-	}
-	
-	public int getPriority() {
-		return this.priority;
 	}
 	
 }

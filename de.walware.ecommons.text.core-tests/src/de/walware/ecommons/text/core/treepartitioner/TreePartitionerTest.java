@@ -76,6 +76,7 @@ public class TreePartitionerTest {
 		
 	}
 	
+	
 	private final TestSet TEST_1= new TestSet("docu     ment{type 1} [type 2](type 3)docu     ment",
 			new ExpectedPartition[] {
 					new ExpectedPartition(0, 13, DEFAULT_ROOT),
@@ -186,6 +187,7 @@ public class TreePartitionerTest {
 		this.doc.set(this.TEST_NESTED.content);
 		assertGetPartition(this.TEST_NESTED.zeroLengthPartitions, true);
 	}
+	
 	
 	protected void assertGetPartition(final ExpectedPartition[] expected, final boolean zeroLength) {
 		for (int i= 0; i < expected.length; i++) {

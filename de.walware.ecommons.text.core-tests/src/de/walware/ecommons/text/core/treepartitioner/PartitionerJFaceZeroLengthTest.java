@@ -73,7 +73,6 @@ public class PartitionerJFaceZeroLengthTest extends PartitionerJFaceTest {
 		}
 	}
 	
-	
 	private boolean isOpenType(final ITreePartitionNodeType type) {
 		return (type == TestPartitionNodeType.DEFAULT_ROOT);
 	}

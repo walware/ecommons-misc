@@ -190,13 +190,13 @@ public class TreePartitioner implements IDocumentPartitioner,
 			this.scan= new TreePartitionerScan(this);
 		}
 		
-		NodePosition beginPosition= this.rootPosition;
+		this.scan.init(0, this.document.getLength(), this.rootPosition);
+		this.scan.markDirtyRegion(0, Integer.MAX_VALUE);
+		
 		if (this.startType != null) {
-			beginPosition= this.scan.add(this.startType, beginPosition, 0);
+			this.scan.addBeginPosition(this.startType);
 		}
 		
-		this.scan.init(0, this.document.getLength(), beginPosition);
-		this.scan.markDirtyRegion(0, Integer.MAX_VALUE);
 		try {
 			this.scanner.execute(this.scan);
 		}
@@ -291,15 +291,16 @@ public class TreePartitioner implements IDocumentPartitioner,
 			}
 			if (reparseStart == 0) {
 				beginPosition= this.rootPosition;
-				
-				if (this.startType != null) {
-					beginPosition= this.scan.add(this.startType, beginPosition, 0);
-				}
 			}
 			
 			this.scan.init(reparseStart, this.document.getLength(), beginPosition);
 			this.scan.markDirtyBegin(reparseStart);
 			this.scan.markDirtyEnd(event.getOffset() + newLength);
+			
+			if (reparseStart == 0 && beginPosition == this.rootPosition && this.startType != null) {
+				this.scan.addBeginPosition(this.startType);
+			}
+			
 			try {
 				this.scanner.execute(this.scan);
 			}

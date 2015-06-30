@@ -76,6 +76,11 @@ final class TreePartitionerScan implements ITreePartitionNodeScan {
 		this.autoBreakEnabled= true;
 	}
 	
+	void addBeginPosition(final ITreePartitionNodeType type) {
+		this.beginPosition= doAdd(type, this.beginPosition, this.beginOffset, 0);
+	}
+	
+	
 	@Override
 	public IDocument getDocument() {
 		return this.partitioner.document;

@@ -120,6 +120,25 @@ public class TreePartitionerTest {
 			}
 	);
 	
+	private final TestSet TEST_START_TYPE= new TestSet("type 1} [type 2](type 3)docu     ment",
+			new ExpectedPartition[] {
+					new ExpectedPartition(0, 7, T1),
+					new ExpectedPartition(7, 1, DEFAULT_ROOT),
+					new ExpectedPartition(8, 8, T2),
+					new ExpectedPartition(16, 8, T3),
+					new ExpectedPartition(24, 13, DEFAULT_ROOT)
+			},
+			new ExpectedPartition[] {
+					new ExpectedPartition(0, 0, DEFAULT_ROOT, true, true), // TODO
+					new ExpectedPartition(0, 7, T1, false, false),
+					new ExpectedPartition(7, 1, DEFAULT_ROOT, true, true),
+					new ExpectedPartition(8, 8, T2, false, false),
+					new ExpectedPartition(16, 0, DEFAULT_ROOT, true, true),
+					new ExpectedPartition(16, 8, T3, false, false),
+					new ExpectedPartition(24, 13, DEFAULT_ROOT, true, true)
+			}
+	);
+	
 	
 	protected IDocument doc;
 	protected TreePartitioner partitioner;
@@ -188,6 +207,36 @@ public class TreePartitionerTest {
 		assertGetPartition(this.TEST_NESTED.zeroLengthPartitions, true);
 	}
 	
+	
+	@Test
+	public void computePartitiong_StartType() {
+		this.partitioner.setStartType(TestPartitionNodeType.T1);
+		this.doc.set(this.TEST_START_TYPE.content);
+		assertTypedRegions(this.TEST_START_TYPE.partitions,
+				this.partitioner.computePartitioning(0, this.doc.getLength(), false) );
+	}
+	
+	@Test
+	public void computePartitiongZeroLength_StartType() {
+		this.partitioner.setStartType(TestPartitionNodeType.T1);
+		this.doc.set(this.TEST_START_TYPE.content);
+		assertTypedRegions(this.TEST_START_TYPE.zeroLengthPartitions,
+				this.partitioner.computePartitioning(0, this.doc.getLength(), true) );
+	}
+	
+	@Test
+	public void getPartition_StartType() throws BadLocationException {
+		this.partitioner.setStartType(TestPartitionNodeType.T1);
+		this.doc.set(this.TEST_START_TYPE.content);
+		assertGetPartition(this.TEST_START_TYPE.partitions, false);
+	}
+	
+	@Test
+	public void getPartitionZeroLength_StartType() throws BadLocationException {
+		this.partitioner.setStartType(TestPartitionNodeType.T1);
+		this.doc.set(this.TEST_START_TYPE.content);
+		assertGetPartition(this.TEST_START_TYPE.zeroLengthPartitions, true);
+	}
 	
 	protected void assertGetPartition(final ExpectedPartition[] expected, final boolean zeroLength) {
 		for (int i= 0; i < expected.length; i++) {

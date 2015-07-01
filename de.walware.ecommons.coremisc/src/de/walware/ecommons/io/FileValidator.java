@@ -39,7 +39,7 @@ import org.eclipse.osgi.util.NLS;
 import de.walware.ecommons.ECommons;
 import de.walware.ecommons.coreutils.internal.CoreMiscellanyPlugin;
 import de.walware.ecommons.io.internal.Messages;
-import de.walware.ecommons.runtime.core.utils.StatusUtils;
+import de.walware.ecommons.runtime.core.util.StatusUtils;
 import de.walware.ecommons.variables.core.VariableText2;
 import de.walware.ecommons.variables.core.VariableUtils;
 

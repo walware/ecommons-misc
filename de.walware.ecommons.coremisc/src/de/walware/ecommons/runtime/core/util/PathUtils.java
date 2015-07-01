@@ -9,7 +9,7 @@
  #     Stephan Wahlbrink - initial API and implementation
  #=============================================================================*/
 
-package de.walware.ecommons.runtime.core.utils;
+package de.walware.ecommons.runtime.core.util;
 
 import org.eclipse.core.runtime.IPath;
 

@@ -9,17 +9,21 @@
  #     Stephan Wahlbrink - initial API and implementation
  #=============================================================================*/
 
-package de.walware.ecommons.databinding;
+package de.walware.ecommons.databinding.core.observable;
 
 import org.eclipse.core.databinding.observable.ChangeEvent;
 import org.eclipse.core.databinding.observable.Diffs;
 import org.eclipse.core.databinding.observable.IChangeListener;
 import org.eclipse.core.databinding.observable.IObservable;
 import org.eclipse.core.databinding.observable.value.AbstractObservableValue;
+import org.eclipse.core.databinding.observable.value.ComputedValue;
+
+import de.walware.ecommons.collections.ImCollections;
+import de.walware.ecommons.collections.ImList;
 
 
 /**
- * 
+ * Similar to {@link ComputedValue}, but using a fixed list of dependencies.
  */
 public abstract class ComputedOnChangeValue extends AbstractObservableValue 
 		implements IChangeListener {
@@ -27,7 +31,7 @@ public abstract class ComputedOnChangeValue extends AbstractObservableValue
 	
 	private final Object valueType;
 	
-	private final IObservable[] dependencies;
+	private final ImList<IObservable> dependencies;
 	
 	private boolean setting;
 	
@@ -37,7 +41,7 @@ public abstract class ComputedOnChangeValue extends AbstractObservableValue
 	public ComputedOnChangeValue(final Object valueType, final IObservable... dependencies) {
 		super(dependencies[0].getRealm());
 		this.valueType= valueType;
-		this.dependencies= dependencies;
+		this.dependencies= ImCollections.newList(dependencies);
 		for (final IObservable obs : dependencies) {
 			obs.addChangeListener(this);
 		}

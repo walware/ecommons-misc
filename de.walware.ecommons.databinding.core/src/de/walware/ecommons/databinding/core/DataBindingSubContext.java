@@ -9,7 +9,7 @@
  #     Stephan Wahlbrink - initial API and implementation
  #=============================================================================*/
 
-package de.walware.ecommons.databinding;
+package de.walware.ecommons.databinding.core;
 
 import java.util.ArrayList;
 

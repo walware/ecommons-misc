@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: de.walware.ecommons.databinding.core;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Vendor: WalWare.de
+Bundle-Name: ECommons Databinding - Core
+Bundle-Activator: de.walware.ecommons.databinding.internal.core.ECommonsDatabindingCorePlugin
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Require-Bundle: org.eclipse.core.runtime;bundle-version="3.8.0",
+ org.eclipse.core.databinding;visibility:=reexport
+Import-Package: com.ibm.icu.text;version="4.4.2.2",
+ de.walware.ecommons.collections;version="1.5.0"
+Export-Package: de.walware.ecommons.databinding.core,
+ de.walware.ecommons.databinding.core.observable,
+ de.walware.ecommons.databinding.core.util

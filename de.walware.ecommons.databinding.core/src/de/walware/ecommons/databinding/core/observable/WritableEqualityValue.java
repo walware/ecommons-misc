@@ -10,7 +10,7 @@
  #     Stephan Wahlbrink - initial WritableEqualityValue
  #=============================================================================*/
 
-package de.walware.ecommons.databinding;
+package de.walware.ecommons.databinding.core.observable;
 
 import org.eclipse.core.databinding.observable.Diffs;
 import org.eclipse.core.databinding.observable.Realm;
@@ -22,7 +22,7 @@ public class WritableEqualityValue extends AbstractObservableValue {
 	
 	private final Object valueType;
 	
-	private Object value = null;
+	private Object value= null;
 	
 	
 	/**
@@ -41,7 +41,7 @@ public class WritableEqualityValue extends AbstractObservableValue {
 	 * @param valueType
 	 *            can be <code>null</code>
 	 */
-	public WritableEqualityValue(Object initialValue, Class valueType) {
+	public WritableEqualityValue(final Object initialValue, final Class valueType) {
 		this(Realm.getDefault(), initialValue, valueType);
 	}
 	
@@ -51,7 +51,7 @@ public class WritableEqualityValue extends AbstractObservableValue {
 	 *
 	 * @param realm
 	 */
-	public WritableEqualityValue(Realm realm) {
+	public WritableEqualityValue(final Realm realm) {
 		this(realm, null, null);
 	}
 	
@@ -64,21 +64,21 @@ public class WritableEqualityValue extends AbstractObservableValue {
 	 * @param valueType
 	 *            can be <code>null</code>
 	 */
-	public WritableEqualityValue(Realm realm, Object initialValue, Class valueType) {
+	public WritableEqualityValue(final Realm realm, final Object initialValue, final Class valueType) {
 		super(realm);
-		this.valueType = valueType;
-		this.value = initialValue;
+		this.valueType= valueType;
+		this.value= initialValue;
 	}
 	
 	
 	@Override
 	public Object getValueType() {
-		return valueType;
+		return this.valueType;
 	}
 	
 	@Override
 	public Object doGetValue() {
-		return value;
+		return this.value;
 	}
 	
 	@Override

@@ -39,6 +39,10 @@ public class DDEClient {
 	}
 	
 	
+	public static final int INIT_FAILED= 1;
+	public static final int CONNECT_FAILED= 2;
+	
+	
 	public static void execute(final String server, final String topic, final String command)
 			throws CoreException {
 		if (server == null) {
@@ -58,12 +62,12 @@ public class DDEClient {
 			error = 1001;
 		}
 		if (error != 0) {
-			throw new CoreException(new Status(IStatus.ERROR, ECommons.PLUGIN_ID,
-					"Executing DDE command failed:"
-							+ "\n\tserver= " + server
-							+ "\n\ttopic= " + topic
-							+ "\n\tcommand= " + command
-							+ "\n\terror= " + error ));
+			throw new CoreException(new Status(IStatus.ERROR, ECommons.PLUGIN_ID, error,
+					"Executing DDE command failed:" +
+							"\n\tserver= " + server +
+							"\n\ttopic= " + topic +
+							"\n\tcommand= " + command,
+					null ));
 		}
 	}
 	

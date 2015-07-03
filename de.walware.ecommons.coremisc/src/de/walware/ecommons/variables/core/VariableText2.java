@@ -208,7 +208,7 @@ public class VariableText2 {
 		final StringBuilder escaped= getStringBuilder();
 		int start= 0;
 		for (int idx= 0; idx < text.length(); idx++) {
-			if (text.indexOf(idx) == '$') {
+			if (text.charAt(idx) == '$') {
 				if (start < idx) {
 					escaped.append(text, start, idx);
 				}

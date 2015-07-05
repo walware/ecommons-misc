@@ -23,6 +23,8 @@ public class Messages extends NLS {
 	public static String InputArguments_label;
 	public static String InputArguments_note;
 	
+	public static String ConfigTab_LoadPreset_label;
+	
 	
 	static {
 		NLS.initializeMessages(Messages.class.getName(), Messages.class);

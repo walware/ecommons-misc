@@ -165,6 +165,7 @@ public class UIMiscellanyPlugin extends AbstractUIPlugin {
 		
 		util.register(SharedUIResources.OBJ_USER_IMAGE_ID, ImageRegistryUtil.T_OBJ, "user.png"); //$NON-NLS-1$
 		util.register(SharedUIResources.OBJ_LINE_MATCH_IMAGE_ID, ImageRegistryUtil.T_OBJ, "line_match.gif"); //$NON-NLS-1$
+		util.register(SharedUIResources.OBJ_MAIN_TAB_ID, ImageRegistryUtil.T_OBJ, "main_tab.png"); //$NON-NLS-1$
 		
 		util.register(SharedUIResources.OVR_DEFAULT_MARKER_IMAGE_ID, ImageRegistryUtil.T_OVR, "default_marker.gif"); //$NON-NLS-1$
 		util.register(SharedUIResources.OVR_GREEN_LIGHT_IMAGE_ID, ImageRegistryUtil.T_OVR, "light-green.png"); //$NON-NLS-1$

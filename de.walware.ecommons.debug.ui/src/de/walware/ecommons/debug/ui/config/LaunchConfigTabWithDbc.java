@@ -11,14 +11,12 @@
 
 package de.walware.ecommons.debug.ui.config;
 
-import org.eclipse.core.databinding.AggregateValidationStatus;
 import org.eclipse.core.databinding.Binding;
 import org.eclipse.core.databinding.DataBindingContext;
 import org.eclipse.core.databinding.observable.ObservableEvent;
 import org.eclipse.core.databinding.observable.Realm;
 import org.eclipse.core.databinding.observable.value.IValueChangeListener;
 import org.eclipse.core.databinding.observable.value.ValueChangeEvent;
-import org.eclipse.core.databinding.validation.IValidator;
 import org.eclipse.core.databinding.validation.ValidationStatus;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
@@ -33,6 +31,8 @@ import org.eclipse.ui.statushandlers.StatusManager;
 
 import de.walware.ecommons.ICommonStatusConstants;
 import de.walware.ecommons.databinding.DirtyTracker;
+import de.walware.ecommons.databinding.core.AggregateValidationStatus;
+import de.walware.ecommons.databinding.core.DataStatus;
 import de.walware.ecommons.debug.ui.ECommonsDebugUI;
 
 
@@ -48,31 +48,6 @@ import de.walware.ecommons.debug.ui.ECommonsDebugUI;
  * </p>
  */
 public abstract class LaunchConfigTabWithDbc extends AbstractLaunchConfigurationTab {
-	
-	
-	protected static class SavableErrorValidator implements IValidator {
-		
-		private final IValidator wrappedValidator;
-		
-		public SavableErrorValidator(final IValidator validator) {
-			assert (validator != null);
-			this.wrappedValidator= validator;
-		}
-		
-		@Override
-		public IStatus validate(final Object value) {
-			final IStatus status= this.wrappedValidator.validate(value);
-			if (status != null) {
-				switch (status.getSeverity()) {
-				case IStatus.ERROR:
-					return ValidationStatus.warning(status.getMessage());
-				case IStatus.WARNING:
-					return ValidationStatus.info(status.getMessage());
-				}
-			}
-			return status;
-		}
-	}
 	
 	
 	private DataBindingContext dbc;
@@ -92,23 +67,29 @@ public abstract class LaunchConfigTabWithDbc extends AbstractLaunchConfiguration
 	
 	protected void updateDialogState() {
 		if (!isInitializing()) {
-			String message= null;
-			String errorMessage= null;
-			switch (this.currentStatus.getSeverity()) {
-			case IStatus.ERROR:
-				errorMessage= this.currentStatus.getMessage();
+			switch (DataStatus.getInfoSeverity(this.currentStatus)) {
+			case DataStatus.ERROR:
+			case DataStatus.UPDATEABLE_ERROR:
+				setMessage(null);
+				setWarningMessage(null);
+				setErrorMessage(this.currentStatus.getMessage());
 				break;
 			case IStatus.WARNING:
-				errorMessage= this.currentStatus.getMessage();
+				setMessage(null);
+				setWarningMessage(this.currentStatus.getMessage());
+				setErrorMessage(null);
 				break;
 			case IStatus.INFO:
-				message= this.currentStatus.getMessage();
+				setMessage(this.currentStatus.getMessage());
+				setWarningMessage(null);
+				setErrorMessage(null);
 				break;
 			default:
+				setMessage(null);
+				setWarningMessage(null);
+				setErrorMessage(null);
 				break;
 			}
-			setMessage(message);
-			setErrorMessage(errorMessage);
 			updateLaunchConfigurationDialog();
 		}
 	}
@@ -122,7 +103,7 @@ public abstract class LaunchConfigTabWithDbc extends AbstractLaunchConfiguration
 		
 		addBindings(this.dbc);
 		
-		this.aggregateStatus= new AggregateValidationStatus(this.dbc, AggregateValidationStatus.MAX_SEVERITY);
+		this.aggregateStatus= new AggregateValidationStatus(this.dbc, AggregateValidationStatus.MAX_INFO_SEVERITY);
 		this.aggregateStatus.addValueChangeListener(new IValueChangeListener() {
 			@Override
 			public void handleValueChange(final ValueChangeEvent event) {
@@ -172,10 +153,10 @@ public abstract class LaunchConfigTabWithDbc extends AbstractLaunchConfiguration
 	 * @deprecated
 	 */
 	@Deprecated
-	protected void addBindings(DataBindingContext dbc, Realm realm) {
+	protected void addBindings(final DataBindingContext dbc, final Realm realm) {
 	}
 	
-	protected void addBindings(DataBindingContext dbc) {
+	protected void addBindings(final DataBindingContext dbc) {
 		addBindings(dbc, dbc.getValidationRealm());
 	}
 	
@@ -221,7 +202,7 @@ public abstract class LaunchConfigTabWithDbc extends AbstractLaunchConfiguration
 			configuration.setAttribute(getValidationErrorAttr(), true); // To enable the revert button
 			return;
 		}
-		configuration.setAttribute(getValidationErrorAttr(), (String) null);
+		configuration.removeAttribute(getValidationErrorAttr());
 		if (isDirty()) {
 			doSave(configuration);
 			setDirty(false);
@@ -237,7 +218,7 @@ public abstract class LaunchConfigTabWithDbc extends AbstractLaunchConfiguration
 	
 	@Override
 	public boolean isValid(final ILaunchConfiguration launchConfig) {
-		return (this.currentStatus.getSeverity() < IStatus.WARNING);
+		return (DataStatus.getInfoSeverity(this.currentStatus) <= IStatus.WARNING);
 	}
 	
 	@Override

@@ -49,6 +49,8 @@ public class SharedUIResources {
 	
 	public static final String OBJ_LINE_MATCH_IMAGE_ID = UIMiscellanyPlugin.PLUGIN_ID + "/image/obj/line_match"; //$NON-NLS-1$
 	
+	public static final String OBJ_MAIN_TAB_ID= UIMiscellanyPlugin.PLUGIN_ID + "/image/obj/main_tab"; //$NON-NLS-1$
+	
 	public static final String OVR_DEFAULT_MARKER_IMAGE_ID = UIMiscellanyPlugin.PLUGIN_ID + "/image/ovr/default_marker"; //$NON-NLS-1$
 	public static final String OVR_GREEN_LIGHT_IMAGE_ID = UIMiscellanyPlugin.PLUGIN_ID + "/image/ovr/light-green"; //$NON-NLS-1$
 	public static final String OVR_YELLOW_LIGHT_IMAGE_ID = UIMiscellanyPlugin.PLUGIN_ID + "/image/ovr/light-yellow"; //$NON-NLS-1$

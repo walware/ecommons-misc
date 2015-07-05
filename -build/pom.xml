@@ -18,6 +18,7 @@
 		<module>../de.walware.ecommons.databinding.core</module>
 		<module>../de.walware.ecommons.text.core</module>
 		<module>../de.walware.ecommons.debug.core</module>
+		<module>../de.walware.ecommons.debug.ui</module>
 		
 		<module>../de.walware.ecommons.uimisc</module>
 		

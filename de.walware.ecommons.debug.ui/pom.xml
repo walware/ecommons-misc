@@ -12,7 +12,7 @@
 	</parent>
 	
 	<groupId>de.walware.ecommons</groupId>
-	<artifactId>de.walware.ecommons.debug.core</artifactId>
+	<artifactId>de.walware.ecommons.debug.ui</artifactId>
 	<version>1.1.0-SNAPSHOT</version>
 	<packaging>eclipse-plugin</packaging>
 	

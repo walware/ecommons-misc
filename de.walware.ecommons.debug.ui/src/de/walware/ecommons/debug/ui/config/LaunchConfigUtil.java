@@ -32,7 +32,7 @@ import org.eclipse.ui.statushandlers.StatusManager;
 
 import de.walware.ecommons.ICommonStatusConstants;
 import de.walware.ecommons.debug.internal.ui.Messages;
-import de.walware.ecommons.ui.internal.UIMiscellanyPlugin;
+import de.walware.ecommons.debug.ui.ECommonsDebugUI;
 
 
 /**
@@ -96,7 +96,7 @@ public class LaunchConfigUtil {
 						}
 						catch (final CoreException e) {
 							StatusManager.getManager().handle(new Status(
-									ICommonStatusConstants.LAUNCHING, UIMiscellanyPlugin.PLUGIN_ID,
+									ICommonStatusConstants.LAUNCHING, ECommonsDebugUI.PLUGIN_ID,
 									NLS.bind("An error occurred when refreshing resources for launch configuration ''{0}''.", BackgroundResourceRefresher.this.fConfiguration.getName()), e));
 							return e.getStatus();
 						}

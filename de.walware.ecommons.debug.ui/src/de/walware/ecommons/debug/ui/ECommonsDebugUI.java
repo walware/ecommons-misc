@@ -9,13 +9,13 @@
  #     Stephan Wahlbrink - initial API and implementation
  #=============================================================================*/
 
-package de.walware.ecommons.debug.core;
+package de.walware.ecommons.debug.ui;
 
 
-public final class ECommonsDebugCore {
+public final class ECommonsDebugUI {
 	
 	
-	public static final String PLUGIN_ID= "de.walware.ecommons.debug.core"; //$NON-NLS-1$
+	public static final String PLUGIN_ID= "de.walware.ecommons.debug.ui"; //$NON-NLS-1$
 	
 	
 }

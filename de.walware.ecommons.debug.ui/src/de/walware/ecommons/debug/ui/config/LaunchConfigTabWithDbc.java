@@ -29,10 +29,11 @@ import org.eclipse.debug.ui.AbstractLaunchConfigurationTab;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.ui.statushandlers.StatusManager;
 
 import de.walware.ecommons.ICommonStatusConstants;
 import de.walware.ecommons.databinding.DirtyTracker;
-import de.walware.ecommons.ui.internal.UIMiscellanyPlugin;
+import de.walware.ecommons.debug.ui.ECommonsDebugUI;
 
 
 /**
@@ -185,7 +186,7 @@ public abstract class LaunchConfigTabWithDbc extends AbstractLaunchConfiguration
 	}
 	
 	protected void logReadingError(final CoreException e) {
-		UIMiscellanyPlugin.log(new Status(IStatus.ERROR, UIMiscellanyPlugin.PLUGIN_ID,
+		StatusManager.getManager().handle(new Status(IStatus.ERROR, ECommonsDebugUI.PLUGIN_ID,
 				ICommonStatusConstants.LAUNCHCONFIG_ERROR,
 				NLS.bind("An error occurred while reading launch configuration (name: ''{0}'', id: ''{1}'')", //$NON-NLS-1$
 						getName(), getId()),

@@ -12,6 +12,7 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.8.0",
  de.walware.ecommons.coremisc,
  org.eclipse.core.variables,
  de.walware.ecommons.debug.core;bundle-version="1.1.0",
+ de.walware.ecommons.databinding.core,
  de.walware.ecommons.uimisc,
  org.eclipse.ui,
  org.eclipse.debug.ui;visibility:=reexport

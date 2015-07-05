@@ -28,6 +28,7 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 
 import de.walware.ecommons.collections.ConstArrayList;
 import de.walware.ecommons.collections.ImCollections;
+import de.walware.ecommons.collections.ImList;
 
 
 /**
@@ -305,14 +306,14 @@ public class DialogUtil {
 	/**
 	 * Common set of filters for use cases, in which user interaction is possible.
 	 */
-	public static final List<VariableFilter> DEFAULT_INTERACTIVE_FILTERS= ImCollections.newList(
+	public static final ImList<VariableFilter> DEFAULT_INTERACTIVE_FILTERS= ImCollections.newList(
 			EXCLUDE_JAVA_FILTER,
 			EXCLUDE_BUILD_FILTER );
 	
 	/**
 	 * Common set of filters for use cases, in which user interaction is possible, for workspace resources.
 	 */
-	public static final List<VariableFilter> DEFAULT_INTERACTIVE_RESOURCE_FILTERS= ImCollections.newList(
+	public static final ImList<VariableFilter> DEFAULT_INTERACTIVE_RESOURCE_FILTERS= ImCollections.newList(
 			EXCLUDE_JAVA_FILTER,
 			EXCLUDE_BUILD_FILTER,
 			EXCLUDE_LOC_FILTER );
@@ -320,7 +321,7 @@ public class DialogUtil {
 	/**
 	 * Common set of filters for use cases, in which user interaction is not possible.
 	 */
-	public static final List<VariableFilter> DEFAULT_NON_ITERACTIVE_FILTERS= ImCollections.newList(
+	public static final ImList<VariableFilter> DEFAULT_NON_ITERACTIVE_FILTERS= ImCollections.newList(
 			EXCLUDE_JAVA_FILTER,
 			EXCLUDE_BUILD_FILTER,
 			EXCLUDE_INTERACTIVE_FILTER );

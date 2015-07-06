@@ -133,12 +133,14 @@ public class ResourceVariableUtil implements ResourceVariableResolver.IResolveCo
 	
 	public ResourceVariableUtil(final IResource resource) {
 		this();
+		this.state|= S_RESOURCE_FETCHED;
 		this.resource= resource;
 	}
 	
 	public ResourceVariableUtil(final ResourceVariableUtil location, final IResource resource) {
 		this.workbenchPage= location.getWorkbenchPage();
 		this.part= location.getWorkbenchPart();
+		this.state|= S_RESOURCE_FETCHED;
 		this.resource= resource;
 	}
 	

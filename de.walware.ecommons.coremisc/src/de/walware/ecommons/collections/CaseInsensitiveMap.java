@@ -60,12 +60,12 @@ public class CaseInsensitiveMap<V> extends HashMap<String, V> {
 		return prevValue;
 	}
 	
-//	@Override
-//	public void putAll(final Map<? extends String, ? extends String> t) {
-//		for (final Entry<? extends String, ? extends String> entry : t.entrySet()) {
-//			put(entry.getKey(), entry.getValue());
-//		}
-//	}
+	@Override
+	public void putAll(final Map<? extends String, ? extends V> t) {
+		for (final Map.Entry<? extends String, ? extends V> entry : t.entrySet()) {
+			put(entry.getKey(), entry.getValue());
+		}
+	}
 	
 	@Override
 	public V remove(final Object key) {

@@ -124,7 +124,7 @@ public class LaunchUtils {
 	public static Map<String, String> createEnvironment(final ILaunchConfiguration configuration, final Map<String, String>[] add)
 			throws CoreException {
 		final Map<String, String> envp= (Platform.getOS().startsWith("win")) ? //$NON-NLS-1$
-				new CaseInsensitiveMap<String>() : new HashMap<String, String>();
+				new CaseInsensitiveMap<String>(64) : new HashMap<String, String>(64);
 		if (configuration == null || configuration.getAttribute(ILaunchManager.ATTR_APPEND_ENVIRONMENT_VARIABLES, true)) {
 			envp.putAll(DebugPlugin.getDefault().getLaunchManager().getNativeEnvironmentCasePreserved());
 		}

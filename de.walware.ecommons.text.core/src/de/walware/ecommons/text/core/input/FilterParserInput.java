@@ -60,8 +60,14 @@ public abstract class FilterParserInput extends TextParserInput {
 		return this;
 	}
 	
+	
 	public final TextParserInput getSource() {
 		return this.source;
+	}
+	
+	@Override
+	protected int getSourceStartIndex() {
+		return this.source.getSourceStartIndex();
 	}
 	
 	@Override
@@ -110,8 +116,9 @@ public abstract class FilterParserInput extends TextParserInput {
 					offset-= lastOffset;
 				}
 				if (!updateBuffer(offset + 1)) {
+					checkOffset(offset);
 					int index= getStopIndex();
-					if (index < 0) {
+					if (index == Integer.MIN_VALUE) {
 						index= this.bufferBeginIndexes[getEndIdx()];
 					}
 					setConsume(offset, index);

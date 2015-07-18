@@ -15,7 +15,7 @@ package de.walware.ecommons.text.core.input;
 /**
  * Text parser input for source string.
  */
-public class StringParserInput extends TextParserInput implements CharSequence {
+public final class StringParserInput extends TextParserInput implements CharSequence {
 	
 	
 	private String source;
@@ -60,13 +60,13 @@ public class StringParserInput extends TextParserInput implements CharSequence {
 	
 	
 	@Override
-	protected String getSourceString() {
-		return this.source;
+	protected int getSourceLength() {
+		return this.source.length();
 	}
 	
 	@Override
-	protected int getSourceLength() {
-		return this.source.length();
+	protected String getSourceString() {
+		return this.source;
 	}
 	
 	

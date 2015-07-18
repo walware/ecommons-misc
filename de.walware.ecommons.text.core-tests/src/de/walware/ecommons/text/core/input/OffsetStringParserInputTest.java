@@ -15,44 +15,22 @@ import static de.walware.ecommons.text.core.input.StringParserInputTest.COUNTER_
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import org.eclipse.jface.text.Document;
-import org.eclipse.jface.text.IDocument;
-import org.junit.Before;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.internal.ArrayComparisonFailure;
 
 
 @FixMethodOrder
-public class DocumentParserInputTest {
+public class OffsetStringParserInputTest {
 	
 	
-	private IDocument doc;
-	private DocumentParserInput input;
+	private OffsetStringParserInput input;
 	
-	
-	@Before
-	public void setUp() {
-		this.doc= new Document();
-	}
-	
-	
-	@Test
-	public void init() {
-		final String s= COUNTER_STRING.substring(0, 800);
-		this.doc.set(s);
-		this.input= new DocumentParserInput(this.doc);
-		this.input.init();
-		
-		assertEquals(0, this.input.getStartIndex());
-		assertEquals(s.length(), this.input.getStopIndex());
-	}
 	
 	@Test
 	public void initRegion() {
 		final String s= COUNTER_STRING.substring(0, 800);
-		this.doc.set(s);
-		this.input= new DocumentParserInput(this.doc);
+		this.input= new OffsetStringParserInput(s.substring(50), 50);
 		this.input.init(100, 200);
 		
 		assertEquals(100, this.input.getStartIndex());
@@ -62,64 +40,78 @@ public class DocumentParserInputTest {
 	@Test (expected= IndexOutOfBoundsException.class)
 	public void initRegionIllegalStart() {
 		final String s= COUNTER_STRING.substring(0, 800);
-		this.doc.set(s);
-		this.input= new DocumentParserInput(this.doc);
-		this.input.init(-1, 400);
+		this.input= new OffsetStringParserInput(s.substring(50), 50);
+		this.input.init(49, 400);
 	}
 	
 	@Test (expected= IndexOutOfBoundsException.class)
 	public void initRegionIllegalStop() {
 		final String s= COUNTER_STRING.substring(0, 800);
-		this.doc.set(s);
-		this.input= new DocumentParserInput(this.doc);
-		this.input.init(0, 801);
+		this.input= new OffsetStringParserInput(s.substring(50), 50);
+		this.input.init(50, 801);
 	}
 	
 	@Test (expected= IllegalArgumentException.class)
 	public void initRegionIllegalLength() {
 		final String s= COUNTER_STRING.substring(0, 800);
-		this.doc.set(s);
-		this.input= new DocumentParserInput(this.doc);
+		this.input= new OffsetStringParserInput(s.substring(50), 50);
 		this.input.init(800, 400);
+	}
+	
+	public void initNegativIndex() {
+		final String s= COUNTER_STRING.substring(0, 800);
+		this.input= new OffsetStringParserInput(s, -50);
+		this.input.init(-50, 750);
+	}
+	
+	@Test (expected= IndexOutOfBoundsException.class)
+	public void initNegativIndexInvalidStart() {
+		final String s= COUNTER_STRING.substring(0, 800);
+		this.input= new OffsetStringParserInput(s, -50);
+		this.input.init(-51, 750);
+	}
+	
+	@Test (expected= IndexOutOfBoundsException.class)
+	public void initNegativIndexInvalidStop() {
+		final String s= COUNTER_STRING.substring(0, 800);
+		this.input= new OffsetStringParserInput(s, -50);
+		this.input.init(-50, 751);
 	}
 	
 	@Test
 	public void read() {
 		final String s= COUNTER_STRING.substring(0, 800);
-		this.doc.set(s);
-		this.input= new DocumentParserInput(this.doc);
-		this.input.init();
+		this.input= new OffsetStringParserInput(s.substring(50), 50);
+		this.input.init(50, 800);
 		
-		assertChars(s);
+		assertChars(s, 50, 800);
 		
 		assertEquals(TextParserInput.EOF, this.input.get(s.length()));
+		assertEquals(TextParserInput.EOF, this.input.get(s.length() + 0x10000));
 		
-		assertEquals(s.length(), this.input.getBuffer().length);
+		assertEquals(s.length() - 50, this.input.getBuffer().length);
 	}
 	
 	@Test
 	public void readRegion() {
 		final String s= COUNTER_STRING.substring(0, 800);
-		this.doc.set(s);
-		this.input= new DocumentParserInput(this.doc);
+		this.input= new OffsetStringParserInput(s.substring(50), 50);
 		this.input.init(100, 200);
 		
 		assertChars(s, 100, 200);
 		
 		assertEquals(TextParserInput.EOF, this.input.get(200));
 		
-		assertEquals(s.length(), this.input.getBuffer().length);
+		assertEquals(s.length() - 50, this.input.getBuffer().length);
 	}
 	
 	@Test
 	public void updateBuffer() {
 		final String s= COUNTER_STRING;
-		this.input= new DocumentParserInput();
-		this.input.reset(this.doc);
-		this.doc.set(s);
-		this.input.init();
+		this.input= new OffsetStringParserInput(s.substring(50), 50);
+		this.input.init(50, s.length());
 		
-		readConsume(s, 0, s.length(), 100);
+		readConsume(s, 50, s.length(), 100);
 		
 		assertEquals(TextParserInput.EOF, this.input.get(0));
 		
@@ -129,25 +121,34 @@ public class DocumentParserInputTest {
 	@Test
 	public void increaseBuffer() {
 		final String s= COUNTER_STRING;
-		this.input= new DocumentParserInput();
-		this.input.reset(this.doc);
-		this.doc.set(s);
-		this.input.init();
+		this.input= new OffsetStringParserInput(s.substring(50), 50);
+		this.input.init(50, s.length());
 		
-		assertChars(s);
+		assertChars(s, 50, s.length());
+		// check increased buffer completely:
+		assertChars(s, 50, s.length());
 		
 		assertEquals(TextParserInput.EOF, this.input.get(s.length()));
 	}
 	
 	@Test
+	public void consume1() {
+		final String s= COUNTER_STRING;
+		this.input= new OffsetStringParserInput(s.substring(50), 50);
+		this.input.init(50, s.length());
+		
+		readConsume(s, 50, s.length(), 1);
+		
+		assertEquals(TextParserInput.EOF, this.input.get(0));
+	}
+	
+	@Test
 	public void combined() {
 		final String s= COUNTER_STRING;
-		this.input= new DocumentParserInput();
-		this.input.reset(this.doc);
-		this.doc.set(s);
-		this.input.init();
+		this.input= new OffsetStringParserInput(s.substring(50), 50);
+		this.input.init(50, s.length());
 		
-		readConsume(s, 0, s.length(), 2351);
+		readConsume(s, 50, s.length(), 2351);
 		
 		assertEquals(TextParserInput.EOF, this.input.get(0));
 		
@@ -157,14 +158,10 @@ public class DocumentParserInputTest {
 	@Test
 	public void empty() {
 		final String s= "";
-		this.input= new DocumentParserInput();
-		this.input.reset(this.doc);
-		this.doc.set(s);
-		this.input.init();
+		this.input= new OffsetStringParserInput(s, 50);
+		this.input.init(50, 50);
 		
 		assertEquals(TextParserInput.EOF, this.input.get(0));
-		
-		assertTrue(0x1000 >= this.input.getBuffer().length);
 	}
 	
 	

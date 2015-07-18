@@ -19,7 +19,7 @@ import de.walware.ecommons.collections.ImList;
 /**
  * Text parser input limiting the source to the specified regions.
  */
-public class RegionParserInput extends FilterParserInput {
+public final class RegionParserInput extends FilterParserInput {
 	
 	
 	private ImList<? extends IRegion> regions;

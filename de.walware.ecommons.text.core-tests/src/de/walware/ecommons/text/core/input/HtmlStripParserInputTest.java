@@ -48,9 +48,10 @@ public class HtmlStripParserInputTest {
 		assertEquals(106, this.input.getIndex());
 		assertChars(s, 100, s.length());
 		assertEquals(sb.length() - 106, this.input.getLengthInSource(s.length() - 100));
-		this.input.consume(sb.length() - 106);
+		this.input.consume(s.length() - 100);
 		
 		assertEquals(TextParserInput.EOF, this.input.get(0));
+		assertEquals(0, this.input.getLengthInSource(0));
 	}
 	
 	@Test

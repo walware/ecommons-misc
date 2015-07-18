@@ -75,14 +75,20 @@ public abstract class TextParserInput {
 	public TextParserInput init(final int startIndex, int stopIndex) {
 		final int length= getSourceLength();
 		if (length > 0) {
-			if (stopIndex > length) {
+			final int sourceStartIndex= getSourceStartIndex();
+			final int sourceStopIndex= sourceStartIndex + length;
+			if (stopIndex > sourceStopIndex) {
 				throw new IndexOutOfBoundsException("stopIndex= " + stopIndex); //$NON-NLS-1$
 			}
-			else if (stopIndex < 0) {
-				stopIndex= length;
+			else if (stopIndex == Integer.MIN_VALUE) {
+				stopIndex= sourceStopIndex;
 			}
-			if (startIndex < 0 || startIndex > stopIndex) {
+			if (startIndex < sourceStartIndex | startIndex > sourceStopIndex) {
 				throw new IndexOutOfBoundsException("startIndex= " + startIndex); //$NON-NLS-1$
+			}
+			if (startIndex > stopIndex) {
+				throw new IllegalArgumentException("startIndex > stopIndex: " +
+						"startIndex= " + startIndex + ", stopIndex= " + stopIndex); //$NON-NLS-1$
 			}
 		}
 		
@@ -97,6 +103,15 @@ public abstract class TextParserInput {
 		return this;
 	}
 	
+	
+	/**
+	 * Returns the start index of the source text (by default <code>0</code>).
+	 * 
+	 * @return the start index
+	 */
+	protected int getSourceStartIndex() {
+		return 0;
+	}
 	
 	/**
 	 * Returns the length of the source text.
@@ -387,24 +402,22 @@ public abstract class TextParserInput {
 		}
 	}
 	
+	protected final void checkOffset(final int offset) {
+		if (this.currentIdx + offset > this.endIdx) {
+			throw new IndexOutOfBoundsException("offset= " + offset);
+		}
+	}
+	
 	
 	@Override
 	public String toString() {
-		if (getSourceString() != null) {
-			final int offset= getSourceStringIndex();
-			if (offset == 0) {
-				return getSourceString();
-			}
-			else if (offset > 0) {
-				final StringBuilder sb= new StringBuilder();
-				sb.ensureCapacity(offset + getSourceString().length());
-				sb.setLength(offset);
-				sb.append(getSourceString());
-				return sb.toString();
-			}
-			else {
-				return getSourceString().substring(-offset);
-			}
+		final StringBuilder sb= new StringBuilder(getClass().getName());
+		final String s= getSourceString();
+		if (s != null) {
+			final int index= getSourceStringIndex();
+			sb.append("\n~~~ [").append(index).append(", ").append(index + s.length()).append("] ~~~");
+			sb.append(getSourceStringIndex());
+			sb.append("\n~~~\n");
 		}
 		return super.toString();
 	}

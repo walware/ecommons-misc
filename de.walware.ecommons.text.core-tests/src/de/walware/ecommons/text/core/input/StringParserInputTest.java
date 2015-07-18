@@ -57,17 +57,24 @@ public class StringParserInputTest {
 	}
 	
 	@Test (expected= IndexOutOfBoundsException.class)
-	public void initInvalidStart() {
+	public void initRegionIllegalStart() {
 		final String s= COUNTER_STRING.substring(0, 800);
 		this.input= new StringParserInput(s);
-		this.input.init(-100, 900);
+		this.input.init(-1, 400);
 	}
 	
 	@Test (expected= IndexOutOfBoundsException.class)
-	public void initInvalidStop() {
+	public void initRegionIllegalStop() {
 		final String s= COUNTER_STRING.substring(0, 800);
 		this.input= new StringParserInput(s);
-		this.input.init(100, 900);
+		this.input.init(0, 801);
+	}
+	
+	@Test (expected= IllegalArgumentException.class)
+	public void initRegionIllegalLength() {
+		final String s= COUNTER_STRING.substring(0, 800);
+		this.input= new StringParserInput(s);
+		this.input.init(800, 400);
 	}
 	
 	@Test

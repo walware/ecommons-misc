@@ -128,7 +128,7 @@ public class HtmlUtils {
 		add(entities, "apE", "\u2A70");
 		add(entities, "ape", "\u224A");
 		add(entities, "apid", "\u224B");
-		add(entities, "apos", "\\u0027");
+		add(entities, "apos", "\u0027");
 		add(entities, "ApplyFunction", "\u2061");
 		add(entities, "approx", "\u2248");
 		add(entities, "approxeq", "\u224A");
@@ -263,7 +263,7 @@ public class HtmlUtils {
 		add(entities, "bsemi", "\u204F");
 		add(entities, "bsim", "\u223D");
 		add(entities, "bsime", "\u22CD");
-		add(entities, "bsol", "\\u005C");
+		add(entities, "bsol", "\\"); // u005C
 		add(entities, "bsolb", "\u29C5");
 		add(entities, "bsolhsub", "\u27C8");
 		add(entities, "bull", "\u2022");
@@ -1176,7 +1176,7 @@ public class HtmlUtils {
 		add(entities, "nesim", "\u2242\u0338");
 		add(entities, "NestedGreaterGreater", "\u226B");
 		add(entities, "NestedLessLess", "\u226A");
-		add(entities, "NewLine", "\\u000A");
+		add(entities, "NewLine", "\n"); // u000A
 		add(entities, "nexist", "\u2204");
 		add(entities, "nexists", "\u2204");
 		add(entities, "Nfr", "\uD835\uDD11");
@@ -1544,8 +1544,8 @@ public class HtmlUtils {
 		add(entities, "quatint", "\u2A16");
 		add(entities, "quest", "\u003F");
 		add(entities, "questeq", "\u225F");
-		add(entities, "QUOT", "\\u0022");
-		add(entities, "quot", "\\u0022");
+		add(entities, "QUOT", "\""); // u0022
+		add(entities, "quot", "\""); // u0022
 		add(entities, "rAarr", "\u21DB");
 		add(entities, "race", "\u223D\u0331");
 		add(entities, "Racute", "\u0154");
@@ -1884,7 +1884,7 @@ public class HtmlUtils {
 		add(entities, "swarrow", "\u2199");
 		add(entities, "swnwar", "\u292A");
 		add(entities, "szlig", "\u00DF");
-		add(entities, "Tab", "\\u0009");
+		add(entities, "Tab", "\t"); // u0009
 		add(entities, "target", "\u2316");
 		add(entities, "Tau", "\u03A4");
 		add(entities, "tau", "\u03C4");

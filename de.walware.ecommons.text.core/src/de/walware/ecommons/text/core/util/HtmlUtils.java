@@ -2217,7 +2217,7 @@ public class HtmlUtils {
 	}
 	
 	
-	public static String getEntityName(final String entity) {
+	public static String getEntityReference(final String entity) {
 		final int end= entity.length();
 		if (end >= 2 && entity.charAt(0) == '&') {
 			return entity.substring(1, (entity.charAt(end - 1) == ';') ? (end - 1) : end);
@@ -2225,8 +2225,31 @@ public class HtmlUtils {
 		return entity;
 	}
 	
-	public static Entity getEntity(final String name) {
+	public static Entity getNamedEntity(final String name) {
 		return NAMED_ENTITIES.get(name);
+	}
+	
+	public static String resolveEntity(final String reference) throws IllegalArgumentException {
+		final int length= reference.length();
+		if (length > 0) {
+			if (reference.charAt(0) == '#') {
+				final int codePoint;
+				if (length > 1
+						&& (reference.charAt(1) == 'x' || reference.charAt(1) == 'X') ) {
+					codePoint= Integer.parseInt(reference.substring(2), 16);
+				}
+				else {
+					codePoint= Integer.parseInt(reference.substring(1), 10);
+				}
+				return new String(Character.toChars(codePoint));
+			}
+			{	final Entity entity= NAMED_ENTITIES.get(reference);
+				if (entity != null) {
+					return entity.getString();
+				}
+			}
+		}
+		return null;
 	}
 	
 }

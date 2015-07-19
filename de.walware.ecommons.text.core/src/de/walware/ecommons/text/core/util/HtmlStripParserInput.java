@@ -498,7 +498,7 @@ public class HtmlStripParserInput extends FilterParserInput {
 	}
 	
 	private static Match resolveEntity(final TextParserInput in, final String name, final int n) {
-		final Entity entity= HtmlUtils.getEntity(name);
+		final Entity entity= HtmlUtils.getNamedEntity(name);
 		if (entity != null) {
 			return new Match(entity.getChars(), n);
 		}

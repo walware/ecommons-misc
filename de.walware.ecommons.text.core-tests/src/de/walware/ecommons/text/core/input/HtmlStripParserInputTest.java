@@ -133,7 +133,7 @@ public class HtmlStripParserInputTest {
 	public void decodeEntity() {
 		final String s= COUNTER_STRING;
 		final StringBuilder sb= new StringBuilder(s);
-		final int entityIdx= replaceByEntity(sb, HtmlUtils.getEntity("angle"));
+		final int entityIdx= replaceByEntity(sb, HtmlUtils.getNamedEntity("angle"));
 		
 		this.input= new HtmlStripParserInput(sb.toString());
 		this.input.init();

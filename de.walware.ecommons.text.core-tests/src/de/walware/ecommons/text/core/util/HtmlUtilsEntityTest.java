@@ -20,14 +20,14 @@ public class HtmlUtilsEntityTest {
 	
 	@Test
 	public void getEntityName_fromName() {
-		Assert.assertEquals("amp", HtmlUtils.getEntityName("amp"));
+		Assert.assertEquals("amp", HtmlUtils.getEntityReference("amp"));
 	}
 	
 	@Test
 	public void getEntityName_fromHtmlEntity() {
-		Assert.assertEquals("amp", HtmlUtils.getEntityName("&amp;"));
+		Assert.assertEquals("amp", HtmlUtils.getEntityReference("&amp;"));
 		
-		Assert.assertEquals("amp", HtmlUtils.getEntityName("&amp"));
+		Assert.assertEquals("amp", HtmlUtils.getEntityReference("&amp"));
 	}
 	
 }

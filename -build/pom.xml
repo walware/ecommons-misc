@@ -5,17 +5,20 @@
 	<modelVersion>4.0.0</modelVersion>
 	
 	<groupId>de.walware.ecommons</groupId>
-	<artifactId>ecommons-coremisc</artifactId>
-	<version>1.5-SNAPSHOT</version>
+	<artifactId>ecommons-misc</artifactId>
+	<version>1.6-SNAPSHOT</version>
 	<packaging>pom</packaging>
-	<name>ECommons CoreMisc</name>
+	<name>ECommons Misc</name>
 	
 	<modules>
 		<module>targetplatform</module>
 		
 		<module>../de.walware.ecommons.coremisc</module>
+		
 		<module>../de.walware.ecommons.text.core</module>
 		<module>../de.walware.ecommons.debug.core</module>
+		
+		<module>../de.walware.ecommons.uimisc</module>
 		
 		<module>../de.walware.thirdparty-org.apache.commons.primitives</module>
 	</modules>
@@ -27,7 +30,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		
 		<tycho.version>0.22.0</tycho.version>
-		<tycho.scmUrl>scm:git:https://github.com/walware/ecommons-coremisc.git</tycho.scmUrl>
+		<tycho.scmUrl>scm:git:https://github.com/walware/ecommons-misc.git</tycho.scmUrl>
 	</properties>
 	
 	<build>
@@ -66,8 +69,8 @@
 					<target>
 						<artifact>
 							<groupId>de.walware.ecommons</groupId>
-							<artifactId>de.walware.ecommons.coremisc-default</artifactId>
-							<version>1.5.0-SNAPSHOT</version>
+							<artifactId>de.walware.ecommons.misc-default</artifactId>
+							<version>1.6.0-SNAPSHOT</version>
 						</artifact>
 					</target>
 				</configuration>
@@ -93,6 +96,9 @@
 	<profiles>
 		<profile>
 			<id>walware-releng</id>
+			<modules>
+				<module>de.walware.ecommons.e-feature</module>
+			</modules>
 			
 			<build>
 				<plugins>
@@ -113,6 +119,39 @@
 								<version>${tycho.version}</version>
 							</dependency>
 						</dependencies>
+					</plugin>
+					
+					<!-- enable source feature generation -->
+					<plugin>
+						<groupId>org.eclipse.tycho.extras</groupId>
+						<artifactId>tycho-source-feature-plugin</artifactId>
+						<version>${tycho.version}</version>
+						<executions>
+							<execution>
+								<id>source-feature</id>
+								<phase>package</phase>
+								<goals>
+									<goal>source-feature</goal>
+								</goals>
+							</execution>
+						</executions>
+						<configuration>
+							<labelSuffix> - Sources</labelSuffix>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.eclipse.tycho</groupId>
+						<artifactId>tycho-p2-plugin</artifactId>
+						<version>${tycho.version}</version>
+						<executions>
+							<execution>
+								<id>attach-p2-metadata</id>
+								<phase>package</phase>
+								<goals>
+									<goal>p2-metadata</goal>
+								</goals>
+							</execution>
+						</executions>
 					</plugin>
 				</plugins>
 			</build>

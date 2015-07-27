@@ -5,12 +5,12 @@
 	
 	<parent>
 		<groupId>de.walware.ecommons</groupId>
-		<artifactId>ecommons-coremisc</artifactId>
-		<version>1.5-SNAPSHOT</version>
+		<artifactId>ecommons-misc</artifactId>
+		<version>1.6-SNAPSHOT</version>
 	</parent>
 	
-	<artifactId>de.walware.ecommons.coremisc-default</artifactId>
-	<version>1.5.0-SNAPSHOT</version>
+	<artifactId>de.walware.ecommons.misc-default</artifactId>
+	<version>1.6.0-SNAPSHOT</version>
 	<packaging>eclipse-target-definition</packaging>
 	
 </project>

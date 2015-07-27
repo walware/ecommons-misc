@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Vendor: WalWare.de
-Bundle-Name: ECommons Text - Core
 Bundle-SymbolicName: de.walware.ecommons.text.core;singleton:=true
 Bundle-Version: 1.0.0.qualifier
+Bundle-Vendor: WalWare.de
+Bundle-Name: ECommons Text - Core
 Bundle-Activator: de.walware.ecommons.text.internal.core.ECommonsTextCorePlugin
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7

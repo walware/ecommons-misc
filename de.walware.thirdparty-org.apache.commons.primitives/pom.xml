@@ -6,8 +6,8 @@
 	
 	<parent>
 		<groupId>de.walware.ecommons</groupId>
-		<artifactId>ecommons-coremisc</artifactId>
-		<version>1.5-SNAPSHOT</version>
+		<artifactId>ecommons-misc</artifactId>
+		<version>1.6-SNAPSHOT</version>
 		<relativePath>../-build</relativePath>
 	</parent>
 	

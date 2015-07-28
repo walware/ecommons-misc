@@ -233,7 +233,7 @@ final class ImArraySet<E> extends AbstractImList<E> implements ImSet<E>,
 		}
 		if (obj instanceof Set) {
 			final Set<?> other= (Set<?>) obj;
-			return (this.array.length != other.size()
+			return (this.array.length == other.size()
 					&& containsAll(other) );
 		}
 		return false;

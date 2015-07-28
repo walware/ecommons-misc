@@ -213,7 +213,7 @@ final class ImArrayIdentitySet<E> extends AbstractImList<E> implements ImIdentit
 		}
 		if (obj instanceof Set) {
 			final Set<?> other= (Set<?>) obj;
-			return (this.array.length != other.size()
+			return (this.array.length == other.size()
 					&& containsAll(other) );
 		}
 		return false;

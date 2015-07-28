@@ -268,7 +268,7 @@ final class ImArrayList<E> extends AbstractImList<E> implements ImList<E>,
 		}
 		if (obj instanceof List) {
 			final List<?> other= (List<?>) obj;
-			if (this.array.length == other.size()) {
+			if (this.array.length != other.size()) {
 				return false;
 			}
 			final Iterator<?> otherIter= other.iterator();

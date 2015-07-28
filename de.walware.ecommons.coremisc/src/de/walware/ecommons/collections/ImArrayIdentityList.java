@@ -246,20 +246,20 @@ final class ImArrayIdentityList<E> extends AbstractImList<E> implements ImIdenti
 		if (obj == this) {
 			return true;
 		}
-		if (!(obj instanceof IdentityList)) {
-			return false;
-		}
-		final List<?> other= (List<?>) obj;
-		if (this.array.length != other.size()) {
-			return false;
-		}
-		final Iterator<?> otherIter= other.iterator();
-		for (int i= 0; i < this.array.length; i++) {
-			if (this.array[i] != otherIter.next()) {
+		if (obj instanceof IdentityList) {
+			final List<?> other= (List<?>) obj;
+			if (this.array.length != other.size()) {
 				return false;
 			}
+			final Iterator<?> otherIter= other.iterator();
+			for (int i= 0; i < this.array.length; i++) {
+				if (this.array[i] != otherIter.next()) {
+					return false;
+				}
+			}
+			return true;
 		}
-		return true;
+		return false;
 	}
 	
 	@Override
@@ -489,21 +489,21 @@ final class ImArrayIdentitySubList<E> extends AbstractImList<E> implements ImIde
 		if (obj == this) {
 			return true;
 		}
-		if (!(obj instanceof IdentityList)) {
-			return false;
-		}
-		final List<?> other= (List<?>) obj;
-		if (this.size != other.size()) {
-			return false;
-		}
-		final ListIterator<?> otherIter= other.listIterator();
-		final int toIndex= this.offset + this.size;
-		for (int i= this.offset; i < toIndex; i++) {
-			if (this.array[i] != otherIter.next()) {
+		if (obj instanceof IdentityList) {
+			final List<?> other= (List<?>) obj;
+			if (this.size != other.size()) {
 				return false;
 			}
+			final ListIterator<?> otherIter= other.listIterator();
+			final int toIndex= this.offset + this.size;
+			for (int i= this.offset; i < toIndex; i++) {
+				if (this.array[i] != otherIter.next()) {
+					return false;
+				}
+			}
+			return true;
 		}
-		return true;
+		return false;
 	}
 	
 	@Override

@@ -12,8 +12,10 @@
 package de.walware.ecommons.collections;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 
@@ -96,6 +98,7 @@ public class ImCollections {
 	 * 
 	 * @return the immutable list
 	 */
+	@SafeVarargs
 	public static <E> ImList<E> newList(final E... e) {
 		if (e.length == 0) {
 			return ImEmptyList.INSTANCE;
@@ -162,6 +165,38 @@ public class ImCollections {
 		}
 	}
 	
+	/**
+	 * Returns a immutable list containing the elements of the iterable object.
+	 * 
+	 * If the collection is already an immutable list, the method return the same instance.
+	 * 
+	 * @param iterable object with iterator for the elements
+	 * 
+	 * @return the immutable list
+	 */
+	public static <E> ImList<E> toList(final Iterable<? extends E> iterable) {
+		if (iterable instanceof Collection) {
+			return toList((Collection<? extends E>) iterable);
+		}
+		final Iterator<? extends E> iter= iterable.iterator();
+		if (!iter.hasNext()) {
+			return ImEmptyList.INSTANCE;
+		}
+		final E first= iter.next();
+		if (!iter.hasNext()) {
+			return new ImSingletonList<>(first);
+		}
+		else {
+			final List<E> list= new ArrayList<>();
+			list.add(first);
+			do {
+				list.add(iter.next());
+			}
+			while (iter.hasNext());
+			return new ImArrayList<>((E[]) list.toArray());
+		}
+	}
+	
 	
 	private static void copyTo(final List<?> src, final Object[] dest, final int destPos) {
 		if (src instanceof AbstractImList<?>) {
@@ -221,6 +256,7 @@ public class ImCollections {
 		}
 	}
 	
+	@SafeVarargs
 	public static <T> ImList<T> concatList(final List<? extends T>... lists) {
 		switch (lists.length) {
 		case 0:
@@ -349,6 +385,7 @@ public class ImCollections {
 	 * 
 	 * @param e the elements
 	 */
+	@SafeVarargs
 	public static <E> ImIdentityList<E> newIdentityList(final E... e) {
 		if (e.length == 0) {
 			return ImEmptyIdentityList.INSTANCE;
@@ -539,6 +576,7 @@ public class ImCollections {
 	 * 
 	 * @param e the elements
 	 */
+	@SafeVarargs
 	public static <E> ImSet<E> newSet(final E... e) {
 		if (e.length == 0) {
 			return ImEmptySet.INSTANCE;
@@ -656,6 +694,7 @@ public class ImCollections {
 	 * 
 	 * @param e the elements
 	 */
+	@SafeVarargs
 	public static <E> ImIdentitySet<E> newIdentitySet(final E... e) {
 		if (e.length == 0) {
 			return ImEmptyIdentitySet.INSTANCE;

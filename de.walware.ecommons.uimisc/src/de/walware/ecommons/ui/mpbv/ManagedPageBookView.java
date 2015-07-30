@@ -23,6 +23,7 @@ import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.commands.IHandler2;
+import org.eclipse.e4.core.contexts.IEclipseContext;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.Separator;
@@ -34,13 +35,16 @@ import org.eclipse.ui.IPropertyListener;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchPartSite;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.handlers.IHandlerService;
+import org.eclipse.ui.internal.WorkbenchPlugin;
 import org.eclipse.ui.menus.CommandContributionItemParameter;
 import org.eclipse.ui.part.IPage;
 import org.eclipse.ui.part.IPageBookViewPage;
 import org.eclipse.ui.part.MessagePage;
 import org.eclipse.ui.part.PageBook;
 import org.eclipse.ui.part.PageBookView;
+import org.eclipse.ui.part.PageSite;
 import org.eclipse.ui.part.PageSwitcher;
 import org.eclipse.ui.services.IServiceLocator;
 
@@ -226,6 +230,36 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 	@Override
 	protected IWorkbenchPart getBootstrapPart() {
 		return null;
+	}
+	
+	@Override
+	protected void initPage(IPageBookViewPage page) {
+		// E-Bug 473941
+		try {
+			page.init(new PageSite(getViewSite()) {
+				@Override
+				public void activate() {
+					super.activate();
+					
+					final IEclipseContext context= (IEclipseContext) getService(IEclipseContext.class);
+					if (context != null) {
+						context.activate();
+					}
+				}
+				@Override
+				public void deactivate() {
+					super.deactivate();
+					
+					final IEclipseContext context= (IEclipseContext) getService(IEclipseContext.class);
+					if (context != null) {
+						context.deactivate();
+					}
+				}
+			});
+		}
+		catch (final PartInitException e) {
+			WorkbenchPlugin.log(getClass(), "initPage", e); //$NON-NLS-1$
+		}
 	}
 	
 	@Override

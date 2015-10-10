@@ -11,15 +11,42 @@
 
 package de.walware.ecommons.text.core.treepartitioner;
 
-import org.eclipse.jface.text.IRegion;
-
 import de.walware.ecommons.collections.ImList;
+import de.walware.ecommons.text.core.ITextRegion;
 
 
-public interface ITreePartitionNode extends IRegion {
+public interface ITreePartitionNode extends ITextRegion {
 	
 	
 	ITreePartitionNodeType getType();
+	
+	
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * <p><b>Warning:</b> region of the tree partition node is mutable due to document changes.
+	 * </p>
+	 */
+	@Override
+	int getOffset();
+	
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * <p><b>Warning:</b> region of the tree partition node is mutable due to document changes.
+	 * </p>
+	 */
+	@Override
+	int getEndOffset();
+	
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * <p><b>Warning:</b> region of the tree partition node is mutable due to document changes.
+	 * </p>
+	 */
+	@Override
+	int getLength();
 	
 	
 	ITreePartitionNode getParent();

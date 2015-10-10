@@ -21,7 +21,7 @@ import de.walware.ecommons.collections.ImCollections;
 import de.walware.ecommons.collections.ImList;
 
 
-class NodePosition extends Position implements ITreePartitionNode {
+abstract class NodePosition extends Position implements ITreePartitionNode {
 	
 	
 	static final int indexOf(final List<NodePosition> children, final int offset) {
@@ -48,6 +48,31 @@ class NodePosition extends Position implements ITreePartitionNode {
 			}
 		}
 		return -(begin + 1);
+	}
+	
+	static final class CommonNode extends NodePosition {
+		
+		public CommonNode(final NodePosition parent, final int offset, final int length,
+				final ITreePartitionNodeType type, final int stamp) {
+			super(parent, offset, length, type, stamp);
+		}
+		
+		
+		@Override
+		public int getOffset() {
+			return this.offset;
+		}
+		
+		@Override
+		public int getEndOffset() {
+			return this.offset + this.length;
+		}
+		
+		@Override
+		public int getLength() {
+			return this.length;
+		}
+		
 	}
 	
 	
@@ -80,9 +105,12 @@ class NodePosition extends Position implements ITreePartitionNode {
 	}
 	
 	
-	public final int getEndOffset() {
-		return getOffset() + getLength();
-	}
+	@Override
+	public abstract int getOffset();
+	@Override
+	public abstract int getEndOffset();
+	@Override
+	public abstract int getLength();
 	
 	
 	final void insertChild(final int childIdx, final NodePosition child) {

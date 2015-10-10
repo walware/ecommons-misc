@@ -258,7 +258,7 @@ final class TreePartitionerScan implements ITreePartitionNodeScan {
 			final int offset, final int length, final int childIdx, final ITreePartitionNodeType type) {
 		markDirtyRegion(offset, length);
 		
-		final NodePosition position= new NodePosition(parentPosition, offset, length,
+		final NodePosition position= new NodePosition.CommonNode(parentPosition, offset, length,
 				type, this.stamp );
 		parentPosition.insertChild(childIdx, position);
 		try {

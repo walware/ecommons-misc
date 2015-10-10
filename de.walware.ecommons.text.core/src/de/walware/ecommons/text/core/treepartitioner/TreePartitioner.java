@@ -55,6 +55,40 @@ public class TreePartitioner implements IDocumentPartitioner,
 			Platform.getDebugOption("de.walware.ecommons.text/debug/TreePartitioner/validate") ); //$NON-NLS-1$
 	
 	
+	private final class RootNode extends NodePosition {
+		
+		
+		public RootNode(final ITreePartitionNodeType type) {
+			super(null, 0, Integer.MAX_VALUE, type, 0);
+		}
+		
+		
+		@Override
+		public void setOffset(final int offset) {
+		}
+		
+		@Override
+		public int getOffset() {
+			return 0;
+		}
+		
+		@Override
+		public int getEndOffset() {
+			return TreePartitioner.this.document.getLength();
+		}
+		
+		@Override
+		public void setLength(final int length) {
+		}
+		
+		@Override
+		public int getLength() {
+			return TreePartitioner.this.document.getLength();
+		}
+		
+	}
+	
+	
 	/**
 	 * The position category this partitioner uses to store the document's partitioning information.
 	 */
@@ -110,15 +144,7 @@ public class TreePartitioner implements IDocumentPartitioner,
 		this.legalContentTypes= Arrays.copyOf(legalContentTypes, legalContentTypes.length, String[].class);
 		this.positionCategory= CONTENT_TYPES_CATEGORY + hashCode();
 		this.positionUpdater= new DefaultPositionUpdater(this.positionCategory);
-		this.rootPosition= new NodePosition(null, 0, Integer.MAX_VALUE, scanner.getRootType(), 0) {
-			@Override
-			public void setLength(final int length) {
-			}
-			@Override
-			public int getLength() {
-				return TreePartitioner.this.document.getLength();
-			}
-		};
+		this.rootPosition= new RootNode(scanner.getRootType());
 	}
 	
 	

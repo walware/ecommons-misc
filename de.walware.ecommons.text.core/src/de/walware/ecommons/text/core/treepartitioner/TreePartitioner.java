@@ -13,7 +13,6 @@ package de.walware.ecommons.text.core.treepartitioner;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.runtime.Assert;
@@ -24,16 +23,24 @@ import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.BadPositionCategoryException;
 import org.eclipse.jface.text.DefaultPositionUpdater;
 import org.eclipse.jface.text.DocumentEvent;
+import org.eclipse.jface.text.DocumentPartitioningChangedEvent;
 import org.eclipse.jface.text.DocumentRewriteSession;
+import org.eclipse.jface.text.DocumentRewriteSessionType;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentPartitioner;
 import org.eclipse.jface.text.IDocumentPartitionerExtension;
 import org.eclipse.jface.text.IDocumentPartitionerExtension2;
 import org.eclipse.jface.text.IDocumentPartitionerExtension3;
+import org.eclipse.jface.text.IDocumentPartitioningListenerExtension2;
+import org.eclipse.jface.text.IPositionUpdater;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITypedRegion;
 import org.eclipse.jface.text.Region;
 
+import de.walware.ecommons.collections.ImCollections;
+import de.walware.ecommons.collections.ImList;
+import de.walware.ecommons.text.core.DocumentEnhancer;
+import de.walware.ecommons.text.core.IDocumentEnhancement;
 import de.walware.ecommons.text.core.treepartitioner.ITreePartitionNodeScan.BreakException;
 import de.walware.ecommons.text.internal.core.ECommonsTextCorePlugin;
 
@@ -88,17 +95,65 @@ public class TreePartitioner implements IDocumentPartitioner,
 		
 	}
 	
+	private final class RewriteSessionUpdater implements IPositionUpdater {
+		
+		
+		private int beginOffset= -1;
+		private int endOffset= -1;
+		
+		
+		public RewriteSessionUpdater() {
+		}
+		
+		
+		@Override
+		public void update(final DocumentEvent event) {
+			if (TreePartitioner.this.activeRewriteSession == null) {
+				return;
+			}
+			
+			TreePartitioner.this.positionUpdater.update(event);
+			
+			final int eventOffset= event.getOffset();
+			final int eventOldEndOffset= eventOffset + event.getLength();
+			final int eventNewLength= event.getText() == null ? 0 : event.getText().length();
+			final int eventNewEndOffset= eventOffset + eventNewLength;
+			
+			if (this.beginOffset < 0) {
+				this.beginOffset= eventOffset;
+				this.endOffset= eventNewEndOffset;
+			}
+			else {
+				// update begin
+				if (this.beginOffset > eventOffset) {
+					this.beginOffset= eventOffset;
+				}
+				// update end
+				if (this.endOffset > eventOldEndOffset) {
+					this.endOffset+= eventNewLength - event.getLength();
+				}
+				else {
+					this.endOffset= eventNewEndOffset;
+				}
+			}
+		}
+		
+	}
+	
 	
 	/**
 	 * The position category this partitioner uses to store the document's partitioning information.
 	 */
-	private static final String CONTENT_TYPES_CATEGORY= "__content_types_category"; //$NON-NLS-1$
+	private static final String CONTENT_TYPES_CATEGORY= "de.walware.ecommons.text.TreePartitionerNodes"; //$NON-NLS-1$
+	
+	
+	private final String partitioningId;
 	
 	/** The partitioner's scanner */
 	protected final ITreePartitionNodeScanner scanner;
 	
 	/** The legal content types of this partitioner */
-	protected final String[] legalContentTypes;
+	protected final ImList<String> legalContentTypes;
 	
 	/**
 	 * Flag indicating whether this partitioner has been initialized.
@@ -107,6 +162,8 @@ public class TreePartitioner implements IDocumentPartitioner,
 	
 	/** The partitioner's document */
 	protected IDocument document;
+	
+	private IDocumentEnhancement documentEnh;
 	
 	/** The document length before a document change occurred */
 	protected int previousDocumentLength;
@@ -123,30 +180,55 @@ public class TreePartitioner implements IDocumentPartitioner,
 	
 	private ITreePartitionNodeType startType;
 	
+	private TreePartitionerScan scan;
+	
+	
 	/**
 	 * The active document rewrite session.
 	 */
 	private DocumentRewriteSession activeRewriteSession;
+	/**
+	 * Tracks changes during small document rewrite session.
+	 */
+	private RewriteSessionUpdater activeRewriteUpdater;
 	
-	private TreePartitionerScan scan;
+	private IDocumentPartitioningListenerExtension2 partitioningListener;
+	private IRegion partitioningChangeRegion;
 	
 	
 	/**
 	 * Creates a new partitioner that uses the given scanner and may return
 	 * partitions of the given legal content types.
-	 *
+	 * 
+	 * @param id the id of the partitioning or <code>null</code>
 	 * @param scanner the scanner this partitioner is supposed to use
 	 * @param legalContentTypes the legal content types of this partitioner
 	 */
-	public TreePartitioner(final ITreePartitionNodeScanner scanner,
-			final String[] legalContentTypes) {
+	public TreePartitioner(final String partitioningId,
+			final ITreePartitionNodeScanner scanner, final List<String> legalContentTypes) {
+		if (partitioningId == null) {
+			throw new NullPointerException("partitioningId"); //$NON-NLS-1$
+		}
+		if (scanner == null) {
+			throw new NullPointerException("scanner"); //$NON-NLS-1$
+		}
+		if (legalContentTypes == null) {
+			throw new NullPointerException("legalContentTypes"); //$NON-NLS-1$
+		}
+		
+		this.partitioningId= partitioningId;
 		this.scanner= scanner;
-		this.legalContentTypes= Arrays.copyOf(legalContentTypes, legalContentTypes.length, String[].class);
-		this.positionCategory= CONTENT_TYPES_CATEGORY + hashCode();
+		this.legalContentTypes= ImCollections.toIdentityList(legalContentTypes);
+		
+		this.positionCategory= CONTENT_TYPES_CATEGORY + ':' + this.partitioningId;
 		this.positionUpdater= new DefaultPositionUpdater(this.positionCategory);
 		this.rootPosition= new RootNode(scanner.getRootType());
 	}
 	
+	
+	protected final String getPartitioningId() {
+		return this.partitioningId;
+	}
 	
 	@Override
 	public String[] getManagingPositionCategories() {
@@ -155,6 +237,8 @@ public class TreePartitioner implements IDocumentPartitioner,
 	
 	public void setStartType(final ITreePartitionNodeType type) {
 		this.startType= type;
+		
+		clear();
 	}
 	
 	@Override
@@ -175,6 +259,7 @@ public class TreePartitioner implements IDocumentPartitioner,
 		
 		this.document= document;
 		this.document.addPositionCategory(this.positionCategory);
+		this.documentEnh= DocumentEnhancer.get(this.document);
 		
 		this.isInitialized= false;
 		if (!delayInitialization) {
@@ -211,6 +296,19 @@ public class TreePartitioner implements IDocumentPartitioner,
 	 */
 	protected void initialize() {
 		this.isInitialized= true;
+		this.partitioningChangeRegion= null;
+		
+		if (this.documentEnh != null) {
+			if (this.partitioningListener == null) {
+				this.partitioningListener= new IDocumentPartitioningListenerExtension2() {
+					@Override
+					public void documentPartitioningChanged(final DocumentPartitioningChangedEvent event) {
+						updatePartitioningChange(event);
+					}
+				};
+				this.documentEnh.addPrePartitioningListener(this.partitioningListener);
+			}
+		}
 		
 		if (this.scan == null) {
 			this.scan= new TreePartitionerScan(this);
@@ -248,8 +346,24 @@ public class TreePartitioner implements IDocumentPartitioner,
 		
 		try {
 			this.document.removePositionCategory(this.positionCategory);
-		} catch (final BadPositionCategoryException x) {
+		}
+		catch (final BadPositionCategoryException x) {
 			// can not happen because of Assert
+		}
+		
+		if (this.activeRewriteSession != null) {
+			if (this.activeRewriteUpdater != null) {
+				this.document.removePositionUpdater(this.activeRewriteUpdater);
+				this.activeRewriteUpdater= null;
+			}
+			this.activeRewriteSession= null;
+		}
+		if (this.documentEnh != null) {
+			if (this.partitioningListener != null) {
+				this.documentEnh.removePrePartitioningListener(this.partitioningListener);
+				this.partitioningListener= null;
+			}
+			this.documentEnh= null;
 		}
 	}
 	
@@ -289,41 +403,46 @@ public class TreePartitioner implements IDocumentPartitioner,
 		if (!this.isInitialized) {
 			return null;
 		}
+		Assert.isTrue(event.getDocument() == this.document);
+		
+		this.positionUpdater.update(event);
+		
+		return updatePartitioning(event.getOffset(), event.getOffset() +
+				((event.getText() != null) ? event.getText().length() : 0) );
+	}
+	
+	protected final IRegion updatePartitioning(int beginOffset, int endOffset) {
 		try {
-			Assert.isTrue(event.getDocument() == this.document);
+			this.partitioningChangeRegion= null;
 			
-			int reparseStart= event.getOffset();
-			final int lineOfOffset= this.document.getLineOfOffset(reparseStart);
-			final int newLength= event.getText() == null ? 0 : event.getText().length();
-			
-			this.positionUpdater.update(event);
+			final int lineOfOffset= this.document.getLineOfOffset(beginOffset);
 			
 			// line start of previous line
 			/* This adds support of two-line partition separators.
 			 * An alternative would be to implement it (depend on the position) in
 			 * scanner.getRestartOffset(...) */
-			reparseStart= this.document.getLineOffset((lineOfOffset > 0) ? lineOfOffset - 1 : 0);
+			beginOffset= this.document.getLineOffset((lineOfOffset > 0) ? lineOfOffset - 1 : 0);
 			
 			NodePosition beginPosition= null;
-			if (reparseStart > 0) {
-				beginPosition= findPositionPreferOpen(reparseStart);
-				final int offset= this.scanner.getRestartOffset(beginPosition, this.document, reparseStart);
-				if (reparseStart != offset) {
-					reparseStart= offset;
-					if (reparseStart != 0) {
-						beginPosition= findPositionPreferOpen(reparseStart);
+			if (beginOffset > 0) {
+				beginPosition= findPositionPreferOpen(beginOffset);
+				final int offset= this.scanner.getRestartOffset(beginPosition, this.document, beginOffset);
+				if (beginOffset != offset) {
+					beginOffset= offset;
+					if (beginOffset != 0) {
+						beginPosition= findPositionPreferOpen(beginOffset);
 					}
 				}
 			}
-			if (reparseStart == 0) {
+			if (beginOffset == 0) {
 				beginPosition= this.rootPosition;
 			}
 			
-			this.scan.init(reparseStart, this.document.getLength(), beginPosition);
-			this.scan.markDirtyBegin(reparseStart);
-			this.scan.markDirtyEnd(event.getOffset() + newLength);
+			this.scan.init(beginOffset, this.document.getLength(), beginPosition);
+			this.scan.markDirtyBegin(beginOffset);
+			this.scan.markDirtyEnd(endOffset);
 			
-			if (reparseStart == 0 && beginPosition == this.rootPosition && this.startType != null) {
+			if (beginOffset == 0 && beginPosition == this.rootPosition && this.startType != null) {
 				this.scan.addBeginPosition(this.startType);
 			}
 			
@@ -509,27 +628,17 @@ public class TreePartitioner implements IDocumentPartitioner,
 	 */
 	@Override
 	public String[] getLegalContentTypes() {
-		return Arrays.copyOf(this.legalContentTypes, this.legalContentTypes.length, String[].class);
+		return this.legalContentTypes.toArray(new String[this.legalContentTypes.size()]);
 	}
 	
 	/**
 	 * Returns whether the given type is one of the legal content types.
-	 * <p>
-	 * May be extended by subclasses.
-	 * </p>
 	 *
 	 * @param contentType the content type to check
 	 * @return <code>true</code> if the content type is a legal content type
 	 */
-	protected boolean isSupportedPartitionType(final String contentType) {
-		if (contentType != null) {
-			for (int i= 0; i < this.legalContentTypes.length; i++) {
-				if (this.legalContentTypes[i].equals(contentType)) {
-					return true;
-				}
-			}
-		}
-		return false;
+	protected final boolean isSupportedPartitionType(final String contentType) {
+		return (contentType != null && this.legalContentTypes.contains(contentType));
 	}
 	
 	/* zero-length partition support */
@@ -695,12 +804,19 @@ public class TreePartitioner implements IDocumentPartitioner,
 				computePartitioning(offset, length);
 	}
 	
+	
 	@Override
 	public void startRewriteSession(final DocumentRewriteSession session) throws IllegalStateException {
 		if (this.activeRewriteSession != null) {
 			throw new IllegalStateException();
 		}
 		this.activeRewriteSession= session;
+		
+		if (this.isInitialized
+				&& this.activeRewriteSession.getSessionType() == DocumentRewriteSessionType.UNRESTRICTED_SMALL) {
+			this.activeRewriteUpdater= new RewriteSessionUpdater();
+			this.document.addPositionUpdater(this.activeRewriteUpdater);
+		}
 	}
 	
 	/**
@@ -732,7 +848,27 @@ public class TreePartitioner implements IDocumentPartitioner,
 	 */
 	protected final void flushRewriteSession() {
 		this.activeRewriteSession= null;
+		
+		if (this.activeRewriteUpdater != null) {
+			this.document.removePositionUpdater(this.activeRewriteUpdater);
+			if (this.isInitialized) {
+				this.partitioningChangeRegion= (this.activeRewriteUpdater.beginOffset >= 0) ?
+						updatePartitioning(this.activeRewriteUpdater.beginOffset, this.activeRewriteUpdater.endOffset) :
+						new Region(0, 0);
+			}
+			this.activeRewriteUpdater= null;
+			return;
+		}
+		
 		clear();
+	}
+	
+	private void updatePartitioningChange(final DocumentPartitioningChangedEvent event) {
+		if (this.partitioningChangeRegion != null && event.getChangedRegion(this.partitioningId) != null) {
+			event.setPartitionChange(this.partitioningId,
+					this.partitioningChangeRegion.getOffset(), this.partitioningChangeRegion.getLength() );
+			this.partitioningChangeRegion= null;
+		}
 	}
 	
 	
@@ -788,5 +924,6 @@ public class TreePartitioner implements IDocumentPartitioner,
 		}
 		return writer.toString();
 	}
+	
 	
 }

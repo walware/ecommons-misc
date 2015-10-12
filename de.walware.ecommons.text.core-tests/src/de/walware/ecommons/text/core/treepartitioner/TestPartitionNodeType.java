@@ -11,6 +11,8 @@
 
 package de.walware.ecommons.text.core.treepartitioner;
 
+import de.walware.ecommons.collections.ImCollections;
+import de.walware.ecommons.collections.ImList;
 
 public class TestPartitionNodeType extends AbstractPartitionNodeType {
 	
@@ -21,10 +23,10 @@ public class TestPartitionNodeType extends AbstractPartitionNodeType {
 	public static final String T3_ID= "()";
 	
 	
-	public static String[] CONTENT_TYPES_IDS= new String[] {
+	public static ImList<String> CONTENT_TYPES_IDS= ImCollections.newList(
 			DEFAULT_ID,
 			T1_ID, T2_ID, T3_ID
-	};
+	);
 	
 	
 	public static final TestPartitionNodeType DEFAULT_ROOT= new TestPartitionNodeType(DEFAULT_ID, 0);

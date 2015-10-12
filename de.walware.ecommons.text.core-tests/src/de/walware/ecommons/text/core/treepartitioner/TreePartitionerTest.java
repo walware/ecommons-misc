@@ -147,7 +147,8 @@ public class TreePartitionerTest {
 	@Before
 	public void setUp() {
 		this.doc= new Document();
-		this.partitioner= new TreePartitioner(new TestPartitionNodeScanner(),
+		this.partitioner= new TreePartitioner("default",
+				new TestPartitionNodeScanner(),
 				TestPartitionNodeType.CONTENT_TYPES_IDS );
 		this.doc.setDocumentPartitioner(this.partitioner);
 		this.partitioner.connect(this.doc);

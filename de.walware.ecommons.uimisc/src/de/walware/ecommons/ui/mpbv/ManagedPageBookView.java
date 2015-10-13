@@ -59,17 +59,17 @@ import de.walware.ecommons.ui.util.StatusLineMessageManager;
 public abstract class ManagedPageBookView<S extends ISession> extends PageBookView {
 	
 	
-	protected static final String PAGE_CONTROL_MENU_ID = "page_control"; //$NON-NLS-1$
+	protected static final String PAGE_CONTROL_MENU_ID= "page_control"; //$NON-NLS-1$
 	
 	
 	private class SessionHandler implements IWorkbenchPart {
 		
 		
-		private final S fSession;
+		private final S session;
 		
 		
 		public SessionHandler(final S session) {
-			fSession = session;
+			this.session= session;
 		}
 		
 		
@@ -83,7 +83,7 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 		}
 		
 		public S getSession() {
-			return fSession;
+			return this.session;
 		}
 		
 		
@@ -129,13 +129,13 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 		
 		@Override
 		public int hashCode() {
-			return fSession.hashCode();
+			return this.session.hashCode();
 		}
 		
 		@Override
 		public boolean equals(final Object obj) {
 			return ( (obj instanceof ManagedPageBookView<?>.SessionHandler)
-					&& (fSession == ((SessionHandler) obj).fSession) );
+					&& (this.session == ((SessionHandler) obj).session) );
 		}
 		
 	}
@@ -164,12 +164,12 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 		
 		@Override
 		public void setEnabled(final Object evaluationContext) {
-			setBaseEnabled(!fSessionList.isEmpty());
+			setBaseEnabled(!ManagedPageBookView.this.sessionList.isEmpty());
 		}
 		
 		@Override
 		public Object execute(final ExecutionEvent event) throws ExecutionException {
-			final S session = getCurrentSession();
+			final S session= getCurrentSession();
 			if (session != null) {
 				closePage(session);
 			}
@@ -183,13 +183,13 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 		
 		@Override
 		public void setEnabled(final Object evaluationContext) {
-			setBaseEnabled(!fSessionList.isEmpty());
+			setBaseEnabled(!ManagedPageBookView.this.sessionList.isEmpty());
 		}
 		
 		@Override
 		public Object execute(final ExecutionEvent event) throws ExecutionException {
-			fSessionHistory.clear();
-			final List<S> sessions = getSessions();
+			ManagedPageBookView.this.sessionHistory.clear();
+			final List<S> sessions= getSessions();
 			for (final S session : sessions) {
 				closePage(session);
 			}
@@ -199,15 +199,15 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 	}
 	
 	
-	private final List<S> fSessionList = new ArrayList<S>();
-	private final Map<S, SessionHandler> fSessionMap = new HashMap<S, SessionHandler>();
-	private Comparator<S> fSessionComparator;
+	private final List<S> sessionList= new ArrayList<>();
+	private final Map<S, SessionHandler> sessionMap= new HashMap<>();
+	private Comparator<S> sessionComparator;
 	
-	private final List<S> fSessionHistory = new LinkedList<S>();
+	private final List<S> sessionHistory= new LinkedList<>();
 	
-	private SessionHandler fActiveSession;
+	private SessionHandler activeSession;
 	
-	private final HandlerCollection fViewHandlers = new HandlerCollection();
+	private final HandlerCollection viewHandlers= new HandlerCollection();
 	
 	private StatusLineMessageManager statusManager;
 	
@@ -218,7 +218,7 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 	
 	
 	protected void setSessionComparator(final Comparator<S> comparator) {
-		fSessionComparator = comparator;
+		this.sessionComparator= comparator;
 	}
 	
 	@Override
@@ -233,7 +233,7 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 	}
 	
 	@Override
-	protected void initPage(IPageBookViewPage page) {
+	protected void initPage(final IPageBookViewPage page) {
 		// E-Bug 473941
 		try {
 			page.init(new PageSite(getViewSite()) {
@@ -266,18 +266,18 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 	public void createPartControl(final Composite parent) {
 		super.createPartControl(parent);
 		
-		final IViewSite site = getViewSite();
+		final IViewSite site= getViewSite();
 		this.statusManager= new StatusLineMessageManager(site.getActionBars().getStatusLineManager());
-		initActions(site, fViewHandlers);
+		initActions(site, this.viewHandlers);
 		initPageSwitcher();
-		contributeToActionBars(site, site.getActionBars(), fViewHandlers);
+		contributeToActionBars(site, site.getActionBars(), this.viewHandlers);
 		
 		updateState();
 	}
 	
 	@Override
 	protected IPage createDefaultPage(final PageBook book) {
-		final MessagePage page = new MessagePage();
+		final MessagePage page= new MessagePage();
 		page.createControl(getPageBook());
 		initPage(page);
 		return page;
@@ -285,15 +285,15 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 	
 	@Override
 	protected PageRec doCreatePage(final IWorkbenchPart part) {
-		final SessionHandler sessionHandler = (SessionHandler) part;
-		final S session = sessionHandler.getSession();
+		final SessionHandler sessionHandler= (SessionHandler) part;
+		final S session= sessionHandler.getSession();
 		
-		final IPageBookViewPage page = doCreatePage(session);
+		final IPageBookViewPage page= doCreatePage(session);
 		if (page != null) {
 			initPage(page);
 			page.createControl(getPageBook());
 			
-			final PageRec pageRecord = new PageRec(part, page);
+			final PageRec pageRecord= new PageRec(part, page);
 			return pageRecord;
 		}
 		return null;
@@ -305,22 +305,22 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 	
 	@Override
 	protected void showPageRec(final PageRec pageRec) {
-		if ((fActiveSession != null) ? (pageRec.part != fActiveSession) : (pageRec.part != null)) {
-			onPageHiding((IPageBookViewPage) getCurrentPage(), (fActiveSession != null) ? fActiveSession.getSession() : null);
-			fActiveSession = null;
+		if ((this.activeSession != null) ? (pageRec.part != this.activeSession) : (pageRec.part != null)) {
+			onPageHiding((IPageBookViewPage) getCurrentPage(), (this.activeSession != null) ? this.activeSession.getSession() : null);
+			this.activeSession= null;
 			
 			super.showPageRec(pageRec);
 			
-			fActiveSession = (SessionHandler) pageRec.part;
+			this.activeSession= (SessionHandler) pageRec.part;
 			
 			final S session;
-			if (fActiveSession != null) {
-				session = fActiveSession.getSession();
-				fSessionHistory.remove(session);
-				fSessionHistory.add(0, session);
+			if (this.activeSession != null) {
+				session= this.activeSession.getSession();
+				this.sessionHistory.remove(session);
+				this.sessionHistory.add(0, session);
 			}
 			else {
-				session = null;
+				session= null;
 			}
 			onPageShowing((IPageBookViewPage) pageRec.page, session);
 		}
@@ -328,7 +328,7 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 	}
 	
 	protected void updateTitle() {
-		final S session = getCurrentSession();
+		final S session= getCurrentSession();
 		if (session == null) {
 			setContentDescription(getNoPageTitle());
 		}
@@ -344,18 +344,18 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 	@Override
 	public void partClosed(final IWorkbenchPart part) {
 		if (part instanceof ManagedPageBookView<?>.SessionHandler) {
-			final SessionHandler sessionHandler = (SessionHandler) part;
-			final S session = sessionHandler.getSession();
+			final SessionHandler sessionHandler= (SessionHandler) part;
+			final S session= sessionHandler.getSession();
 			
-			fSessionList.remove(session);
-			fSessionHistory.remove(session);
+			this.sessionList.remove(session);
+			this.sessionHistory.remove(session);
 			
-			if (fActiveSession == part) {
-				if (!fSessionHistory.isEmpty()) {
-					showPage(fSessionHistory.get(0));
+			if (this.activeSession == part) {
+				if (!this.sessionHistory.isEmpty()) {
+					showPage(this.sessionHistory.get(0));
 				}
-				else if (!fSessionList.isEmpty()) {
-					showPage(fSessionList.get(fSessionList.size()-1));
+				else if (!this.sessionList.isEmpty()) {
+					showPage(this.sessionList.get(this.sessionList.size()-1));
 				}
 			}
 			super.partClosed(part);
@@ -364,15 +364,15 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 	
 	@Override
 	protected void doDestroyPage(final IWorkbenchPart part, final PageRec pageRecord) {
-		final SessionHandler sessionHandler = (SessionHandler) part;
-		final S session = sessionHandler.getSession();
+		final SessionHandler sessionHandler= (SessionHandler) part;
+		final S session= sessionHandler.getSession();
 		
 		pageRecord.page.dispose();
 		pageRecord.dispose();
 		
-		fSessionMap.remove(session);
-		if (sessionHandler == fActiveSession) {
-			fActiveSession = null;
+		this.sessionMap.remove(session);
+		if (sessionHandler == this.activeSession) {
+			this.activeSession= null;
 		}
 	}
 	
@@ -381,7 +381,7 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 		new PageSwitcher(this) {
 			@Override
 			public Object[] getPages() {
-				return fSessionList.toArray();
+				return ManagedPageBookView.this.sessionList.toArray();
 			}
 			@Override
 			public String getName(final Object page) {
@@ -393,7 +393,10 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 			}
 			@Override
 			public int getCurrentPageIndex() {
-				return fSessionList.indexOf(fActiveSession);
+				return (activeSession != null) ?
+						ManagedPageBookView.this.sessionList.indexOf(
+								ManagedPageBookView.this.activeSession.getSession() ) :
+						-1;
 			}
 			@Override
 			public void activatePage(final Object page) {
@@ -408,18 +411,18 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 	}
 	
 	protected void initActions(final IServiceLocator serviceLocator, final HandlerCollection handlers) {
-		final IHandlerService handlerService = (IHandlerService) serviceLocator.getService(IHandlerService.class);
+		final IHandlerService handlerService= (IHandlerService) serviceLocator.getService(IHandlerService.class);
 		
 		if (getPageControlByUser()) {
-			final IHandler2 newPageHandler = createNewPageHandler();
+			final IHandler2 newPageHandler= createNewPageHandler();
 			if (newPageHandler != null) {
 				handlers.add(SharedUIResources.NEW_PAGE_COMMAND_ID, newPageHandler);
 				handlerService.activateHandler(SharedUIResources.NEW_PAGE_COMMAND_ID, newPageHandler);
 			}
-			final IHandler2 closePageHandler = new CloseCurrentPageHandler();
+			final IHandler2 closePageHandler= new CloseCurrentPageHandler();
 			handlers.add(SharedUIResources.CLOSE_PAGE_COMMAND_ID, closePageHandler);
 			handlerService.activateHandler(SharedUIResources.CLOSE_PAGE_COMMAND_ID, closePageHandler);
-			final IHandler2 closeAllPagesHandler = new CloseAllPagesHandler();
+			final IHandler2 closeAllPagesHandler= new CloseAllPagesHandler();
 			handlers.add(SharedUIResources.CLOSE_ALL_PAGES_COMMAND_ID, closeAllPagesHandler);
 			handlerService.activateHandler(SharedUIResources.CLOSE_ALL_PAGES_COMMAND_ID, closeAllPagesHandler);
 		}
@@ -431,11 +434,11 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 	
 	protected void contributeToActionBars(final IServiceLocator serviceLocator,
 			final IActionBars actionBars, final HandlerCollection handlers) {
-		final IToolBarManager toolBarManager = actionBars.getToolBarManager();
+		final IToolBarManager toolBarManager= actionBars.getToolBarManager();
 		
 		toolBarManager.add(new Separator(SharedUIResources.ADDITIONS_MENU_ID));
 		toolBarManager.add(new Separator(PAGE_CONTROL_MENU_ID));
-		{	final IHandler2 handler = handlers.get(SharedUIResources.NEW_PAGE_COMMAND_ID);
+		{	final IHandler2 handler= handlers.get(SharedUIResources.NEW_PAGE_COMMAND_ID);
 			if (handler != null) {
 				toolBarManager.appendToGroup(PAGE_CONTROL_MENU_ID,
 						new HandlerContributionItem(new CommandContributionItemParameter(
@@ -457,12 +460,12 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 			}
 			@Override
 			protected void execute() throws ExecutionException {
-				if (fSessionHistory.size() >= 2) {
-					showPage(fSessionHistory.get(1));
+				if (ManagedPageBookView.this.sessionHistory.size() >= 2) {
+					showPage(ManagedPageBookView.this.sessionHistory.get(1));
 				}
 			}
 		});
-		{	final IHandler2 handler = handlers.get(SharedUIResources.CLOSE_PAGE_COMMAND_ID);
+		{	final IHandler2 handler= handlers.get(SharedUIResources.CLOSE_PAGE_COMMAND_ID);
 			if (handler != null) {
 				toolBarManager.appendToGroup(PAGE_CONTROL_MENU_ID,
 						new HandlerContributionItem(new CommandContributionItemParameter(
@@ -470,7 +473,7 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 								handler));
 			}
 		}
-		{	final IHandler2 handler = handlers.get(SharedUIResources.CLOSE_ALL_PAGES_COMMAND_ID);
+		{	final IHandler2 handler= handlers.get(SharedUIResources.CLOSE_ALL_PAGES_COMMAND_ID);
 			if (handler != null) {
 				toolBarManager.appendToGroup(PAGE_CONTROL_MENU_ID,
 						new HandlerContributionItem(new CommandContributionItemParameter(
@@ -484,33 +487,33 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 	public void dispose() {
 		super.dispose();
 		
-		fViewHandlers.dispose();
+		this.viewHandlers.dispose();
 	}
 	
 	
 	public IPage newPage(S session, final boolean show) {
-		session = checkNewSession(session);
-		if (session == null || fSessionList.contains(session)) {
+		session= checkNewSession(session);
+		if (session == null || this.sessionList.contains(session)) {
 			return null;
 		}
-		final SessionHandler sessionHandler = new SessionHandler(session);
-		if (fSessionComparator != null) {
-			final int idx = Collections.binarySearch(fSessionList, session, fSessionComparator);
-			fSessionList.add((idx >= 0) ? idx : -(idx+1), session);
+		final SessionHandler sessionHandler= new SessionHandler(session);
+		if (this.sessionComparator != null) {
+			final int idx= Collections.binarySearch(this.sessionList, session, this.sessionComparator);
+			this.sessionList.add((idx >= 0) ? idx : -(idx+1), session);
 		}
 		else {
-			fSessionList.add(session);
+			this.sessionList.add(session);
 		}
-		fSessionMap.put(session, sessionHandler);
+		this.sessionMap.put(session, sessionHandler);
 		if (show) {
 			partActivated(sessionHandler);
-			final PageRec pageRec = getPageRec(sessionHandler);
+			final PageRec pageRec= getPageRec(sessionHandler);
 			if (pageRec != null) {
 				return pageRec.page;
 			}
 			else {
-				fSessionMap.remove(sessionHandler);
-				fSessionList.remove(session);
+				this.sessionMap.remove(sessionHandler);
+				this.sessionList.remove(session);
 				return null;
 			}
 		}
@@ -524,9 +527,9 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 	}
 	
 	public IPage getPage(final S session) {
-		final SessionHandler sessionHandler = fSessionMap.get(session);
+		final SessionHandler sessionHandler= this.sessionMap.get(session);
 		if (sessionHandler != null) {
-			final PageRec pageRec = getPageRec(sessionHandler);
+			final PageRec pageRec= getPageRec(sessionHandler);
 			if (pageRec != null) {
 				return pageRec.page;
 			}
@@ -535,25 +538,25 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 	}
 	
 	public void showPage(final S session) {
-		final SessionHandler sessionHandler = fSessionMap.get(session);
+		final SessionHandler sessionHandler= this.sessionMap.get(session);
 		if (sessionHandler != null) {
 			partActivated(sessionHandler);
 		}
 	}
 	
 	public void closePage(final S session) {
-		final SessionHandler sessionHandler = fSessionMap.get(session);
+		final SessionHandler sessionHandler= this.sessionMap.get(session);
 		if (sessionHandler != null) {
 			partClosed(sessionHandler);
 		}
 	}
 	
 	public final List<S> getSessions() {
-		return new ConstArrayList<S>(fSessionList);
+		return new ConstArrayList<S>(this.sessionList);
 	}
 	
 	public final S getCurrentSession() {
-		final SessionHandler sessionHandler = fActiveSession;
+		final SessionHandler sessionHandler= this.activeSession;
 		if (sessionHandler != null) {
 			return sessionHandler.getSession();
 		}
@@ -573,7 +576,7 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 	}
 	
 	protected void updateState() {
-		fViewHandlers.update(null);
+		this.viewHandlers.update(null);
 	}
 	
 }

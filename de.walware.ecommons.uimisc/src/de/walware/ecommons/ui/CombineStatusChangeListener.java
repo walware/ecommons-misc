@@ -40,7 +40,7 @@ public class CombineStatusChangeListener implements IStatusChangeListener {
 	
 	private IStatus fBaseStatus = Status.OK_STATUS;
 	
-	private final List<StackListeners> fStack = new ArrayList<StackListeners>();
+	private final List<StackListeners> fStack= new ArrayList<>();
 	
 	
 	public CombineStatusChangeListener(final IStatusChangeListener statusListener) {

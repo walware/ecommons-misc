@@ -55,7 +55,7 @@ public class SettingsChangeNotifier implements ISchedulingRule, IDisposable {
 	private class NotifyJob extends Job {
 		
 		private final String fSource;
-		private final Set<String> fChangedGroupIds = new HashSet<String>();
+		private final Set<String> fChangedGroupIds= new HashSet<>();
 		
 		public NotifyJob(final String source) {
 			super(Messages.SettingsChangeNotifier_Job_title);
@@ -96,7 +96,7 @@ public class SettingsChangeNotifier implements ISchedulingRule, IDisposable {
 	
 	private final ListenerList fManagers = new ListenerList();
 	private final ListenerList fListeners = new ListenerList();
-	private final Map<String, NotifyJob> fPendingJobs = new HashMap<String, NotifyJob>();
+	private final Map<String, NotifyJob> fPendingJobs= new HashMap<>();
 	
 	private volatile boolean fIsDisposed;
 	

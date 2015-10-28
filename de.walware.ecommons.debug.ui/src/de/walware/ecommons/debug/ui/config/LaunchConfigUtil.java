@@ -31,6 +31,7 @@ import org.eclipse.osgi.util.NLS;
 import org.eclipse.ui.statushandlers.StatusManager;
 
 import de.walware.ecommons.ICommonStatusConstants;
+
 import de.walware.ecommons.debug.internal.ui.Messages;
 import de.walware.ecommons.debug.ui.ECommonsDebugUI;
 

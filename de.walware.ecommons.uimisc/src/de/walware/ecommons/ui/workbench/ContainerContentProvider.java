@@ -63,7 +63,7 @@ public class ContainerContentProvider implements ITreeContentProvider {
 				return allProjects;
 			}
 			
-			final List<IProject> accessibleProjects = new ArrayList<IProject>();
+			final List<IProject> accessibleProjects= new ArrayList<>();
 			for (int i = 0; i < allProjects.length; i++) {
 				if (allProjects[i].isOpen()) {
 					accessibleProjects.add(allProjects[i]);
@@ -75,7 +75,7 @@ public class ContainerContentProvider implements ITreeContentProvider {
 			final IContainer container = (IContainer) element;
 			if (container.isAccessible()) {
 				try {
-					final List<IResource> children = new ArrayList<IResource>();
+					final List<IResource> children= new ArrayList<>();
 					final IResource[] members = container.members();
 					for (int i = 0; i < members.length; i++) {
 						if (members[i].getType() != IResource.FILE) {

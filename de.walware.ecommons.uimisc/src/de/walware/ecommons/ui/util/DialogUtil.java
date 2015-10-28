@@ -80,7 +80,7 @@ public class DialogUtil {
 	 * @param newItem optional new item
 	 */
 	public static String[] combineHistoryItems(final String[] existingItems, final String newItem) {
-		final LinkedHashSet<String> history= new LinkedHashSet<String>(HISTORY_MAX);
+		final LinkedHashSet<String> history= new LinkedHashSet<>(HISTORY_MAX);
 		if (newItem != null && newItem.length() > 0) {
 			history.add(newItem);
 		}

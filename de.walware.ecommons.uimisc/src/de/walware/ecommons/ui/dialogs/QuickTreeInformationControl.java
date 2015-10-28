@@ -219,7 +219,7 @@ public abstract class QuickTreeInformationControl extends PopupDialog implements
 			this.commandBestKeyStrokeFormatted= keyStroke.format();
 		}
 		{	final TriggerSequence[] sequences= bindingSvc.getActiveBindingsFor(this.commandId);
-			this.commandActiveKeyStrokes= new ArrayList<KeyStroke>(sequences.length);
+			this.commandActiveKeyStrokes= new ArrayList<>(sequences.length);
 			for (int i= 0; i < sequences.length; i++) {
 				final KeyStroke keyStroke= getKeyStroke(sequences[i]);
 				if (keyStroke != null) {

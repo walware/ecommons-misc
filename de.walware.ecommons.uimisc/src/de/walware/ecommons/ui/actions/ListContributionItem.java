@@ -34,7 +34,7 @@ public abstract class ListContributionItem extends CompoundContributionItem {
 	
 	@Override
 	protected IContributionItem[] getContributionItems() {
-		final List<IContributionItem> items= new ArrayList<IContributionItem>();
+		final List<IContributionItem> items= new ArrayList<>();
 		
 		createContributionItems(items);
 		

@@ -126,7 +126,7 @@ public abstract class BreadcrumbViewer extends StructuredViewer {
 	 * @param style the style flag used for this viewer
 	 */
 	public BreadcrumbViewer(final Composite parent, final int style) {
-		fBreadcrumbItems= new ArrayList<BreadcrumbItem>();
+		fBreadcrumbItems= new ArrayList<>();
 		fMenuListeners= new ListenerList();
 		
 		fContainer= new Composite(parent, SWT.NONE);

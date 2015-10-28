@@ -22,8 +22,8 @@ import de.walware.ecommons.FastList;
 public abstract class AbstractPostSelectionProvider implements IPostSelectionProvider {
 	
 	
-	private final FastList<ISelectionChangedListener> fSelectionListeners = new FastList<ISelectionChangedListener>(ISelectionChangedListener.class);
-	private final FastList<ISelectionChangedListener> fPostSelectionListeners = new FastList<ISelectionChangedListener>(ISelectionChangedListener.class);
+	private final FastList<ISelectionChangedListener> fSelectionListeners= new FastList<>(ISelectionChangedListener.class);
+	private final FastList<ISelectionChangedListener> fPostSelectionListeners= new FastList<>(ISelectionChangedListener.class);
 	
 	
 	public AbstractPostSelectionProvider() {

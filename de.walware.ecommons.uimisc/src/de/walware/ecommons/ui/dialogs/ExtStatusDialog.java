@@ -184,7 +184,7 @@ public class ExtStatusDialog extends StatusDialog implements IRunnableContext {
 				}
 				
 				fProgressLastContentEnableState = ControlEnableState.disable(getDialogArea());
-				final List<Control> buttons = new ArrayList<Control>();
+				final List<Control> buttons= new ArrayList<>();
 				for (final Control child : getButton(IDialogConstants.OK_ID).getParent().getChildren()) {
 					if (child instanceof Button) {
 						buttons.add(child);

@@ -77,7 +77,7 @@ public class AutoCheckController implements Listener {
 						}
 						if ((event.stateMask & SWT.MOD2) != 0) {
 							final TableItem[] selection = fViewer.getTable().getSelection();
-							final List<Object> list = new ArrayList<Object>();
+							final List<Object> list= new ArrayList<>();
 							for (final TableItem item : selection) {
 								final Object element = item.getData();
 								if (element != null) {

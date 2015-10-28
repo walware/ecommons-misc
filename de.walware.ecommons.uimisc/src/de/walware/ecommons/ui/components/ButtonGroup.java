@@ -195,7 +195,7 @@ public class ButtonGroup<ItemType> extends Composite {
 		protected List<ItemType> getItems(final List<? extends Object> list) {
 			if (!list.isEmpty()) {
 				final DataAdapter<ItemType> dataAdapter = (DataAdapter<ItemType>) getGroup().getDataAdapter();
-				final List<ItemType> items = new ArrayList<ItemType>();
+				final List<ItemType> items= new ArrayList<>();
 				for (final Object element : list) {
 					if (dataAdapter.isContentItem(element)) {
 						items.add(dataAdapter.getModelItem(element));
@@ -416,7 +416,7 @@ public class ButtonGroup<ItemType> extends Composite {
 	private SelectionHandler fEditHandler;
 	private SelectionHandler fDeleteHandler;
 	
-	private final List<SelectionHandler> fHandlers = new ArrayList<SelectionHandler>();
+	private final List<SelectionHandler> fHandlers= new ArrayList<>();
 	
 	private int fCachedWidthHint;
 	

@@ -179,9 +179,9 @@ public abstract class AbstractEditorOutlinePage extends Page
 	private TreeViewer fTreeViewer;
 	private ISelection fCurrentSelection;
 	
-	private final FastList<ISelectionChangedListener> fSelectionListeners = new FastList<ISelectionChangedListener>(ISelectionChangedListener.class);
+	private final FastList<ISelectionChangedListener> fSelectionListeners= new FastList<>(ISelectionChangedListener.class);
 	private final ISelectionChangedListener fSelectionListener = new SelectionChangeNotify(fSelectionListeners);
-	private final FastList<ISelectionChangedListener> fPostSelectionListeners = new FastList<ISelectionChangedListener>(ISelectionChangedListener.class);
+	private final FastList<ISelectionChangedListener> fPostSelectionListeners= new FastList<>(ISelectionChangedListener.class);
 	private final ISelectionChangedListener fPostSelectionListener = new SelectionChangeNotify(fPostSelectionListeners);
 	private int fIgnoreSelection;
 	
@@ -189,7 +189,7 @@ public abstract class AbstractEditorOutlinePage extends Page
 	private Menu fContextMenu;
 	
 	private final HandlerCollection fHandlers = new HandlerCollection();
-	private final FastList<IHandler2> fHandlersToUpdate = new FastList<IHandler2>(IHandler2.class);
+	private final FastList<IHandler2> fHandlersToUpdate= new FastList<>(IHandler2.class);
 	
 	
 	public AbstractEditorOutlinePage(final String contextMenuId) {

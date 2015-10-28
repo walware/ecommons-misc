@@ -552,7 +552,7 @@ public class HSVSelector extends Canvas implements IObjValueWidget<ColorDef> {
 	
 	private HSVColorDef fValue = DEFAULT_VALUE;
 	
-	private final FastList<IObjValueListener<ColorDef>> fValueListeners = (FastList) new FastList<IObjValueListener>(IObjValueListener.class);
+	private final FastList<IObjValueListener<ColorDef>> fValueListeners= (FastList) new FastList<>(IObjValueListener.class);
 	
 	
 	public HSVSelector(final Composite parent) {
@@ -575,7 +575,7 @@ public class HSVSelector extends Canvas implements IObjValueWidget<ColorDef> {
 			return false;
 		}
 		final IObjValueListener<ColorDef>[] listeners = fValueListeners.toArray();
-		final ObjValueEvent<ColorDef> event = new ObjValueEvent<ColorDef>(this, time, 0,
+		final ObjValueEvent<ColorDef> event= new ObjValueEvent<>(this, time, 0,
 				fValue, newValue, flags);
 		
 		fValue = newValue;

@@ -36,7 +36,7 @@ public class ShowPageDropdownContribution<S extends ISession> extends CompoundCo
 	
 	@Override
 	protected IContributionItem[] getContributionItems() {
-		final List<IContributionItem> list = new ArrayList<IContributionItem>();
+		final List<IContributionItem> list= new ArrayList<>();
 		
 		final List<S> sessions = fView.getSessions();
 		for (int i = 0; i < sessions.size(); i++) {

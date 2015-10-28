@@ -131,7 +131,7 @@ public class RMIUtil {
 	public static final RMIUtil INSTANCE = new RMIUtil(true);
 	
 	
-	private final Map<Port, ManagedRegistry> registries = new HashMap<Port, ManagedRegistry>();
+	private final Map<Port, ManagedRegistry> registries= new HashMap<>();
 	
 	private final Object embeddedLock = new Object();
 	private int embeddedPortFrom;
@@ -139,7 +139,7 @@ public class RMIUtil {
 	private boolean embeddedStartSeparate = true;
 	private boolean embeddedSSL = false;
 	private ManagedRegistry embeddedRegistry;
-	private final List<ManagedRegistry> embeddedRegistries = new ArrayList<RMIUtil.ManagedRegistry>(4);
+	private final List<ManagedRegistry> embeddedRegistries= new ArrayList<>(4);
 	private List<String> embeddedCodebaseEntries;
 	private boolean embeddedCodebaseLoadContrib;
 	
@@ -281,7 +281,7 @@ public class RMIUtil {
 		}
 		synchronized (this.embeddedLock) {
 			if (this.embeddedCodebaseEntries == null) {
-				this.embeddedCodebaseEntries = new ArrayList<String>();
+				this.embeddedCodebaseEntries= new ArrayList<>();
 			}
 			if (!this.embeddedCodebaseEntries.contains(entry)) {
 				this.embeddedRegistry = null;
@@ -420,12 +420,12 @@ public class RMIUtil {
 	}
 	
 	private void loadCodebaseContrib() {
-		final List<String> pluginIds = new ArrayList<String>();
+		final List<String> pluginIds= new ArrayList<>();
 		collectPluginIds(EXTENSIONPOINT_ID, "codebaseEntry", pluginIds); //$NON-NLS-1$
 		collectPluginIds(CLASSPATH_EXTENSIONPOINT_ID, "plugin", pluginIds); //$NON-NLS-1$
 		
 		if (this.embeddedCodebaseEntries == null) {
-			this.embeddedCodebaseEntries = new ArrayList<String>(pluginIds.size()+2);
+			this.embeddedCodebaseEntries= new ArrayList<>(pluginIds.size()+2);
 		}
 		for (final String pluginId : pluginIds) {
 			final Bundle pluginBundle = Platform.getBundle(pluginId);
@@ -531,7 +531,7 @@ public class RMIUtil {
 		}
 		final Process process;
 		try {
-			final List<String> command = new ArrayList<String>();
+			final List<String> command= new ArrayList<>();
 			final StringBuilder sb = new StringBuilder();
 			sb.setLength(0);
 			sb.append(System.getProperty("java.home")); //$NON-NLS-1$

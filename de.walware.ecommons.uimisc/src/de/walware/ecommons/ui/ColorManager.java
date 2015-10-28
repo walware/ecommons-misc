@@ -27,8 +27,8 @@ import de.walware.ecommons.IDisposable;
 public class ColorManager implements IDisposable {
 	
 	
-	protected Map<String, RGB> fKeyTable = new HashMap<String, RGB>(10);
-	protected Map<Display, Map<RGB, Color>> fDisplayTable = new HashMap<Display, Map<RGB, Color>>(2);
+	protected Map<String, RGB> fKeyTable= new HashMap<>(10);
+	protected Map<Display, Map<RGB, Color>> fDisplayTable= new HashMap<>(2);
 	
 	
 	/**
@@ -99,7 +99,7 @@ public class ColorManager implements IDisposable {
 		final Display display = Display.getCurrent();
 		Map<RGB, Color> colorTable = fDisplayTable.get(display);
 		if (colorTable == null) {
-			colorTable = new HashMap<RGB, Color>(10);
+			colorTable= new HashMap<>(10);
 			fDisplayTable.put(display, colorTable);
 			if (fAutoDisposeOnDisplayDispose) {
 				display.addListener(SWT.Dispose, fDisposeListener);

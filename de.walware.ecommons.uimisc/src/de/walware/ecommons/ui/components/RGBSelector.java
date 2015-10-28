@@ -290,7 +290,7 @@ public class RGBSelector extends Canvas implements IObjValueWidget<ColorDef> {
 	private byte fCurrentRectX;
 	private byte fCurrentRectY;
 	
-	private final FastList<IObjValueListener<ColorDef>> fValueListeners = (FastList) new FastList<IObjValueListener>(IObjValueListener.class);
+	private final FastList<IObjValueListener<ColorDef>> fValueListeners= (FastList) new FastList<>(IObjValueListener.class);
 	
 	
 	public RGBSelector(final Composite parent) {
@@ -342,7 +342,7 @@ public class RGBSelector extends Canvas implements IObjValueWidget<ColorDef> {
 			return false;
 		}
 		final IObjValueListener<ColorDef>[] listeners = fValueListeners.toArray();
-		final ObjValueEvent<ColorDef> event = new ObjValueEvent<ColorDef>(this, time, 0,
+		final ObjValueEvent<ColorDef> event= new ObjValueEvent<>(this, time, 0,
 				fValue, newValue, flags);
 		
 		fValue = newValue;

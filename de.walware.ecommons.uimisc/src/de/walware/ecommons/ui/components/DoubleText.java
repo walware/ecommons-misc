@@ -74,7 +74,7 @@ public class DoubleText implements IObjValueWidget<Double> {
 	
 	private Double fValue;
 	
-	private final FastList<IObjValueListener<Double>> fValueListeners = (FastList) new FastList<IObjValueListener>(IObjValueListener.class);
+	private final FastList<IObjValueListener<Double>> fValueListeners= (FastList) new FastList<>(IObjValueListener.class);
 	
 	private double fIncrement;
 	private double fMin;
@@ -180,7 +180,7 @@ public class DoubleText implements IObjValueWidget<Double> {
 			return;
 		}
 		final IObjValueListener<Double>[] listeners = fValueListeners.toArray();
-		final ObjValueEvent<Double> event = new ObjValueEvent<Double>(this, time, 0,
+		final ObjValueEvent<Double> event= new ObjValueEvent<>(this, time, 0,
 				fValue, newValue, 0 );
 		fValue = newValue;
 		

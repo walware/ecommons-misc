@@ -88,8 +88,8 @@ public class VariableText {
 	
 	private final List<String> fSpecialVariablesNames;
 	private List<IDynamicVariable> fSpecialVariables;
-	private final Set<String> fUnresolvedSpecial = new HashSet<String>();
-	private final Map<String, String> fLocationVariables = new HashMap<String, String>();
+	private final Set<String> fUnresolvedSpecial= new HashSet<>();
+	private final Map<String, String> fLocationVariables= new HashMap<>();
 	
 	
 	public VariableText(final String text, final List<String> specialVariablesNames) {
@@ -99,7 +99,7 @@ public class VariableText {
 	}
 	
 	public VariableText(final String text, final List<IDynamicVariable> checkedVariables, final boolean useDirectly) {
-		final List<String> specialVariablesNames = new ArrayList<String>(checkedVariables.size());
+		final List<String> specialVariablesNames= new ArrayList<>(checkedVariables.size());
 		for (final IStringVariable variable : checkedVariables) {
 			specialVariablesNames.add(variable.getName());
 		}
@@ -122,7 +122,7 @@ public class VariableText {
 		}
 		String text = fText;
 		
-		final LinkedHashMap<String, String> specialVariables = new LinkedHashMap<String, String>();
+		final LinkedHashMap<String, String> specialVariables= new LinkedHashMap<>();
 		for (final String variableName : fSpecialVariablesNames) {
 			final String pattern = "${"+variableName; //$NON-NLS-1$
 			int offset = -1;

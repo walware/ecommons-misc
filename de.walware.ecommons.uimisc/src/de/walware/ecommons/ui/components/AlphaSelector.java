@@ -246,7 +246,7 @@ public class AlphaSelector extends Canvas implements IObjValueWidget<Float> {
 	
 	private Float fValue = DEFAULT_VALUE;
 	
-	private final FastList<IObjValueListener<Float>> fValueListeners = (FastList) new FastList<IObjValueListener>(IObjValueListener.class);
+	private final FastList<IObjValueListener<Float>> fValueListeners= (FastList) new FastList<>(IObjValueListener.class);
 	
 	private ColorDef fBaseColor = DEFAULT_BASE;
 	
@@ -277,7 +277,7 @@ public class AlphaSelector extends Canvas implements IObjValueWidget<Float> {
 			return false;
 		}
 		final IObjValueListener<Float>[] listeners = fValueListeners.toArray();
-		final ObjValueEvent<Float> event = new ObjValueEvent<Float>(this, time, 0,
+		final ObjValueEvent<Float> event= new ObjValueEvent<>(this, time, 0,
 				fValue, newValue, flags);
 		
 		fValue = newValue;

@@ -76,7 +76,7 @@ public class SettingsUpdater implements ChangeListener {
 	}
 	
 	private void runUpdate(final Set<String> groupIds) {
-		final HashMap<String, Object> options = new HashMap<String, Object>();
+		final HashMap<String, Object> options= new HashMap<>();
 		UIAccess.getDisplay().syncExec(new Runnable() {
 			@Override
 			public void run() {

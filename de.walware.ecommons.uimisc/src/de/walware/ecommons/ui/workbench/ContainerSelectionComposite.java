@@ -440,7 +440,7 @@ public class ContainerSelectionComposite extends Composite {
 		fSelectedContainer = container;
 		
 		//expand to and select the specified container
-		final List<IContainer> itemsToExpand = new ArrayList<IContainer>();
+		final List<IContainer> itemsToExpand= new ArrayList<>();
 		IContainer parent = container.getParent();
 		while (parent != null) {
 			itemsToExpand.add(0, parent);

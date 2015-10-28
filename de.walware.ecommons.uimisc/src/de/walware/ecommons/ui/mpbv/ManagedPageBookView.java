@@ -458,7 +458,7 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 			}
 			@Override
 			protected void dropDownMenuAboutToShow(final IMenuManager manager) {
-				manager.add(new ShowPageDropdownContribution<S>(ManagedPageBookView.this));
+				manager.add(new ShowPageDropdownContribution<>(ManagedPageBookView.this));
 			}
 			@Override
 			protected void execute() throws ExecutionException {

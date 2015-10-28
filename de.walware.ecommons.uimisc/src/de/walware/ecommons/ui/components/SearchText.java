@@ -97,7 +97,7 @@ public class SearchText extends Composite {
 	private Text fTextControl;
 	private Label fClearButton;
 	
-	private final FastList<Listener> fListeners = new FastList<Listener>(Listener.class);
+	private final FastList<Listener> fListeners= new FastList<>(Listener.class);
 	
 	private boolean fTypingChange = true;
 	

@@ -56,7 +56,7 @@ public class EditableTextList implements ButtonGroup.IActions<String> {
 		fColumn.setLabelProvider(new ColumnLabelProvider());
 		fComposite.layout.setColumnData(fColumn.getColumn(), new ColumnWeightData(100));
 		
-		fButtonGroup = new ButtonGroup<String>(composite, this, true);
+		fButtonGroup= new ButtonGroup<>(composite, this, true);
 		fButtonGroup.setLayoutData(new GridData(SWT.FILL, SWT.TOP, false, true));
 		
 		fButtonGroup.addAddButton(null);

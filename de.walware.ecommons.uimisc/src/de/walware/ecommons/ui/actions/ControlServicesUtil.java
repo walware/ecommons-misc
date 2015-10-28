@@ -145,7 +145,7 @@ public class ControlServicesUtil {
 		if (fHandlerService == null) {
 			fHandlerService = (IHandlerService) fServiceLocator.getService(IHandlerService.class);
 			if (fRequireDeactivation) {
-				fActivatedHandlers = new ArrayList<IHandlerActivation>();
+				fActivatedHandlers= new ArrayList<>();
 			}
 		}
 		final IHandlerActivation handlerActivation = fHandlerService.activateHandler(commandId, handler, fDefaultExpression);

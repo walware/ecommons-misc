@@ -45,7 +45,7 @@ public abstract class WindowContributionsProvider implements IWindowListener {
 		
 		public WindowContributions(final IWorkbenchWindow window) {
 			fWindow = window;
-			fHandlerActivations = new ArrayList<IHandlerActivation>();
+			fHandlerActivations= new ArrayList<>();
 			synchronized (fHandlerActivations) {
 				init();
 			}
@@ -82,7 +82,7 @@ public abstract class WindowContributionsProvider implements IWindowListener {
 	}
 	
 	
-	private final List<WindowContributions> fList = new ArrayList<WindowContributions>(4);
+	private final List<WindowContributions> fList= new ArrayList<>(4);
 	
 	
 	public WindowContributionsProvider() {

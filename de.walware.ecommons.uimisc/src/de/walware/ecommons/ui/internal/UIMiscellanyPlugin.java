@@ -71,7 +71,7 @@ public class UIMiscellanyPlugin extends AbstractUIPlugin {
 	
 	private boolean fStarted;
 	
-	private final List<IDisposable> fDisposables = new ArrayList<IDisposable>();
+	private final List<IDisposable> fDisposables= new ArrayList<>();
 	
 	private ColorManager fColorManager;
 	private ImageDescriptorRegistry fImageDescriptorRegistry;

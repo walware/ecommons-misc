@@ -166,7 +166,7 @@ public abstract class PropertyAndPreferencePage extends ConfigurationBlockPrefer
 	}
 	
 	final void doLinkActivated(final Link link) {
-		final Map<String, Object> data = new HashMap<String, Object>();
+		final Map<String, Object> data= new HashMap<>();
 		data.put(DATA_NO_LINK, Boolean.TRUE);
 		
 		if (isProjectPreferencePage()) {
@@ -175,7 +175,7 @@ public abstract class PropertyAndPreferencePage extends ConfigurationBlockPrefer
 		else {
 			try {
 				final Set<IProject> all = getAllProjects();
-				final Set<IProject> projectsWithSpecifics = new HashSet<IProject>();
+				final Set<IProject> projectsWithSpecifics= new HashSet<>();
 				for (final IProject proj : all) {
 					if (hasProjectSpecificSettings(proj.getProject())) {
 						projectsWithSpecifics.add(proj);
@@ -197,7 +197,7 @@ public abstract class PropertyAndPreferencePage extends ConfigurationBlockPrefer
 	
 	private Set<IProject> getAllProjects() throws CoreException {
 		final IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
-		final Set<IProject> collected = new HashSet<IProject>();
+		final Set<IProject> collected= new HashSet<>();
 		for (final IProject project : projects) {
 			if (isProjectSupported(project)) {
 				collected.add(project);

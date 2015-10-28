@@ -51,7 +51,7 @@ public abstract class ExtensibleTextCellEditor extends CellEditor {
 	
 	public static abstract class FocusGroup implements Listener {
 		
-		private final List<Widget> fControls = new ArrayList<Widget>();
+		private final List<Widget> fControls= new ArrayList<>();
 		
 		private Widget fWidget;
 		

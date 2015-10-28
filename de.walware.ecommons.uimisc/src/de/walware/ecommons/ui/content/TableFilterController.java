@@ -380,10 +380,10 @@ public class TableFilterController {
 	
 	private int fInputId;
 	
-	private final IntArrayMap<IElementFilter> fFilter = new IntArrayMap<IElementFilter>(8);
+	private final IntArrayMap<IElementFilter> fFilter= new IntArrayMap<>(8);
 	private int fMaxFilter = -1;
 	
-	private final FastList<Listener> fListener = new FastList<Listener>(Listener.class);
+	private final FastList<Listener> fListener= new FastList<>(Listener.class);
 	
 	
 	/**

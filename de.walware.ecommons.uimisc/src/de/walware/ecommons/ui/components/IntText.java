@@ -62,7 +62,7 @@ public class IntText implements IObjValueWidget<Integer> {
 	
 	private Integer fValue;
 	
-	private final FastList<IObjValueListener<Integer>> fValueListeners = (FastList) new FastList<IObjValueListener>(IObjValueListener.class);
+	private final FastList<IObjValueListener<Integer>> fValueListeners= (FastList) new FastList<>(IObjValueListener.class);
 	
 	private int fIncrement;
 	private int fMin = Integer.MIN_VALUE;
@@ -160,7 +160,7 @@ public class IntText implements IObjValueWidget<Integer> {
 			return;
 		}
 		final IObjValueListener<Integer>[] listeners = fValueListeners.toArray();
-		final ObjValueEvent<Integer> event = new ObjValueEvent<Integer>(this, time, 0,
+		final ObjValueEvent<Integer> event= new ObjValueEvent<>(this, time, 0,
 				fValue, newValue, 0 );
 		fValue = newValue;
 		

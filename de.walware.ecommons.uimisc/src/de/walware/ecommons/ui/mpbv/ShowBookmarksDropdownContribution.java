@@ -64,7 +64,7 @@ public class ShowBookmarksDropdownContribution extends CompoundContributionItem 
 	
 	@Override
 	protected IContributionItem[] getContributionItems() {
-		final List<IContributionItem> list = new ArrayList<IContributionItem>();
+		final List<IContributionItem> list= new ArrayList<>();
 		
 		final List<BrowserBookmark> bookmarks = fView.getBookmarks();
 		for (int i = 0; i < bookmarks.size(); i++) {

@@ -456,10 +456,10 @@ public abstract class Preference<T> {
 		public ArrayList<E> store2Usage(final Object storedValue) {
 			final String s = (String) storedValue;
 			if (s == null || s.length() == 0) {
-				return new ArrayList<E>(0);
+				return new ArrayList<>(0);
 			}
 			final String[] values = LIST_SEPARATOR_PATTERN.split(s);
-			final ArrayList<E> list = new ArrayList<E>(values.length);
+			final ArrayList<E> list= new ArrayList<>(values.length);
 			for (final String name : values) {
 				if (name.length() > 0) {
 					list.add(Enum.valueOf(fEnumType, name));
@@ -549,7 +549,7 @@ public abstract class Preference<T> {
 		public Set<String> store2Usage(final Object storedValue) {
 			final String s = (String) storedValue;
 			if (s == null || s.length() == 0) {
-				return new HashSet<String>(0);
+				return new HashSet<>(0);
 			}
 			final String[] strings = LIST_SEPARATOR_PATTERN.split(s);
 			return new HashSet<>(ImCollections.newList(strings));

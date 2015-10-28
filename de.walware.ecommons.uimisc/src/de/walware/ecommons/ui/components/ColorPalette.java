@@ -231,7 +231,7 @@ public class ColorPalette extends Canvas implements IObjValueWidget<ColorDef> {
 	private int fColumnCount;
 	private int fVisibleRowCount;
 	
-	private final FastList<IObjValueListener<ColorDef>> fValueListeners = (FastList) new FastList<IObjValueListener>(IObjValueListener.class);
+	private final FastList<IObjValueListener<ColorDef>> fValueListeners= (FastList) new FastList<>(IObjValueListener.class);
 	
 	
 	public ColorPalette(final Composite parent) {
@@ -359,7 +359,7 @@ public class ColorPalette extends Canvas implements IObjValueWidget<ColorDef> {
 			return false;
 		}
 		final IObjValueListener<ColorDef>[] listeners = fValueListeners.toArray();
-		final ObjValueEvent<ColorDef> event = new ObjValueEvent<ColorDef>(this, time, 0,
+		final ObjValueEvent<ColorDef> event= new ObjValueEvent<>(this, time, 0,
 				oldValue, newValue, flags);
 		
 		fSelectionIdx = idx;

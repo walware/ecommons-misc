@@ -45,7 +45,7 @@ public class PreferenceStoreBeanWrapper {
 	private final IPreferenceStore fStore;
 	private final PropertyChangeSupport fBeanSupport;
 	
-	private final HashMap<String, PrefData> fPreferenceMap = new HashMap<String, PrefData>();
+	private final HashMap<String, PrefData> fPreferenceMap= new HashMap<>();
 	
 	/**
 	 * 

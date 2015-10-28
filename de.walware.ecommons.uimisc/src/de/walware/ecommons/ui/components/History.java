@@ -131,13 +131,13 @@ public class History<E> {
 	}
 	
 	
-	private final List<E> fList = new ArrayList<E>(HISTORY_SIZE);
+	private final List<E> fList= new ArrayList<>(HISTORY_SIZE);
 	
 	private int fCurrentPosition = -1;
 	private boolean fCurrentPositionSelected;
 	
 	private IServiceLocator fServiceLocator;
-	private final List<IHandler2> fHandler = new ArrayList<IHandler2>();
+	private final List<IHandler2> fHandler= new ArrayList<>();
 	
 	private ISelectionProvider fSelectionProvider;
 	

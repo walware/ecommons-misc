@@ -69,7 +69,7 @@ public class UIAccess {
 		if (display.getThread() == Thread.currentThread()) {
 			return PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		}
-		final AtomicReference<IWorkbenchWindow> windowRef = new AtomicReference<IWorkbenchWindow>();
+		final AtomicReference<IWorkbenchWindow> windowRef= new AtomicReference<>();
 		display.syncExec(new Runnable() {
 			@Override
 			public void run() {
@@ -107,7 +107,7 @@ public class UIAccess {
 	}
 	
 	public static Color getColor(final ColorManager colorManager, final RGB rgb) {
-		final AtomicReference<Color> colorRef = new AtomicReference<Color>();
+		final AtomicReference<Color> colorRef= new AtomicReference<>();
 		getDisplay().syncExec(new Runnable() {
 			
 			@Override
@@ -127,7 +127,7 @@ public class UIAccess {
 	
 	public static void checkedSyncExec(final CheckedRunnable runnable)
 			throws CoreException {
-		final AtomicReference<CoreException> error = new AtomicReference<CoreException>();
+		final AtomicReference<CoreException> error= new AtomicReference<>();
 		UIAccess.getDisplay().syncExec(new Runnable() {
 			
 			@Override

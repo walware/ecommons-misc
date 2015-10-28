@@ -23,7 +23,7 @@ import org.eclipse.core.commands.IHandler2;
 public class HandlerCollection {
 	
 	
-	private final Map<String, IHandler2> fHandlers = new HashMap<String, IHandler2>();
+	private final Map<String, IHandler2> handlers= new HashMap<>();
 	
 	
 	public HandlerCollection() {
@@ -34,25 +34,25 @@ public class HandlerCollection {
 		if (commandId == null || handler == null) {
 			throw new NullPointerException();
 		}
-		fHandlers.put(commandId, handler);
+		this.handlers.put(commandId, handler);
 	}
 	
 	public IHandler2 get(final String commandId) {
-		return fHandlers.get(commandId);
+		return this.handlers.get(commandId);
 	}
 	
 	public void update(final Object evaluationContext) {
-		for (final IHandler2 handler : fHandlers.values()) {
+		for (final IHandler2 handler : this.handlers.values()) {
 			handler.setEnabled(evaluationContext);
 		}
 	}
 	
 	
 	public void dispose() {
-		for (final IHandler2 handler : fHandlers.values()) {
+		for (final IHandler2 handler : this.handlers.values()) {
 			handler.dispose();
 		}
-		fHandlers.clear();
+		this.handlers.clear();
 	}
 	
 }

@@ -43,7 +43,7 @@ public class DecoratingStyledLabelProvider extends DecoratingStyledCellLabelProv
 	public static final Collection<String> DEFAULT_UPDATE_PROPERTIES;
 	
 	static {
-		final Set<String> properties = new HashSet<String>();
+		final Set<String> properties= new HashSet<>();
 		properties.add(IWorkbenchPreferenceConstants.USE_COLORED_LABELS);
 		properties.add(JFacePreferences.QUALIFIER_COLOR);
 		properties.add(JFacePreferences.COUNTER_COLOR);

@@ -307,7 +307,7 @@ public class WaScale extends Composite implements IIntValueWidget {
 	
 	private List<Knob> fKnobs;
 	
-	private final FastList<IIntValueListener> fSelectionListeners = new FastList<IIntValueListener>(IIntValueListener.class);
+	private final FastList<IIntValueListener> fSelectionListeners= new FastList<>(IIntValueListener.class);
 	
 	private boolean fIsActive;
 	

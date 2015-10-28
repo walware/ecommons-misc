@@ -48,7 +48,7 @@ public final class CoreMiscellanyPlugin extends Plugin implements IAppEnvironmen
 	
 	private boolean fStarted;
 	
-	private final List<IDisposable> fDisposables = new ArrayList<IDisposable>();
+	private final List<IDisposable> fDisposables= new ArrayList<>();
 	
 	private SettingsChangeNotifier fSettingsNotifier;
 	

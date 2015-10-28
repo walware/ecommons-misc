@@ -184,7 +184,7 @@ public class ToolPopup {
 	private Button fOKButton;
 	private Button fCancelButton;
 	
-	private final List<ToolTab> fToolTabs = new ArrayList<ToolTab>();
+	private final List<ToolTab> fToolTabs= new ArrayList<>();
 	
 	private int fIgnoreActivation;
 	

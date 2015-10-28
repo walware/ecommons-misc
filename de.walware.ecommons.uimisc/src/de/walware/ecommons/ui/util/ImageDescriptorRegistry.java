@@ -29,7 +29,7 @@ import de.walware.ecommons.IDisposable;
 public class ImageDescriptorRegistry implements IDisposable {
 	
 	
-	private final Map<ImageDescriptor, Image> fRegistry = new HashMap<ImageDescriptor, Image>();
+	private final Map<ImageDescriptor, Image> fRegistry= new HashMap<>();
 	
 	private final Display fDisplay;
 	

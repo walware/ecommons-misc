@@ -53,7 +53,7 @@ public class BrowserSession implements ISession {
 	
 	int putStatic(final String html) {
 		if (fStaticContent == null) {
-			fStaticContent = new IntArrayMap<String>();
+			fStaticContent= new IntArrayMap<>();
 		}
 		final int id = fStaticContent.size();
 		fStaticContent.put(id, html);

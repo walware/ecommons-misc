@@ -16,8 +16,9 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IVariable;
 
-import de.walware.ecommons.debug.core.ECommonsDebugCore;
 import de.walware.ecommons.models.core.util.ElementPartitionFactory;
+
+import de.walware.ecommons.debug.core.ECommonsDebugCore;
 
 
 public class VariablePartitionFactory<T extends IIndexedValue>

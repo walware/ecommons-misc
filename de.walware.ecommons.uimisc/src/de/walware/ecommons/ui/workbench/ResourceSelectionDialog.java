@@ -186,7 +186,7 @@ public class ResourceSelectionDialog extends SelectionStatusDialog {
 						final IResource[] members = ((IContainer) o).members();
 						
 						//filter out the desired resource types
-						final ArrayList<IResource> results = new ArrayList<IResource>(members.length);
+						final ArrayList<IResource> results= new ArrayList<>(members.length);
 						for (int i = 0; i < members.length; i++) {
 							if (((members[i].getType() & resourceType) != 0)
 									&& members[i].isAccessible() ) {

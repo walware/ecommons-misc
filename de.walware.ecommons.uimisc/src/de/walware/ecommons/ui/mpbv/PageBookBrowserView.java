@@ -194,7 +194,7 @@ public class PageBookBrowserView extends ManagedPageBookView<BrowserSession> {
 	}
 	
 	
-	private final List<IHandler2> fBrowserHandlers = new ArrayList<IHandler2>();
+	private final List<IHandler2> fBrowserHandlers= new ArrayList<>();
 	
 	private final BrowserListener fBrowserListener = new BrowserListener();
 	
@@ -315,7 +315,7 @@ public class PageBookBrowserView extends ManagedPageBookView<BrowserSession> {
 					@Override
 					protected void execute() throws ExecutionException {
 						final Shell shell = getSite().getShell();
-						final List<String> pageIds = new ArrayList<String>();
+						final List<String> pageIds= new ArrayList<>();
 						PageBookBrowserView.this.collectContextMenuPreferencePages(pageIds);
 						if (!pageIds.isEmpty() && (shell == null || !shell.isDisposed())) {
 							org.eclipse.ui.dialogs.PreferencesUtil.createPreferenceDialogOn(shell,

@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-SymbolicName: de.walware.ecommons.text.core;singleton:=true
-Bundle-Version: 1.0.0.qualifier
+Bundle-Version: 1.1.0.qualifier
 Bundle-Vendor: WalWare.de
 Bundle-Name: ECommons Text - Core
 Bundle-Activator: de.walware.ecommons.text.internal.core.ECommonsTextCorePlugin
@@ -10,8 +10,8 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Require-Bundle: org.eclipse.core.runtime;bundle-version="3.8.0",
  org.eclipse.text;visibility:=reexport
 Import-Package: com.ibm.icu.text;version="4.4.2.2",
- de.walware.ecommons.collections,
- de.walware.ecommons.string
+ de.walware.jcommons.collections;version="1.0",
+ de.walware.jcommons.string;version="1.0"
 Export-Package: de.walware.ecommons.text.core,
  de.walware.ecommons.text.core.input,
  de.walware.ecommons.text.core.treepartitioner,

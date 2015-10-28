@@ -57,8 +57,9 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.dialogs.ContainerSelectionDialog;
 import org.eclipse.ui.dialogs.FilteredResourcesSelectionDialog;
 
-import de.walware.ecommons.collections.ImCollections;
-import de.walware.ecommons.collections.ImList;
+import de.walware.jcommons.collections.ImCollections;
+import de.walware.jcommons.collections.ImList;
+
 import de.walware.ecommons.io.ObservableFileValidator;
 import de.walware.ecommons.ui.SharedMessages;
 import de.walware.ecommons.ui.components.CustomizableVariableSelectionDialog;

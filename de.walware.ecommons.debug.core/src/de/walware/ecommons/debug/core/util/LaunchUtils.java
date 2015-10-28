@@ -40,7 +40,8 @@ import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.model.ILaunchConfigurationDelegate;
 import org.eclipse.osgi.util.NLS;
 
-import de.walware.ecommons.collections.CaseInsensitiveMap;
+import de.walware.jcommons.collections.CaseInsensitiveMap;
+
 import de.walware.ecommons.debug.core.ECommonsDebugCore;
 import de.walware.ecommons.debug.internal.core.Messages;
 

@@ -41,7 +41,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 
-import de.walware.ecommons.collections.ImCollections;
+import de.walware.jcommons.collections.ImCollections;
 
 
 public class LayoutUtil {

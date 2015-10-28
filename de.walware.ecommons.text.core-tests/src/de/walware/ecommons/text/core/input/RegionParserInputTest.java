@@ -21,8 +21,8 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.internal.ArrayComparisonFailure;
 
-import de.walware.ecommons.collections.ImCollections;
-import de.walware.ecommons.collections.ImList;
+import de.walware.jcommons.collections.ImCollections;
+import de.walware.jcommons.collections.ImList;
 
 
 @FixMethodOrder

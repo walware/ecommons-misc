@@ -29,7 +29,8 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 
-import de.walware.ecommons.collections.CopyOnWriteIdentityListSet;
+import de.walware.jcommons.collections.CopyOnWriteIdentityListSet;
+
 import de.walware.ecommons.ui.internal.AccessibleArrowImage;
 import de.walware.ecommons.ui.internal.UIMiscellanyPlugin;
 import de.walware.ecommons.ui.util.MenuUtil;

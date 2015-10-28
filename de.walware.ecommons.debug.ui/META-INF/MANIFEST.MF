@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-SymbolicName: de.walware.ecommons.debug.ui;singleton:=true
-Bundle-Version: 1.1.0.qualifier
+Bundle-Version: 1.2.0.qualifier
 Bundle-Vendor: WalWare.de
 Bundle-Name: ECommons Debug - UI
 Bundle-Activator: de.walware.ecommons.debug.internal.ui.ECommonsDebugUIPlugin
@@ -9,13 +9,15 @@ Bundle-ActivationPolicy: lazy
 Bundle-Localization: plugin
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Require-Bundle: org.eclipse.core.runtime;bundle-version="3.8.0",
- de.walware.ecommons.coremisc,
  org.eclipse.core.variables,
- de.walware.ecommons.debug.core;bundle-version="1.1.0",
+ de.walware.ecommons.debug.core;bundle-version="1.2.0",
  de.walware.ecommons.databinding.core,
  de.walware.ecommons.uimisc,
  org.eclipse.ui,
  org.eclipse.debug.ui;visibility:=reexport
 Import-Package: com.ibm.icu.text;version="4.4.2.2",
- de.walware.ecommons.collections;version="1.5.0"
+ de.walware.ecommons,
+ de.walware.ecommons.databinding;version="0.10.0",
+ de.walware.ecommons.variables.core,
+ de.walware.jcommons.collections;version="1.0"
 Export-Package: de.walware.ecommons.debug.ui.config

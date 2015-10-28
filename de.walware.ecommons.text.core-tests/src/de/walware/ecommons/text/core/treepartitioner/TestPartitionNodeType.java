@@ -11,8 +11,9 @@
 
 package de.walware.ecommons.text.core.treepartitioner;
 
-import de.walware.ecommons.collections.ImCollections;
-import de.walware.ecommons.collections.ImList;
+import de.walware.jcommons.collections.ImCollections;
+import de.walware.jcommons.collections.ImList;
+
 
 public class TestPartitionNodeType extends AbstractPartitionNodeType {
 	

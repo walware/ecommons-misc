@@ -37,8 +37,9 @@ import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITypedRegion;
 import org.eclipse.jface.text.Region;
 
-import de.walware.ecommons.collections.ImCollections;
-import de.walware.ecommons.collections.ImList;
+import de.walware.jcommons.collections.ImCollections;
+import de.walware.jcommons.collections.ImList;
+
 import de.walware.ecommons.text.core.DocumentEnhancer;
 import de.walware.ecommons.text.core.IDocumentEnhancement;
 import de.walware.ecommons.text.core.treepartitioner.ITreePartitionNodeScan.BreakException;

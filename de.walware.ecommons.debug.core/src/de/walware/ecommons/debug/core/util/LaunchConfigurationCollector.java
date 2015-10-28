@@ -20,9 +20,11 @@ import org.eclipse.debug.core.ILaunchConfigurationListener;
 import org.eclipse.debug.core.ILaunchConfigurationType;
 import org.eclipse.debug.core.ILaunchManager;
 
+import de.walware.jcommons.collections.CopyOnWriteListSet;
+import de.walware.jcommons.collections.ImList;
+
 import de.walware.ecommons.IDisposable;
-import de.walware.ecommons.collections.CopyOnWriteListSet;
-import de.walware.ecommons.collections.ImList;
+
 import de.walware.ecommons.debug.core.ECommonsDebugCore;
 import de.walware.ecommons.debug.internal.core.ECommonsDebugCorePlugin;
 
@@ -43,7 +45,7 @@ public class LaunchConfigurationCollector implements ILaunchConfigurationListene
 		launchManager.addLaunchConfigurationListener(this);
 		
 		try {
-			for (ILaunchConfiguration configuration : launchManager.getLaunchConfigurations()) {
+			for (final ILaunchConfiguration configuration : launchManager.getLaunchConfigurations()) {
 				launchConfigurationAdded(configuration);
 			}
 		}
@@ -78,19 +80,19 @@ public class LaunchConfigurationCollector implements ILaunchConfigurationListene
 	
 	
 	@Override
-	public void launchConfigurationAdded(ILaunchConfiguration configuration) {
+	public void launchConfigurationAdded(final ILaunchConfiguration configuration) {
 		try {
 			if (include(configuration)) {
 				this.configurations.add(configuration);
 			}
 		}
-		catch (CoreException e) {
+		catch (final CoreException e) {
 			log(e);
 		}
 	}
 	
 	@Override
-	public void launchConfigurationChanged(ILaunchConfiguration configuration) {
+	public void launchConfigurationChanged(final ILaunchConfiguration configuration) {
 		try {
 			if (include(configuration)) {
 				this.configurations.add(configuration);
@@ -99,13 +101,13 @@ public class LaunchConfigurationCollector implements ILaunchConfigurationListene
 				this.configurations.remove(configuration);
 			}
 		}
-		catch (CoreException e) {
+		catch (final CoreException e) {
 			log(e);
 		}
 	}
 	
 	@Override
-	public void launchConfigurationRemoved(ILaunchConfiguration configuration) {
+	public void launchConfigurationRemoved(final ILaunchConfiguration configuration) {
 		this.configurations.remove(configuration);
 	}
 	

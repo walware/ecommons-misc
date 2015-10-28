@@ -48,7 +48,9 @@ import org.eclipse.ui.part.PageSite;
 import org.eclipse.ui.part.PageSwitcher;
 import org.eclipse.ui.services.IServiceLocator;
 
-import de.walware.ecommons.collections.ConstArrayList;
+import de.walware.jcommons.collections.ImCollections;
+import de.walware.jcommons.collections.ImList;
+
 import de.walware.ecommons.ui.SharedUIResources;
 import de.walware.ecommons.ui.actions.HandlerCollection;
 import de.walware.ecommons.ui.actions.HandlerContributionItem;
@@ -551,8 +553,8 @@ public abstract class ManagedPageBookView<S extends ISession> extends PageBookVi
 		}
 	}
 	
-	public final List<S> getSessions() {
-		return new ConstArrayList<S>(this.sessionList);
+	public final ImList<S> getSessions() {
+		return ImCollections.toList(this.sessionList);
 	}
 	
 	public final S getCurrentSession() {

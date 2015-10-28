@@ -26,9 +26,8 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Monitor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 
-import de.walware.ecommons.collections.ConstArrayList;
-import de.walware.ecommons.collections.ImCollections;
-import de.walware.ecommons.collections.ImList;
+import de.walware.jcommons.collections.ImCollections;
+import de.walware.jcommons.collections.ImList;
 
 
 /**
@@ -176,7 +175,7 @@ public class DialogUtil {
 	 * @param enable
 	 */
 	public static void setVisible(final Control control, final List<? extends Control> exceptions, final boolean enable) {
-		setVisible(new ConstArrayList<Control>(control), exceptions, enable);
+		setVisible(ImCollections.newList(control), exceptions, enable);
 	}
 	
 	/**

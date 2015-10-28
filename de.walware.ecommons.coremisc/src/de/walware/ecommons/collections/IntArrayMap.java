@@ -12,7 +12,6 @@
 package de.walware.ecommons.collections;
 
 import java.lang.reflect.Array;
-import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -157,12 +156,12 @@ public final class IntArrayMap<V> implements IntMap<V> {
 	
 	@Override
 	public Collection<V> values() {
-		throw new UnsupportedAddressTypeException();
+		throw new UnsupportedOperationException();
 	}
 	
 	@Override
 	public Set<java.util.Map.Entry<Integer, V>> entrySet() {
-		throw new UnsupportedAddressTypeException();
+		throw new UnsupportedOperationException();
 	}
 	
 	

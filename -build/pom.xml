@@ -6,12 +6,14 @@
 	
 	<groupId>de.walware.ecommons</groupId>
 	<artifactId>ecommons-misc</artifactId>
-	<version>1.6-SNAPSHOT</version>
+	<version>1.7-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>ECommons Misc</name>
 	
 	<modules>
 		<module>targetplatform</module>
+		
+		<module>../de.walware.jcommons.util</module>
 		
 		<module>../de.walware.ecommons.coremisc</module>
 		

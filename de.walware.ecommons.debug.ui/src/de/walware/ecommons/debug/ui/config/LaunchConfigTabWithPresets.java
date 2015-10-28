@@ -31,11 +31,13 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.ui.statushandlers.StatusManager;
 
-import de.walware.ecommons.collections.ImCollections;
-import de.walware.ecommons.collections.ImList;
+import de.walware.jcommons.collections.ImCollections;
+import de.walware.jcommons.collections.ImList;
+
+import de.walware.ecommons.ui.components.DropDownButton;
+
 import de.walware.ecommons.debug.internal.ui.Messages;
 import de.walware.ecommons.debug.ui.ECommonsDebugUI;
-import de.walware.ecommons.ui.components.DropDownButton;
 
 
 public abstract class LaunchConfigTabWithPresets extends LaunchConfigTabWithDbc {
@@ -84,7 +86,7 @@ public abstract class LaunchConfigTabWithPresets extends LaunchConfigTabWithDbc 
 	}
 	
 	
-	protected List<ILaunchConfigurationTab> getPresetTabs(final ILaunchConfiguration config) {
+	protected ImList<ILaunchConfigurationTab> getPresetTabs(final ILaunchConfiguration config) {
 		final ILaunchConfigurationTab[] tabs= getLaunchConfigurationDialog().getTabs();
 		if (tabs[tabs.length - 1] instanceof CommonTab) {
 			return ImCollections.newList(tabs, 0, tabs.length - 1);

@@ -28,12 +28,14 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Text;
 
-import de.walware.ecommons.collections.ImList;
-import de.walware.ecommons.debug.internal.ui.Messages;
+import de.walware.jcommons.collections.ImList;
+
 import de.walware.ecommons.ui.components.CustomizableVariableSelectionDialog;
 import de.walware.ecommons.ui.components.WidgetToolsButton;
 import de.walware.ecommons.ui.util.LayoutUtil;
 import de.walware.ecommons.variables.core.VariableText2;
+
+import de.walware.ecommons.debug.internal.ui.Messages;
 
 
 /**

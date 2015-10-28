@@ -263,7 +263,7 @@ public final class IntHashMap<V> implements IntMap<V> {
 			increase();
 		}
 		{	final int idx = idxFor(key);
-			fEntries[idx] = new Entry<V>(key, value, fEntries[idx]);
+			fEntries[idx] = new Entry<>(key, value, fEntries[idx]);
 			fSize++;
 			return null;
 		}

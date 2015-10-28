@@ -13,7 +13,7 @@ package de.walware.ecommons.text.core.input;
 
 import org.eclipse.jface.text.IRegion;
 
-import de.walware.ecommons.collections.ImList;
+import de.walware.jcommons.collections.ImList;
 
 
 /**

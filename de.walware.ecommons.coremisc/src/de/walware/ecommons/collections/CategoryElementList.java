@@ -11,6 +11,9 @@
 
 package de.walware.ecommons.collections;
 
+import de.walware.jcommons.collections.SortedArraySet;
+import de.walware.jcommons.collections.SortedListSet;
+
 
 public class CategoryElementList<C, E> extends SortedArraySet<E> {
 	

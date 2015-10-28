@@ -19,7 +19,8 @@ import org.eclipse.jface.text.IDocumentPartitioningListener;
 import org.eclipse.jface.text.IDocumentPartitioningListenerExtension2;
 import org.eclipse.jface.text.Position;
 
-import de.walware.ecommons.collections.CopyOnWriteIdentityListSet;
+import de.walware.jcommons.collections.CopyOnWriteIdentityListSet;
+
 import de.walware.ecommons.text.core.util.TextUtils;
 
 

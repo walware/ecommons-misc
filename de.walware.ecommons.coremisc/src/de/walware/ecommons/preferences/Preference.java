@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 import com.ibm.icu.text.Collator;
 import com.ibm.icu.text.RuleBasedCollator;
 
-import de.walware.ecommons.collections.ConstArrayList;
+import de.walware.jcommons.collections.ImCollections;
 
 
 /**
@@ -552,7 +552,7 @@ public abstract class Preference<T> {
 				return new HashSet<String>(0);
 			}
 			final String[] strings = LIST_SEPARATOR_PATTERN.split(s);
-			return new HashSet<String>(new ConstArrayList<String>(strings));
+			return new HashSet<>(ImCollections.newList(strings));
 		}
 		@Override
 		public String usage2Store(final Set<String> set) {

@@ -11,8 +11,8 @@
 
 package de.walware.ecommons.text.core.input;
 
-import de.walware.ecommons.string.CharArrayString;
-import de.walware.ecommons.string.IStringFactory;
+import de.walware.jcommons.string.CharArrayString;
+import de.walware.jcommons.string.IStringFactory;
 
 
 /**

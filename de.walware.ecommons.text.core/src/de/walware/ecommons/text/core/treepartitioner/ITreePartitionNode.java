@@ -11,7 +11,8 @@
 
 package de.walware.ecommons.text.core.treepartitioner;
 
-import de.walware.ecommons.collections.ImList;
+import de.walware.jcommons.collections.ImList;
+
 import de.walware.ecommons.text.core.ITextRegion;
 
 

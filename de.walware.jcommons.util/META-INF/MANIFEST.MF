@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: de.walware.jcommons.util;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Vendor: WalWare.de
+Bundle-Name: JCommons Util
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Export-Package: de.walware.jcommons.collections;version="1.0.0",
+ de.walware.jcommons.lang;version="1.0.0",
+ de.walware.jcommons.string;version="1.0.0"

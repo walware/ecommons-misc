@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Vendor: WalWare.de
 Bundle-Name: Miscellany of ECommons Core Packages
 Bundle-SymbolicName: de.walware.ecommons.coremisc;singleton:=true
-Bundle-Version: 1.6.0.qualifier
+Bundle-Version: 1.7.0.qualifier
 Bundle-Activator: de.walware.ecommons.coreutils.internal.CoreMiscellanyPlugin
 Bundle-ActivationPolicy: lazy
 Bundle-Localization: plugin
@@ -17,20 +17,20 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.8.0",
  org.eclipse.core.variables;resolution:=optional,
  org.eclipse.core.databinding;bundle-version="1.2.0";resolution:=optional,
  org.eclipse.debug.core;resolution:=optional
-Import-Package: com.ibm.icu.text;version="4.4.2.2"
+Import-Package: com.ibm.icu.text;version="4.4.2.2",
+ de.walware.ecommons.preferences.core,
+ de.walware.jcommons.collections
 Export-Package: de.walware.ecommons,
  de.walware.ecommons.collections;version="1.6.0",
  de.walware.ecommons.databinding;version="0.10.0",
  de.walware.ecommons.graphics.core;version="1.0.0",
  de.walware.ecommons.io,
  de.walware.ecommons.io.win;version="1.2.0",
- de.walware.ecommons.lang,
  de.walware.ecommons.models.core.util,
  de.walware.ecommons.net;version="1.4.0",
  de.walware.ecommons.preferences,
  de.walware.ecommons.resources;version="0.10.0",
  de.walware.ecommons.runtime.core.util,
- de.walware.ecommons.string,
  de.walware.ecommons.ts;version="1.1.0",
  de.walware.ecommons.ts.util;version="1.1.0",
  de.walware.ecommons.variables.core

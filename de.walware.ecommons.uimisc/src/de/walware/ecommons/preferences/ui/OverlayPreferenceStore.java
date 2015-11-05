@@ -16,7 +16,7 @@ import org.eclipse.jface.preference.PreferenceStore;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 
-import de.walware.ecommons.preferences.Preference.Type;
+import de.walware.ecommons.preferences.ui.OverlayStorePreference.Type;
 
 
 /**
@@ -135,7 +135,8 @@ public class OverlayPreferenceStore implements IPreferenceStore {
 		}
 	}
 	
-	private void loadProperty(final IPreferenceStore orgin, final OverlayStorePreference key, final IPreferenceStore target, final boolean forceInitialization) {
+	private void loadProperty(final IPreferenceStore orgin, final OverlayStorePreference key,
+			final IPreferenceStore target, final boolean forceInitialization) {
 		
 		final Type type = key.fType;
 		switch (type) {

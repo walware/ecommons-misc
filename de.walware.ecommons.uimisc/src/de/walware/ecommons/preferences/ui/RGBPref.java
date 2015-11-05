@@ -14,7 +14,7 @@ package de.walware.ecommons.preferences.ui;
 import org.eclipse.jface.resource.StringConverter;
 import org.eclipse.swt.graphics.RGB;
 
-import de.walware.ecommons.preferences.Preference;
+import de.walware.ecommons.preferences.core.Preference;
 
 
 /**
@@ -24,7 +24,7 @@ public class RGBPref extends Preference<RGB> {
 	
 	
 	public RGBPref(final String qualifier, final String key) {
-		super(qualifier, key, Type.STRING);
+		super(qualifier, key);
 	}
 	
 	
@@ -34,19 +34,16 @@ public class RGBPref extends Preference<RGB> {
 	}
 	
 	@Override
-	public RGB store2Usage(final Object obj) {
-		if (obj instanceof String) {
-			return StringConverter.asRGB((String) obj);
+	public RGB store2Usage(final String storeValue) {
+		if (storeValue != null) {
+			return StringConverter.asRGB(storeValue);
 		}
 		return null;
 	}
 	
 	@Override
-	public Object usage2Store(final RGB value) {
-		if (value != null) {
-			return StringConverter.asString(value);
-		}
-		return null;
+	public String usage2Store(final RGB value) {
+		return StringConverter.asString(value);
 	}
 	
 }

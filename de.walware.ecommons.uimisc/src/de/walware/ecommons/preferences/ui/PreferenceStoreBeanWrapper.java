@@ -19,7 +19,7 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 
-import de.walware.ecommons.preferences.Preference;
+import de.walware.ecommons.preferences.core.Preference;
 
 
 /**
@@ -64,10 +64,10 @@ public class PreferenceStoreBeanWrapper {
 					Object newValue = event.getNewValue();
 					if (pref.converter != null) {
 						if (!pref.converter.getUsageType().isInstance(oldValue)) {
-							oldValue = pref.converter.store2Usage(oldValue);
+							oldValue = pref.converter.store2Usage((String) oldValue);
 						}
 						if (!pref.converter.getUsageType().isInstance(newValue)) {
-							newValue = pref.converter.store2Usage(newValue);
+							newValue = pref.converter.store2Usage((String) newValue);
 						}
 					}
 					fBeanSupport.firePropertyChange(pref.beanProperty, 

@@ -26,6 +26,8 @@ import org.eclipse.debug.core.IDebugEventSetListener;
 import org.eclipse.debug.core.ILaunchConfiguration;
 import org.eclipse.debug.core.model.IProcess;
 import org.eclipse.debug.ui.CommonTab;
+import org.eclipse.debug.ui.ILaunchConfigurationDialog;
+import org.eclipse.debug.ui.ILaunchConfigurationTab;
 import org.eclipse.debug.ui.RefreshTab;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.ui.statushandlers.StatusManager;
@@ -39,7 +41,32 @@ import de.walware.ecommons.debug.ui.ECommonsDebugUI;
 /**
  * Methods for common task when working with launch configurations and processes
  */
-public class LaunchConfigUtil {
+public class LaunchConfigUtils {
+	
+	
+	public static class LaunchConfigurationComparator implements Comparator<ILaunchConfiguration> {
+		
+		private final Collator collator= Collator.getInstance();
+		
+		@Override
+		public int compare(final ILaunchConfiguration c1, final ILaunchConfiguration c2) {
+			return this.collator.compare(c1.getName(), c2.getName());
+		}
+		
+	};
+	
+	public static boolean isActiveTabGroup(final ILaunchConfigurationDialog dialog,
+			final ILaunchConfigurationTab tab) {
+		final ILaunchConfigurationTab[] tabs= dialog.getTabs();
+		if (tabs != null) {
+			for (int i= 0; i < tabs.length; i++) {
+				if (tabs[i] == tab) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 	
 	
 	/**
@@ -141,18 +168,6 @@ public class LaunchConfigUtil {
 	}
 	
 	
-	public static class LaunchConfigurationComparator implements Comparator<ILaunchConfiguration> {
-		
-		private final Collator collator= Collator.getInstance();
-		
-		@Override
-		public int compare(final ILaunchConfiguration c1, final ILaunchConfiguration c2) {
-			return this.collator.compare(c1.getName(), c2.getName());
-		}
-		
-	};
-	
-	
-	private LaunchConfigUtil() {}
+	private LaunchConfigUtils() {}
 	
 }

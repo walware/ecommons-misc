@@ -22,6 +22,8 @@ import de.walware.ecommons.ECommons;
 import de.walware.ecommons.ECommons.IAppEnvironment;
 import de.walware.ecommons.IDisposable;
 import de.walware.ecommons.preferences.SettingsChangeNotifier;
+import de.walware.ecommons.preferences.core.IPreferenceSetService;
+import de.walware.ecommons.preferences.internal.core.PreferenceSetService;
 
 
 /**
@@ -50,6 +52,8 @@ public final class CoreMiscellanyPlugin extends Plugin implements IAppEnvironmen
 	
 	private final List<IDisposable> fDisposables= new ArrayList<>();
 	
+	private PreferenceSetService preferenceSetService;
+	
 	private SettingsChangeNotifier fSettingsNotifier;
 	
 	
@@ -73,6 +77,9 @@ public final class CoreMiscellanyPlugin extends Plugin implements IAppEnvironmen
 			
 			fSettingsNotifier = new SettingsChangeNotifier();
 			addStoppingListener(fSettingsNotifier);
+			
+			this.preferenceSetService= new PreferenceSetService();
+			addStoppingListener(this.preferenceSetService);
 		}
 	}
 	
@@ -128,6 +135,10 @@ public final class CoreMiscellanyPlugin extends Plugin implements IAppEnvironmen
 	
 	public SettingsChangeNotifier getSettingsChangeNotifier() {
 		return fSettingsNotifier;
+	}
+	
+	public IPreferenceSetService getPreferenceSetService() {
+		return this.preferenceSetService;
 	}
 	
 }

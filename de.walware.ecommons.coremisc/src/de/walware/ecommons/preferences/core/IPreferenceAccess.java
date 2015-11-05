@@ -9,11 +9,14 @@
  #     Stephan Wahlbrink - initial API and implementation
  #=============================================================================*/
 
-package de.walware.ecommons.preferences;
+package de.walware.ecommons.preferences.core;
 
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChangeListener;
 import org.eclipse.core.runtime.preferences.IScopeContext;
+
+import de.walware.jcommons.collections.ImList;
+import de.walware.jcommons.collections.ImSet;
 
 
 /**
@@ -25,28 +28,20 @@ public interface IPreferenceAccess {
 	
 	
 	/**
-	 * Returns the preference value of the specified <code>Preference</code>
-	 * 
-	 * @param <T> type for which the <code>Preference</code> is designed.
-	 * @param key
-	 * @return value
-	 */
-	<T> T getPreferenceValue(Preference<T> key);
-	
-	/**
-	 * Returns the preference nodes of all scopes used by this agent.
-	 * 
-	 * @param nodeQualifier the qualifier of the node.
-	 * @return array of preference nodes.
-	 */
-	IEclipsePreferences[] getPreferenceNodes(String nodeQualifier);
-	
-	/**
 	 * Returns the scopes used by this agent.
 	 * 
 	 * @return array with all scopes used for lookup.
 	 */
-	IScopeContext[] getPreferenceContexts();
+	ImList<IScopeContext> getPreferenceContexts();
+	
+	/**
+	 * Returns the preference value of the specified <code>Preference</code>
+	 * 
+	 * @param <T> type for which the <code>Preference</code> is designed.
+	 * @param pref
+	 * @return value
+	 */
+	<T> T getPreferenceValue(Preference<T> pref);
 	
 	/**
 	 * Register the given listener at the node in all scopes
@@ -67,5 +62,27 @@ public interface IPreferenceAccess {
 	 * @param listener the listener
 	 */
 	void removePreferenceNodeListener(String nodeQualifier, IPreferenceChangeListener listener);
+	
+	/**
+	 * Subscribes the given preference changeset listener for all scopes of this preference access
+	 * and the specified preference node qualifiers.
+	 * 
+	 * @see IPreferenceSetService#addChangeListener(IPreferenceSetService.IChangeListener)
+	 * 
+	 * @param listener the listener
+	 * @param qualifiers list of preference node qualifiers
+	 */
+	void addPreferenceSetListener(IPreferenceSetService.IChangeListener listener,
+			ImSet<String> qualifiers);
+	
+	/**
+	 * Unsubscribes the given preference changeset listener completely
+	 * (registered with {@link #addPreferenceSetListener(IPreferenceSetService.IChangeListener)}).
+	 * 
+	 * @see IPreferenceSetService#removeChangeListener(IPreferenceSetService.IChangeListener)
+	 * 
+	 * @param listener the listener
+	 */
+	void removePreferenceSetListener(IPreferenceSetService.IChangeListener listener);
 	
 }

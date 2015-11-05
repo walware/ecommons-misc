@@ -15,6 +15,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.walware.ecommons.AbstractSettingsModelObject;
+import de.walware.ecommons.preferences.core.IPreferenceAccess;
+import de.walware.ecommons.preferences.core.Preference;
 
 
 /**

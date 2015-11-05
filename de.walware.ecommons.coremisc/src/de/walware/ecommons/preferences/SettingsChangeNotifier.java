@@ -25,7 +25,7 @@ import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
 
 import de.walware.ecommons.IDisposable;
-import de.walware.ecommons.internal.preferences.Messages;
+import de.walware.ecommons.preferences.internal.Messages;
 
 
 public class SettingsChangeNotifier implements ISchedulingRule, IDisposable {

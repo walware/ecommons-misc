@@ -9,7 +9,7 @@
  #     Stephan Wahlbrink - initial API and implementation
  #=============================================================================*/
 
-package de.walware.ecommons.internal.preferences;
+package de.walware.ecommons.preferences.internal;
 
 import org.eclipse.osgi.util.NLS;
 

@@ -11,22 +11,41 @@
 
 package de.walware.ecommons.preferences.ui;
 
-import de.walware.ecommons.preferences.Preference;
+import de.walware.ecommons.preferences.core.Preference;
 
 
 public class OverlayStorePreference {
 	
+	public static enum Type { 
+			STRING, 
+			BOOLEAN, 
+			DOUBLE,
+			FLOAT,
+			LONG,
+			INT;
+	};
+	
 	
 	public static OverlayStorePreference create(final Preference pref) {
-		return new OverlayStorePreference(pref.getKey(), pref.getStoreType());
+		final Type type;
+		if (pref instanceof Preference.BooleanPref) {
+			type= Type.BOOLEAN;
+		}
+		else if (pref instanceof Preference.IntPref) {
+			type= Type.INT;
+		}
+		else {
+			type = Type.STRING;
+		}
+		return new OverlayStorePreference(pref.getKey(), type);
 	}
 	
 	
 	public final String fKey;
-	public final Preference.Type fType;
+	public final Type fType;
 	
 	
-	public OverlayStorePreference(final String key, final Preference.Type type) {
+	public OverlayStorePreference(final String key, final Type type) {
 		fKey = key;
 		fType = type;
 	}

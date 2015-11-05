@@ -21,17 +21,22 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences.IPreferenceChang
 import org.eclipse.core.runtime.preferences.IScopeContext;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 
-import de.walware.ecommons.preferences.IPreferenceAccess;
-import de.walware.ecommons.preferences.Preference;
-import de.walware.ecommons.preferences.PreferencesUtil;
+import de.walware.jcommons.collections.ImCollections;
+import de.walware.jcommons.collections.ImList;
+
+import de.walware.ecommons.preferences.core.Preference;
+import de.walware.ecommons.preferences.core.util.PreferenceAccessWrapper;
+import de.walware.ecommons.preferences.core.util.PreferenceUtils;
 
 
-public class AbstractProjectNature implements IProjectNature, IPreferenceAccess {
+public class AbstractProjectNature extends PreferenceAccessWrapper implements IProjectNature {
+	
+	// TODO add dispose (ResourceTracker)
 	
 	
 	private IProject project;
 	
-	private IScopeContext[] contexts;
+	private boolean configured;
 	
 	
 	public AbstractProjectNature() {
@@ -41,8 +46,15 @@ public class AbstractProjectNature implements IProjectNature, IPreferenceAccess 
 	
 	@Override
 	public void setProject(final IProject project) {
-		this.project = project;
-		this.contexts = createPrefContexts(true);
+		this.configured= true;
+		
+		this.project= project;
+		super.setPreferenceContexts(createPrefContexts());
+	}
+	
+	@Override
+	public void setPreferenceContexts(final ImList<IScopeContext> contexts) {
+		throw new UnsupportedOperationException();
 	}
 	
 	@Override
@@ -57,6 +69,8 @@ public class AbstractProjectNature implements IProjectNature, IPreferenceAccess 
 	
 	@Override
 	public void deconfigure() throws CoreException {
+		this.configured= false;
+		
 		removeBuilders();
 	}
 	
@@ -68,39 +82,19 @@ public class AbstractProjectNature implements IProjectNature, IPreferenceAccess 
 	
 /*-- IPreferenceAccess -------------------------------------------------------*/
 	
-	private IScopeContext[] createPrefContexts(final boolean inheritInstanceSettings) {
-		return (inheritInstanceSettings) ?
-				new IScopeContext[] {
-					new ProjectScope(getProject()),
-					InstanceScope.INSTANCE,
-					DefaultScope.INSTANCE,
-				} :
-				new IScopeContext[] {
-					new ProjectScope(getProject()),
-					DefaultScope.INSTANCE,
-				};
+	private ImList<IScopeContext> createPrefContexts() {
+		return ImCollections.newList(
+				new ProjectScope(getProject()),
+				InstanceScope.INSTANCE,
+				DefaultScope.INSTANCE );
 	}
 	
-	@Override
-	public <T> T getPreferenceValue(final Preference<T> key) {
-		return PreferencesUtil.getPrefValue(this.contexts, key);
-	}
-	
-	@Override
-	public IEclipsePreferences[] getPreferenceNodes(final String nodeQualifier) {
-		return PreferencesUtil.getRelevantNodes(nodeQualifier, this.contexts);
-	}
-	
-	@Override
-	public IScopeContext[] getPreferenceContexts() {
-		return this.contexts;
-	}
 	
 	@Override
 	public void addPreferenceNodeListener(final String nodeQualifier, final IPreferenceChangeListener listener) {
-		int i = this.contexts.length-2;
-		while (i >= 0) {
-			final IEclipsePreferences node = this.contexts[i--].getNode(nodeQualifier);
+		final ImList<IScopeContext> contexts= getPreferenceContexts();
+		for (int i= 0; i < contexts.size() - 1; i++) {
+			final IEclipsePreferences node= contexts.get(i).getNode(nodeQualifier);
 			if (node != null) {
 				node.addPreferenceChangeListener(listener);
 			}
@@ -109,17 +103,22 @@ public class AbstractProjectNature implements IProjectNature, IPreferenceAccess 
 	
 	@Override
 	public void removePreferenceNodeListener(final String nodeQualifier, final IPreferenceChangeListener listener) {
-		int i = this.contexts.length-2;
-		while (i >= 0) {
-			final IEclipsePreferences node = this.contexts[i--].getNode(nodeQualifier);
+		final ImList<IScopeContext> contexts= getPreferenceContexts();
+		for (int i= 0; i < contexts.size() - 1; i++) {
+			final IEclipsePreferences node= contexts.get(i).getNode(nodeQualifier);
 			if (node != null) {
-				node.removePreferenceChangeListener(listener);
+				node.addPreferenceChangeListener(listener);
 			}
 		}
 	}
 	
-	public IScopeContext getProjectContext() {
-		return this.contexts[0];
+	
+	protected final IScopeContext getProjectContext() {
+		return getPreferenceContexts().get(0);
+	}
+	
+	protected final <T> T getProjectValue(final Preference<T> key) {
+		return PreferenceUtils.getPrefValue(getPreferenceContexts().get(0), key);
 	}
 	
 	

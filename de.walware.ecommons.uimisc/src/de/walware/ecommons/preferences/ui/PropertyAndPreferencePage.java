@@ -30,7 +30,6 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -54,22 +53,22 @@ public abstract class PropertyAndPreferencePage extends ConfigurationBlockPrefer
 		implements IWorkbenchPreferencePage, IWorkbenchPropertyPage {
 	
 	
-	public static final String DATA_NO_LINK = "PropertyAndPreferencePage.nolink"; //$NON-NLS-1$
+	public static final String DATA_NO_LINK= "PropertyAndPreferencePage.nolink"; //$NON-NLS-1$
 	
 	
 	// GUI Components
-	private Composite fParentComposite;
-	protected Button fUseProjectSettings;
-	private Link fChangeWorkspaceSettings;
-	private ControlEnableState fBlockEnableState;
+	private Composite parentComposite;
+	protected Button useProjectSettings;
+	private Link changeWorkspaceSettings;
+	private ControlEnableState blockEnableState;
 	
-	private IProject fProject; // project or null
-	private Map fData; // page data
+	private IProject project; // project or null
+	private Map<String, Object> data; // page data
 	
 	
 	public PropertyAndPreferencePage() {
-		fProject = null;
-		fData = null;
+		this.project= null;
+		this.data= null;
 	}
 	
 	
@@ -91,7 +90,7 @@ public abstract class PropertyAndPreferencePage extends ConfigurationBlockPrefer
 	}
 	
 	protected boolean offerLink() {
-		return fData == null || !Boolean.TRUE.equals(fData.get(DATA_NO_LINK));
+		return this.data == null || !Boolean.TRUE.equals(this.data.get(DATA_NO_LINK));
 	}
 	
 	protected boolean isProjectSupported(final IProject project) throws CoreException {
@@ -100,52 +99,52 @@ public abstract class PropertyAndPreferencePage extends ConfigurationBlockPrefer
 	
 	protected final boolean useProjectSettings() {
 		return isProjectPreferencePage()
-				&& (!supportsInstanceSettings() || fUseProjectSettings.getSelection());
+				&& (!supportsInstanceSettings() || this.useProjectSettings.getSelection());
 	}
 	
 	protected final boolean isProjectPreferencePage() {
-		return fProject != null;
+		return this.project != null;
 	}
 	
 	protected final IProject getProject() {
-		return fProject;
+		return this.project;
 	}
 	
 	
 	@Override
 	protected Label createDescriptionLabel(final Composite parent) {
-		fParentComposite = parent;
+		this.parentComposite= parent;
 		
 		if (isProjectPreferencePage()) {
 			if (supportsInstanceSettings() && offerLink()) {
-				final Composite composite = new Composite(parent, SWT.NONE);
+				final Composite composite= new Composite(parent, SWT.NONE);
 				composite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-				composite.setLayout(LayoutUtil.applyCompositeDefaults(new GridLayout(), 2));
+				composite.setLayout(LayoutUtil.createCompositeGrid(2));
 				
-				fUseProjectSettings = new Button(composite, SWT.CHECK);
-				fUseProjectSettings.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
-				fUseProjectSettings.setText(Messages.PropertyAndPreference_UseProjectSettings_label);
-				fUseProjectSettings.addSelectionListener(new SelectionListener() {
+				this.useProjectSettings= new Button(composite, SWT.CHECK);
+				this.useProjectSettings.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
+				this.useProjectSettings.setText(Messages.PropertyAndPreference_UseProjectSettings_label);
+				this.useProjectSettings.addSelectionListener(new SelectionListener() {
 					@Override
 					public void widgetDefaultSelected(final SelectionEvent e) {
 					}
 					@Override
 					public void widgetSelected(final SelectionEvent e) {
-						doEnableProjectSpecificSettings(fUseProjectSettings.getSelection());
+						doEnableProjectSpecificSettings(PropertyAndPreferencePage.this.useProjectSettings.getSelection());
 					};
 				});
 				
 				if (offerLink()) {
-					fChangeWorkspaceSettings = createLink(composite, Messages.PropertyAndPreference_ShowWorkspaceSettings_label);
+					this.changeWorkspaceSettings= createLink(composite, Messages.PropertyAndPreference_ShowWorkspaceSettings_label);
 				}
 				
-				final Label horizontalLine = new Label(composite, SWT.SEPARATOR | SWT.HORIZONTAL);
+				final Label horizontalLine= new Label(composite, SWT.SEPARATOR | SWT.HORIZONTAL);
 				horizontalLine.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 2, 1));
 			}
 		}
 		else { 
 			if (supportsProjectSpecificSettings() && offerLink()) {
-				fChangeWorkspaceSettings = createLink(parent, Messages.PropertyAndPreference_ShowProjectSpecificSettings_label);
+				this.changeWorkspaceSettings= createLink(parent, Messages.PropertyAndPreference_ShowProjectSpecificSettings_label);
 			}
 		}
 		
@@ -153,7 +152,7 @@ public abstract class PropertyAndPreferencePage extends ConfigurationBlockPrefer
 	}
 	
 	private Link createLink(final Composite composite, final String text) {
-		final Link link = new Link(composite, SWT.RIGHT);
+		final Link link= new Link(composite, SWT.RIGHT);
 		link.setLayoutData(new GridData(SWT.END, SWT.CENTER, true, false));
 		link.setText("<a>" + text + "</a>"); //$NON-NLS-1$//$NON-NLS-2$
 		link.addSelectionListener(new SelectionAdapter() {
@@ -174,7 +173,7 @@ public abstract class PropertyAndPreferencePage extends ConfigurationBlockPrefer
 		}
 		else {
 			try {
-				final Set<IProject> all = getAllProjects();
+				final Set<IProject> all= getAllProjects();
 				final Set<IProject> projectsWithSpecifics= new HashSet<>();
 				for (final IProject proj : all) {
 					if (hasProjectSpecificSettings(proj.getProject())) {
@@ -182,9 +181,9 @@ public abstract class PropertyAndPreferencePage extends ConfigurationBlockPrefer
 					}
 				}
 				
-				final ProjectSelectionDialog dialog = new ProjectSelectionDialog(getShell(), all, projectsWithSpecifics);
+				final ProjectSelectionDialog dialog= new ProjectSelectionDialog(getShell(), all, projectsWithSpecifics);
 				if (dialog.open() == Window.OK) {
-					final IProject proj = (IProject) dialog.getFirstResult();
+					final IProject proj= (IProject) dialog.getFirstResult();
 					openProjectProperties(proj, data);
 				}
 			}
@@ -196,7 +195,7 @@ public abstract class PropertyAndPreferencePage extends ConfigurationBlockPrefer
 	}
 	
 	private Set<IProject> getAllProjects() throws CoreException {
-		final IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+		final IProject[] projects= ResourcesPlugin.getWorkspace().getRoot().getProjects();
 		final Set<IProject> collected= new HashSet<>();
 		for (final IProject project : projects) {
 			if (isProjectSupported(project)) {
@@ -208,11 +207,11 @@ public abstract class PropertyAndPreferencePage extends ConfigurationBlockPrefer
 	
 	@Override
 	protected Control createContents(final Composite parent) {
-		if (fBlock == null) {
+		if (getBlock() == null) {
 			init(null);
 		}
 		
-		final Control control = super.createContents(parent);
+		final Control control= super.createContents(parent);
 		
 		if (isProjectPreferencePage()) {
 			doEnableProjectSpecificSettings(hasProjectSpecificSettings(getProject()));
@@ -222,12 +221,12 @@ public abstract class PropertyAndPreferencePage extends ConfigurationBlockPrefer
 	}
 	
 	protected final void openWorkspacePreferences(final Object data) {
-		final String id = getPreferencePageID();
+		final String id= getPreferencePageID();
 		PreferencesUtil.createPreferenceDialogOn(getShell(), id, new String[] { id }, data).open();
 	}
 	
 	protected final void openProjectProperties(final IProject project, final Object data) {
-		final String id = getPropertyPageID();
+		final String id= getPropertyPageID();
 		if (id != null) {
 			PreferencesUtil.createPropertyDialogOn(getShell(), project, id, new String[] { id }, data).open();
 		}
@@ -235,21 +234,21 @@ public abstract class PropertyAndPreferencePage extends ConfigurationBlockPrefer
 	
 	
 	protected void doEnableProjectSpecificSettings(final boolean useProjectSpecificSettings) {
-		if (fBlock != null) {
-			fBlock.setUseProjectSpecificSettings(useProjectSpecificSettings);
+		if (getBlock() != null) {
+			getBlock().setUseProjectSpecificSettings(useProjectSpecificSettings);
 		}
-		if (fUseProjectSettings != null) {
-			fUseProjectSettings.setSelection(useProjectSpecificSettings);
+		if (this.useProjectSettings != null) {
+			this.useProjectSettings.setSelection(useProjectSpecificSettings);
 		}
 		if (useProjectSpecificSettings) {
-			if (fBlockEnableState != null) {
-				fBlockEnableState.restore();
-				fBlockEnableState = null;
+			if (this.blockEnableState != null) {
+				this.blockEnableState.restore();
+				this.blockEnableState= null;
 			}
 		}
 		else {
-			if (fBlockEnableState == null) {
-				fBlockEnableState = ControlEnableState.disable(fBlockControl);
+			if (this.blockEnableState == null) {
+				this.blockEnableState= ControlEnableState.disable(getBlockControl());
 			}
 		}
 		
@@ -258,18 +257,18 @@ public abstract class PropertyAndPreferencePage extends ConfigurationBlockPrefer
 	}
 	
 	private void updateLinkVisibility() {
-		if (fChangeWorkspaceSettings == null || fChangeWorkspaceSettings.isDisposed()) {
+		if (this.changeWorkspaceSettings == null || this.changeWorkspaceSettings.isDisposed()) {
 			return;
 		}
 		if (isProjectPreferencePage()) {
-			fChangeWorkspaceSettings.setEnabled(!useProjectSettings());
+			this.changeWorkspaceSettings.setEnabled(!useProjectSettings());
 		}
 	}
 	
 	@Override
 	protected void updateStatus() {
 		if (!isProjectPreferencePage() || useProjectSettings()) {
-			updateStatus(fBlockStatus);
+			updateStatus(getBlockStatus());
 		} else {
 			updateStatus(new StatusInfo());
 		}
@@ -280,12 +279,12 @@ public abstract class PropertyAndPreferencePage extends ConfigurationBlockPrefer
 	
 	@Override
 	public IAdaptable getElement() {
-		return fProject;
+		return this.project;
 	}
 	
 	@Override
 	public void setElement(final IAdaptable element) {
-		fProject = (IProject) element.getAdapter(IResource.class);
+		this.project= (IProject) element.getAdapter(IResource.class);
 	}
 	
 	
@@ -294,24 +293,24 @@ public abstract class PropertyAndPreferencePage extends ConfigurationBlockPrefer
 // super
 //	public void init(IWorkbench workbench) {
 //
-//		fBlock = createConfigurationBlock(getProject());
+//		block= createConfigurationBlock(getProject());
 //	}
 	
 	@Override
 	public void applyData(final Object data) {
 		if (data instanceof Map) {
-			fData = (Map) data;
+			this.data= (Map<String, Object>) data;
 		}
-		if (fChangeWorkspaceSettings != null) {
+		if (this.changeWorkspaceSettings != null) {
 			if (!offerLink()) {
-				fChangeWorkspaceSettings.dispose();
-				fParentComposite.layout(true, true);
+				this.changeWorkspaceSettings.dispose();
+				this.parentComposite.layout(true, true);
 			}
 		}
 	}
 	
-	protected Map getData() {
-		return fData;
+	protected Map<String, Object> getData() {
+		return this.data;
 	}
 	
 	@Override

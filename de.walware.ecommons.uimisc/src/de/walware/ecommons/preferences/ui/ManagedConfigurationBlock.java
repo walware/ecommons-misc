@@ -37,12 +37,17 @@ import org.eclipse.ui.preferences.IWorkbenchPreferenceContainer;
 import org.eclipse.ui.preferences.IWorkingCopyManager;
 import org.osgi.service.prefs.BackingStoreException;
 
+import de.walware.jcommons.collections.ImCollections;
+import de.walware.jcommons.collections.ImList;
+import de.walware.jcommons.collections.ImSet;
+
 import de.walware.ecommons.IStatusChangeListener;
 import de.walware.ecommons.databinding.jface.DataBindingSupport;
 import de.walware.ecommons.io.BuildUtil;
-import de.walware.ecommons.preferences.IPreferenceAccess;
-import de.walware.ecommons.preferences.Preference;
 import de.walware.ecommons.preferences.SettingsChangeNotifier;
+import de.walware.ecommons.preferences.core.IPreferenceAccess;
+import de.walware.ecommons.preferences.core.IPreferenceSetService;
+import de.walware.ecommons.preferences.core.Preference;
 
 
 /**
@@ -66,43 +71,41 @@ public abstract class ManagedConfigurationBlock extends ConfigurationBlock
 	
 	protected class PreferenceManager {
 		
-		private final IScopeContext[] fLookupOrder;
-		private final IScopeContext fInheritScope;
-		protected final Map<Preference<?>, String> fPreferences;
+		private final ImList<IScopeContext> lookupOrder;
+		private final IScopeContext inheritScope;
+		private final Map<Preference<?>, String> preferences;
 		
 		/** Manager for a working copy of the preferences */
-		private final IWorkingCopyManager fManager;
+		private final IWorkingCopyManager manager;
 		/** Map saving the project settings, if disabled */
-		private Map<Preference<?>, Object> fDisabledProjectSettings;
+		private Map<Preference<?>, Object> disabledProjectSettings;
 		
 		
 		PreferenceManager(final Map<Preference<?>, String> prefs) {
-			fManager = getContainer().getWorkingCopyManager();
-			fPreferences = prefs;
+			this.manager= getContainer().getWorkingCopyManager();
+			this.preferences= prefs;
 			
-			fPreferenceManager = this;
+			ManagedConfigurationBlock.this.preferenceManager= this;
 			
-			if (fProject != null) {
-				fLookupOrder = new IScopeContext[] {
-						new ProjectScope(fProject),
+			if (ManagedConfigurationBlock.this.project != null) {
+				this.lookupOrder= ImCollections.newList(
+						new ProjectScope(ManagedConfigurationBlock.this.project),
 						InstanceScope.INSTANCE,
-						DefaultScope.INSTANCE
-				};
-				fInheritScope = null;
+						DefaultScope.INSTANCE );
+				this.inheritScope= null;
 			}
 			else {
-				fLookupOrder = new IScopeContext[] {
+				this.lookupOrder= ImCollections.newList(
 						InstanceScope.INSTANCE,
-						DefaultScope.INSTANCE
-				};
-				fInheritScope = fLookupOrder[1];
+						DefaultScope.INSTANCE );
+				this.inheritScope= this.lookupOrder.get(1);
 			}
 			
 			// testIfOptionsComplete();
 			
 			// init disabled settings, if required
-			if (fProject == null || hasProjectSpecificSettings(fProject)) {
-				fDisabledProjectSettings = null;
+			if (ManagedConfigurationBlock.this.project == null || hasProjectSpecificSettings(ManagedConfigurationBlock.this.project)) {
+				this.disabledProjectSettings= null;
 			} else {
 				saveDisabledProjectSettings();
 			}
@@ -118,9 +121,9 @@ public abstract class ManagedConfigurationBlock extends ConfigurationBlock
 		 * @return
 		 */
 		boolean hasProjectSpecificSettings(final IProject project) {
-			final IScopeContext projectContext = new ProjectScope(project);
-			for (final Preference<?> key : fPreferences.keySet()) {
-				if (getInternalValue(key, projectContext, true) != null) {
+			final IScopeContext projectContext= new ProjectScope(project);
+			for (final Preference<?> pref : this.preferences.keySet()) {
+				if (getInternalValue(pref, projectContext, true) != null) {
 					return true;
 				}
 			}
@@ -128,7 +131,7 @@ public abstract class ManagedConfigurationBlock extends ConfigurationBlock
 		}
 		
 		void setUseProjectSpecificSettings(final boolean enable) {
-			final boolean hasProjectSpecificOption = (fDisabledProjectSettings == null);
+			final boolean hasProjectSpecificOption= (this.disabledProjectSettings == null);
 			if (enable != hasProjectSpecificOption) {
 				if (enable) {
 					loadDisabledProjectSettings();
@@ -139,39 +142,39 @@ public abstract class ManagedConfigurationBlock extends ConfigurationBlock
 		}
 		
 		private void saveDisabledProjectSettings() {
-			fDisabledProjectSettings = new IdentityHashMap<Preference<?>, Object>();
-			for (final Preference<?> key : fPreferences.keySet()) {
-				fDisabledProjectSettings.put(key, getValue(key));
-				setInternalValue(key, null); // clear project settings
+			this.disabledProjectSettings= new IdentityHashMap<>();
+			for (final Preference<?> pref : this.preferences.keySet()) {
+				this.disabledProjectSettings.put(pref, getValue(pref));
+				setInternalValue(pref, null); // clear project settings
 			}
 			
 		}
 		
 		private void loadDisabledProjectSettings() {
-			for (final Preference<?> key : fPreferences.keySet()) {
+			for (final Preference<?> key : this.preferences.keySet()) {
 				// Copy values from saved disabled settings to working store
-				setValue((Preference) key, fDisabledProjectSettings.get(key));
+				setValue((Preference) key, this.disabledProjectSettings.get(key));
 			}
-			fDisabledProjectSettings = null;
+			this.disabledProjectSettings= null;
 		}
 		
 		boolean processChanges(final boolean saveStore) {
-			final List<Preference<?>> changedPrefs = new ArrayList<Preference<?>>();
-			final boolean needsBuild = getChanges(changedPrefs);
+			final List<Preference<?>> changedPrefs= new ArrayList<>();
+			final boolean needsBuild= getChanges(changedPrefs);
 			if (changedPrefs.isEmpty()) {
 				return true;
 			}
 			
-			boolean doBuild = false;
+			boolean doBuild= false;
 			if (needsBuild) {
-				final String[] strings = getFullBuildDialogStrings(fProject == null);
+				final String[] strings= getFullBuildDialogStrings(getProject() == null);
 				if (strings != null) {
-					final MessageDialog dialog = new MessageDialog(getShell(),
+					final MessageDialog dialog= new MessageDialog(getShell(),
 							strings[0], null, strings[1],
 							MessageDialog.QUESTION, new String[] { IDialogConstants.YES_LABEL, IDialogConstants.NO_LABEL, IDialogConstants.CANCEL_LABEL }, 2);
-					final int res = dialog.open();
+					final int res= dialog.open();
 					if (res == 0) {
-						doBuild = true;
+						doBuild= true;
 					}
 					else if (res != 1) {
 						return false; // cancel pressed
@@ -180,23 +183,23 @@ public abstract class ManagedConfigurationBlock extends ConfigurationBlock
 			}
 			if (saveStore) {
 				try {
-					fManager.applyChanges();
+					this.manager.applyChanges();
 				} catch (final BackingStoreException e) {
 					logSaveError(e);
 					return false;
 				}
 				if (doBuild) {
-					BuildUtil.getBuildJob(fProject).schedule();
+					BuildUtil.getBuildJob(getProject()).schedule();
 				}
 			}
 			else {
 				if (doBuild) {
-					getContainer().registerUpdateJob(BuildUtil.getBuildJob(fProject));
+					getContainer().registerUpdateJob(BuildUtil.getBuildJob(getProject()));
 				}
 			}
-			final Set<String> groupIds = new HashSet<String>();
+			final Set<String> groupIds= new HashSet<>();
 			for (final Preference<?> pref : changedPrefs) {
-				final String groupId = fPreferences.get(pref);
+				final String groupId= this.preferences.get(pref);
 				if (groupId != null) {
 					groupIds.add(groupId);
 				}
@@ -212,11 +215,11 @@ public abstract class ManagedConfigurationBlock extends ConfigurationBlock
 		 * @return true, if rebuild is required.
 		 */
 		private boolean getChanges(final List<Preference<?>> changedSettings) {
-			final IScopeContext currContext = fLookupOrder[0];
-			boolean needsBuild = false;
-			for (final Preference<?> key : fPreferences.keySet()) {
-				final String oldValue = getInternalValue(key, currContext, false);
-				final String value = getInternalValue(key, currContext, true);
+			final IScopeContext currContext= this.lookupOrder.get(0);
+			boolean needsBuild= false;
+			for (final Preference<?> key : this.preferences.keySet()) {
+				final String oldValue= getInternalValue(key, currContext, false);
+				final String value= getInternalValue(key, currContext, true);
 				if (value == null) {
 					if (oldValue != null) {
 						changedSettings.add(key);
@@ -227,9 +230,9 @@ public abstract class ManagedConfigurationBlock extends ConfigurationBlock
 					changedSettings.add(key);
 					needsBuild |= (oldValue != null || !value.equals(getInternalValue(key, true)));
 					
-					if (fInheritScope != null
-							&& value.equals(getInternalValue(key, fInheritScope, false) )) {
-						final IEclipsePreferences node = getNode(currContext, key.getQualifier(), true);
+					if (this.inheritScope != null
+							&& value.equals(getInternalValue(key, this.inheritScope, false) )) {
+						final IEclipsePreferences node= getNode(currContext, key.getQualifier(), true);
 						node.remove(key.getKey());
 					}
 				}
@@ -239,16 +242,16 @@ public abstract class ManagedConfigurationBlock extends ConfigurationBlock
 		
 		
 		void loadDefaults() {
-			final IScopeContext defaultScope = DefaultScope.INSTANCE;
-			for (final Preference<?> key : fPreferences.keySet()) {
-				final String defValue = getInternalValue(key, defaultScope, false);
+			final IScopeContext defaultScope= DefaultScope.INSTANCE;
+			for (final Preference<?> key : this.preferences.keySet()) {
+				final String defValue= getInternalValue(key, defaultScope, false);
 				setInternalValue(key, defValue);
 			}
 		}
 		
 		// DEBUG
 		private void testIfOptionsComplete() {
-			for (final Preference<?> key : fPreferences.keySet()) {
+			for (final Preference<?> key : this.preferences.keySet()) {
 				if (getInternalValue(key, false) == null) {
 					System.out.println("preference option missing: " + key + " (" + this.getClass().getName() +')');  //$NON-NLS-1$//$NON-NLS-2$
 				}
@@ -256,21 +259,21 @@ public abstract class ManagedConfigurationBlock extends ConfigurationBlock
 		}
 		
 		private IEclipsePreferences getNode(final IScopeContext context, final String qualifier, final boolean useWorkingCopy) {
-			final IEclipsePreferences node = context.getNode(qualifier);
-			if (useWorkingCopy) {
-				return fManager.getWorkingCopy(node);
+			final IEclipsePreferences node= context.getNode(qualifier);
+			if (useWorkingCopy && context != DefaultScope.INSTANCE) {
+				return this.manager.getWorkingCopy(node);
 			}
 			return node;
 		}
 		
-		private String getInternalValue(final Preference<?> key, final IScopeContext context, final boolean useWorkingCopy) {
-			final IEclipsePreferences node = getNode(context, key.getQualifier(), useWorkingCopy);
-			return node.get(key.getKey(), null);
+		private String getInternalValue(final Preference<?> pref, final IScopeContext context, final boolean useWorkingCopy) {
+			final IEclipsePreferences node= getNode(context, pref.getQualifier(), useWorkingCopy);
+			return node.get(pref.getKey(), null);
 		}
 		
-		private String getInternalValue(final Preference<?> key, final boolean ignoreTopScope) {
-			for (int i = ignoreTopScope ? 1 : 0; i < fLookupOrder.length; i++) {
-				final String value = getInternalValue(key, fLookupOrder[i], true);
+		private String getInternalValue(final Preference<?> pref, final boolean ignoreTopScope) {
+			for (int i= ignoreTopScope ? 1 : 0; i < this.lookupOrder.size(); i++) {
+				final String value= getInternalValue(pref, this.lookupOrder.get(i), true);
 				if (value != null) {
 					return value;
 				}
@@ -278,96 +281,51 @@ public abstract class ManagedConfigurationBlock extends ConfigurationBlock
 			return null;
 		}
 		
-		private <T> void setInternalValue(final Preference<T> key, final String value) {
-			final IEclipsePreferences node = getNode(fLookupOrder[0], key.getQualifier(), true);
+		private <T> void setInternalValue(final Preference<T> pref, final String value) {
+			final IEclipsePreferences node= getNode(this.lookupOrder.get(0), pref.getQualifier(), true);
 			if (value != null) {
-				node.put(key.getKey(), value);
+				node.put(pref.getKey(), value);
 			}
 			else {
-				node.remove(key.getKey());
+				node.remove(pref.getKey());
 			}
 		}
 		
 		
-		private <T> void setValue(final Preference<T> key, final T value) {
-			final IEclipsePreferences node = getNode(fLookupOrder[0], key.getQualifier(), true);
-			if (value == null) {
-				node.remove(key.getKey());
+		private <T> void setValue(final Preference<T> pref, final T value) {
+			final IEclipsePreferences node= getNode(this.lookupOrder.get(0), pref.getQualifier(), true);
+			final String storeValue;
+			if (value == null
+					|| (storeValue= pref.usage2Store(value)) == null) {
+				node.remove(pref.getKey());
 				return;
 			}
-			
-			final Object valueToStore = key.usage2Store(value);
-			switch (key.getStoreType()) {
-			case BOOLEAN:
-				node.putBoolean(key.getKey(), (Boolean) valueToStore);
-				break;
-			case INT:
-				node.putInt(key.getKey(), (Integer) valueToStore);
-				break;
-			case LONG:
-				node.putLong(key.getKey(), (Long) valueToStore);
-				break;
-			case DOUBLE:
-				node.putDouble(key.getKey(), (Double) valueToStore);
-				break;
-			case FLOAT:
-				node.putFloat(key.getKey(), (Float) valueToStore);
-				break;
-			default:
-				node.put(key.getKey(), (String) valueToStore);
-				break;
-			}
+			node.put(pref.getKey(), storeValue);
 		}
 		
-		private <T> T getValue(final Preference<T> key) {
-			IEclipsePreferences node = null;
-			int lookupIndex = 0;
-			for (; lookupIndex < fLookupOrder.length; lookupIndex++) {
-				final IEclipsePreferences nodeToCheck = getNode(fLookupOrder[lookupIndex], key.getQualifier(), true);
-				if (nodeToCheck.get(key.getKey(), null) != null) {
-					node = nodeToCheck;
+		private <T> T getValue(final Preference<T> pref) {
+			IEclipsePreferences node= null;
+			for (int i= 0; i < this.lookupOrder.size(); i++) {
+				final IEclipsePreferences nodeToCheck= getNode(this.lookupOrder.get(i), pref.getQualifier(), true);
+				if (nodeToCheck.get(pref.getKey(), null) != null) {
+					node= nodeToCheck;
 					break;
 				}
 			}
 			
-			Object storedValue;
-			if (node != null) {
-				switch (key.getStoreType()) {
-				case BOOLEAN:
-					storedValue = Boolean.valueOf(node.getBoolean(key.getKey(), Preference.BOOLEAN_DEFAULT_VALUE));
-					break;
-				case INT:
-					storedValue = Integer.valueOf(node.getInt(key.getKey(), Preference.INT_DEFAULT_VALUE));
-					break;
-				case LONG:
-					storedValue = Long.valueOf(node.getLong(key.getKey(), Preference.LONG_DEFAULT_VALUE));
-					break;
-				case DOUBLE:
-					storedValue = Double.valueOf(node.getDouble(key.getKey(), Preference.DOUBLE_DEFAULT_VALUE));
-					break;
-				case FLOAT:
-					storedValue = Float.valueOf(node.getFloat(key.getKey(), Preference.FLOAT_DEFAULT_OBJECT));
-					break;
-				default:
-					storedValue = node.get(key.getKey(), null);
-					break;
-				}
-			}
-			else {
-				storedValue = null;
-			}
-			return key.store2Usage(storedValue);
+			final String storeValue= (node != null) ? node.get(pref.getKey(), null) : null;
+			return pref.store2Usage(storeValue);
 		}
 	}
 	
 	
-	protected IProject fProject;
-	protected PreferenceManager fPreferenceManager;
+	private final IProject project;
+	private PreferenceManager preferenceManager;
 	
-	private DataBindingSupport fDataBinding;
-	private IStatusChangeListener fStatusListener;
+	private DataBindingSupport dataBinding;
+	private IStatusChangeListener statusListener;
 	
-	private Composite fPageComposite;
+	private Composite pageComposite;
 	
 	
 	protected ManagedConfigurationBlock(final IProject project) {
@@ -381,24 +339,24 @@ public abstract class ManagedConfigurationBlock extends ConfigurationBlock
 	protected ManagedConfigurationBlock(final IProject project, final String title,
 			final IStatusChangeListener statusListener) {
 		super(title);
-		fProject = project;
-		fStatusListener = statusListener;
+		this.project= project;
+		this.statusListener= statusListener;
 	}
 	
 	
 	protected void setStatusListener(final IStatusChangeListener listener) {
-		fStatusListener = listener;
+		this.statusListener= listener;
 	}
 	
 	
-	public IProject getProject() {
-		return fProject;
+	public final IProject getProject() {
+		return this.project;
 	}
 	
 	@Override
 	public void createContents(final Composite pageComposite,
 			final IWorkbenchPreferenceContainer container, final IPreferenceStore preferenceStore) {
-		fPageComposite = pageComposite;
+		this.pageComposite= pageComposite;
 		super.createContents(pageComposite, container, preferenceStore);
 	}
 	
@@ -413,14 +371,14 @@ public abstract class ManagedConfigurationBlock extends ConfigurationBlock
 	}
 	
 	protected void initBindings() {
-		fDataBinding = new DataBindingSupport(fPageComposite);
-		addBindings(fDataBinding);
+		this.dataBinding= new DataBindingSupport(this.pageComposite);
+		addBindings(this.dataBinding);
 		
-		fDataBinding.installStatusListener(fStatusListener);
+		this.dataBinding.installStatusListener(this.statusListener);
 	}
 	
 	protected DataBindingSupport getDataBinding() {
-		return fDataBinding;
+		return this.dataBinding;
 	}
 	
 	protected void addBindings(final DataBindingSupport db) {
@@ -435,25 +393,25 @@ public abstract class ManagedConfigurationBlock extends ConfigurationBlock
 	
 	@Override
 	public void performApply() {
-		if (fPreferenceManager != null) {
+		if (this.preferenceManager != null) {
 			updatePreferences();
-			fPreferenceManager.processChanges(true);
+			this.preferenceManager.processChanges(true);
 		}
 	}
 	
 	@Override
 	public boolean performOk() {
-		if (fPreferenceManager != null) {
+		if (this.preferenceManager != null) {
 			updatePreferences();
-			return fPreferenceManager.processChanges(false);
+			return this.preferenceManager.processChanges(false);
 		}
 		return true;
 	}
 	
 	@Override
 	public void performDefaults() {
-		if (fPreferenceManager != null) {
-			fPreferenceManager.loadDefaults();
+		if (this.preferenceManager != null) {
+			this.preferenceManager.loadDefaults();
 			updateControls();
 		}
 	}
@@ -468,8 +426,8 @@ public abstract class ManagedConfigurationBlock extends ConfigurationBlock
 	 * @return
 	 */
 	public boolean hasProjectSpecificOptions(final IProject project) {
-		if (project != null && fPreferenceManager != null) {
-			return fPreferenceManager.hasProjectSpecificSettings(project);
+		if (project != null && this.preferenceManager != null) {
+			return this.preferenceManager.hasProjectSpecificSettings(project);
 		}
 		return false;
 	}
@@ -477,55 +435,43 @@ public abstract class ManagedConfigurationBlock extends ConfigurationBlock
 	@Override
 	public void setUseProjectSpecificSettings(final boolean enable) {
 		super.setUseProjectSpecificSettings(enable);
-		if (fProject != null && fPreferenceManager != null) {
-			fPreferenceManager.setUseProjectSpecificSettings(enable);
+		if (this.project != null && this.preferenceManager != null) {
+			this.preferenceManager.setUseProjectSpecificSettings(enable);
 		}
 	}
 	
 	protected void updateControls() {
-		if (fDataBinding != null) {
-			fDataBinding.getContext().updateTargets();
+		if (this.dataBinding != null) {
+			this.dataBinding.getContext().updateTargets();
 		}
 	}
 	
 	
 /* Access preference values ***************************************************/
 	
+	@Override
+	public ImList<IScopeContext> getPreferenceContexts() {
+		assert (this.preferenceManager != null);
+		
+		return this.preferenceManager.lookupOrder;
+	}
+	
 	/**
 	 * Returns the value for the specified preference.
 	 * 
-	 * @param key preference key
+	 * @param pref preference key
 	 * @return value of the preference
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public <T> T getPreferenceValue(final Preference<T> key) {
-		assert (fPreferenceManager != null);
-		assert (key != null);
+	public <T> T getPreferenceValue(final Preference<T> pref) {
+		assert (this.preferenceManager != null);
+		assert (pref != null);
 		
-		if (fPreferenceManager.fDisabledProjectSettings != null) {
-			return (T) fPreferenceManager.fDisabledProjectSettings.get(key);
+		if (this.preferenceManager.disabledProjectSettings != null) {
+			return (T) this.preferenceManager.disabledProjectSettings.get(pref);
 		}
-		return fPreferenceManager.getValue(key);
-	}
-	
-	@Override
-	public IEclipsePreferences[] getPreferenceNodes(final String nodeQualifier) {
-		assert (fPreferenceManager != null);
-		assert (nodeQualifier != null);
-		
-		final IEclipsePreferences[] nodes = new IEclipsePreferences[fPreferenceManager.fLookupOrder.length - 1];
-		for (int i = 0; i < nodes.length; i++) {
-			nodes[i] = fPreferenceManager.getNode(fPreferenceManager.fLookupOrder[i], nodeQualifier, true);
-		}
-		return nodes;
-	}
-	
-	@Override
-	public IScopeContext[] getPreferenceContexts() {
-		assert (fPreferenceManager != null);
-		
-		return fPreferenceManager.fLookupOrder;
+		return this.preferenceManager.getValue(pref);
 	}
 	
 	/**
@@ -537,13 +483,13 @@ public abstract class ManagedConfigurationBlock extends ConfigurationBlock
 	 */
 	@SuppressWarnings("unchecked")
 	public <T> T setPrefValue(final Preference<T> key, final T value) {
-		assert (fPreferenceManager != null);
+		assert (this.preferenceManager != null);
 		
-		if (fPreferenceManager.fDisabledProjectSettings != null) {
-			return (T) fPreferenceManager.fDisabledProjectSettings.put(key, value);
+		if (this.preferenceManager.disabledProjectSettings != null) {
+			return (T) this.preferenceManager.disabledProjectSettings.put(key, value);
 		}
-		final T oldValue = getPreferenceValue(key);
-		fPreferenceManager.setValue(key, value);
+		final T oldValue= getPreferenceValue(key);
+		this.preferenceManager.setValue(key, value);
 		return oldValue;
 	}
 	
@@ -555,7 +501,6 @@ public abstract class ManagedConfigurationBlock extends ConfigurationBlock
 	
 	/**
 	 * Not (yet) supported
-	 * @throws UnsupportedOperationException
 	 */
 	@Override
 	public void addPreferenceNodeListener(final String nodeQualifier, final IPreferenceChangeListener listener) {
@@ -564,10 +509,27 @@ public abstract class ManagedConfigurationBlock extends ConfigurationBlock
 	
 	/**
 	 * Not (yet) supported
-	 * @throws UnsupportedOperationException
 	 */
 	@Override
 	public void removePreferenceNodeListener(final String nodeQualifier, final IPreferenceChangeListener listener) {
+		throw new UnsupportedOperationException();
+	}
+	
+	/**
+	 * Not (yet) supported
+	 */
+	@Override
+	
+	public void addPreferenceSetListener(final IPreferenceSetService.IChangeListener listener,
+			final ImSet<String> qualifiers) {
+		throw new UnsupportedOperationException();
+	}
+	
+	/**
+	 * Not (yet) supported
+	 */
+	@Override
+	public void removePreferenceSetListener(final IPreferenceSetService.IChangeListener listener) {
 		throw new UnsupportedOperationException();
 	}
 	

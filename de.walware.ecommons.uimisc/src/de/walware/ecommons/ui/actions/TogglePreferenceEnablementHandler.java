@@ -23,9 +23,9 @@ import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.commands.IElementUpdater;
 import org.eclipse.ui.menus.UIElement;
 
-import de.walware.ecommons.preferences.IPreferenceAccess;
-import de.walware.ecommons.preferences.Preference;
 import de.walware.ecommons.preferences.PreferencesUtil;
+import de.walware.ecommons.preferences.core.IPreferenceAccess;
+import de.walware.ecommons.preferences.core.Preference;
 
 
 /**
@@ -88,7 +88,7 @@ public class TogglePreferenceEnablementHandler extends AbstractHandler implement
 	
 	@Override
 	public Object execute(final ExecutionEvent arg0) throws ExecutionException {
-		PreferencesUtil.setPrefValue(fPrefAccess.getPreferenceContexts()[0], fPreferenceKey, !fPreferenceIsEnabled);
+		PreferencesUtil.setPrefValue(fPrefAccess.getPreferenceContexts().get(0), fPreferenceKey, !fPreferenceIsEnabled);
 		return null;
 	}
 	

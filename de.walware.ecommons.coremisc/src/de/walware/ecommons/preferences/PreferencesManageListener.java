@@ -14,6 +14,8 @@ package de.walware.ecommons.preferences;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 
+import de.walware.ecommons.preferences.core.IPreferenceAccess;
+
 
 /**
  * Keeps a preferences model up-to-date listening to changes of in the specified settings group.

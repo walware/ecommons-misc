@@ -19,7 +19,7 @@ import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.widgets.Control;
 
 import de.walware.ecommons.preferences.PreferencesUtil;
-import de.walware.ecommons.preferences.SettingsChangeNotifier.ChangeListener;
+import de.walware.ecommons.preferences.SettingsChangeNotifier;
 import de.walware.ecommons.ui.ISettingsChangedHandler;
 import de.walware.ecommons.ui.util.UIAccess;
 
@@ -28,7 +28,7 @@ import de.walware.ecommons.ui.util.UIAccess;
  * Util for settings changes in UI components.
  * Propagates changes to handler in UI thread and disposes automatically.
  */
-public class SettingsUpdater implements ChangeListener {
+public class SettingsUpdater implements SettingsChangeNotifier.ChangeListener {
 	
 	
 	private final ISettingsChangedHandler fHandler;

@@ -14,5 +14,6 @@ Import-Package: com.ibm.icu.text;version="4.4.2.2",
  de.walware.jcommons.string;version="1.0"
 Export-Package: de.walware.ecommons.text.core,
  de.walware.ecommons.text.core.input,
+ de.walware.ecommons.text.core.sections,
  de.walware.ecommons.text.core.treepartitioner,
  de.walware.ecommons.text.core.util

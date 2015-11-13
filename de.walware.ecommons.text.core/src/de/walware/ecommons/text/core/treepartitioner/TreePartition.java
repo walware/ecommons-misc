@@ -12,10 +12,11 @@
 package de.walware.ecommons.text.core.treepartitioner;
 
 import org.eclipse.jface.text.ITypedRegion;
-import org.eclipse.jface.text.Region;
+
+import de.walware.ecommons.text.core.TextRegion;
 
 
-public class TreePartition extends Region implements ITypedRegion {
+public class TreePartition extends TextRegion implements ITypedRegion {
 	
 	
 	private final ITreePartitionNode node;
@@ -24,12 +25,12 @@ public class TreePartition extends Region implements ITypedRegion {
 	/**
 	 * Creates a typed region based on the given specification.
 	 * 
-	 * @param offset the region's offset
-	 * @param length the region's length
-	 * @param type the region's type
+	 * @param beginOffset the beginning offset, inclusive.
+	 * @param endOffset the ending offset, exclusive.
+	 * @param type the type of the region.
 	 */
-	public TreePartition(final int offset, final int length, final ITreePartitionNode node) {
-		super(offset, length);
+	public TreePartition(final int beginOffset, final int endOffset, final ITreePartitionNode node) {
+		super(beginOffset, endOffset);
 		
 		if (node == null) {
 			throw new NullPointerException("node"); //$NON-NLS-1$
@@ -67,7 +68,10 @@ public class TreePartition extends Region implements ITypedRegion {
 	
 	@Override
 	public String toString() {
-		return getType() + ": offset= " + getOffset() + ", length= " + getLength(); //$NON-NLS-1$ //$NON-NLS-2$
+		final StringBuilder sb= new StringBuilder(getType());
+		sb.append(": "); //$NON-NLS-1$
+		appendIntervalString(sb);
+		return sb.toString();
 	}
 	
 }

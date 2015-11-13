@@ -21,6 +21,10 @@ public class TextRegion implements ITextRegion {
 	private final int endOffset;
 	
 	
+	/**
+	 * @param beginOffset the beginning offset, inclusive
+	 * @param endOffset the ending offset, exclusive
+	 */
 	public TextRegion(final int beginOffset, final int endOffset) {
 		if (beginOffset > endOffset) {
 			throw new IllegalArgumentException("beginOffset > endOffset: beginOffset= " + beginOffset + ", endOffset= " + endOffset); //$NON-NLS-1$ //$NON-NLS-2$
@@ -73,14 +77,18 @@ public class TextRegion implements ITextRegion {
 	}
 	
 	
-	@Override
-	public String toString() {
-		final StringBuilder sb= new StringBuilder();
+	protected final void appendIntervalString(final StringBuilder sb) {
 		sb.append('[');
 		sb.append(this.beginOffset);
 		sb.append(',');
 		sb.append(this.endOffset);
 		sb.append(')');
+	}
+	
+	@Override
+	public String toString() {
+		final StringBuilder sb= new StringBuilder();
+		appendIntervalString(sb);
 		return sb.toString();
 	}
 	

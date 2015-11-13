@@ -94,7 +94,7 @@ public class TreePartitionUtil {
 			for (int i= 0; i < partitions.size(); i++) {
 				final TreePartition partition= partitions.get(i);
 				final int beginOffset= partition.getOffset();
-				final int endOffset= partition.getOffset() + partition.getLength();
+				final int endOffset= partition.getEndOffset();
 				
 				this.writer.write('['); 
 				this.writer.write(Integer.toString(beginOffset));
@@ -250,7 +250,7 @@ public class TreePartitionUtil {
 			return null;
 		}
 		final int begin= searchBegin(partition.getTreeNode(), partition.getOffset(), partitionConstraint);
-		final int end= searchEnd(partition.getTreeNode(), partition.getOffset() + partition.getLength(), partitionConstraint);
+		final int end= searchEnd(partition.getTreeNode(), partition.getEndOffset(), partitionConstraint);
 		return new Region(begin, end - begin);
 	}
 	

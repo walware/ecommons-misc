@@ -17,6 +17,19 @@ import org.eclipse.jface.text.IRegion;
 public interface ITextRegion extends IRegion {
 	
 	
+	/**
+	 * Returns the offset the region begins.
+	 *
+	 * @return the beginning offset, inclusive.
+	 */
+	@Override
+	int getOffset();
+	
+	/**
+	 * Returns the offset the region ends.
+	 *
+	 * @return the ending offset, exclusive.
+	 */
 	int getEndOffset();
 	
 }

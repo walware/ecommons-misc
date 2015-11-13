@@ -514,21 +514,21 @@ public class TreePartitioner implements IDocumentPartitioner,
 	}
 	
 	private TreePartition createPartition(final NodePosition p, final int childIdx) {
-		final int offset;
-		final int length;
+		final int beginOffset;
+		final int endOffset;
 		if (childIdx > 0) {
-			offset= p.children.get(childIdx - 1).getEndOffset();
+			beginOffset= p.children.get(childIdx - 1).getEndOffset();
 		}
 		else {
-			offset= p.getOffset();
+			beginOffset= p.getOffset();
 		}
 		if (childIdx >= 0 && childIdx < p.children.size()) {
-			length= p.children.get(childIdx).getOffset() - offset;
+			endOffset= p.children.get(childIdx).getOffset();
 		}
 		else {
-			length= p.getEndOffset() - offset;
+			endOffset= p.getEndOffset();
 		}
-		return new TreePartition(offset, length, p);
+		return new TreePartition(beginOffset, endOffset, p);
 	}
 	
 	@Override
@@ -570,20 +570,20 @@ public class TreePartitioner implements IDocumentPartitioner,
 	 * 
 	 * @param partitions the list of partitions
 	 * @param p the position to add
-	 * @param offset the min offset
+	 * @param beginOffset the min offset
 	 * @param endOffset the max offset
 	 * @return the end offset of the last added partition
 	 */
 	private int addPartition(final List<TreePartition> partitions, final NodePosition p,
-			int offset, int endOffset) {
-		offset= (Math.max(offset, p.getOffset()));
+			int beginOffset, int endOffset) {
+		beginOffset= (Math.max(beginOffset, p.getOffset()));
 		endOffset= (Math.min(endOffset, p.getEndOffset()));
 		final List<NodePosition> children= p.children;
 		int childIdx= 0;
 		final int childCount= children.size();
 		if (childCount > 0) {
-			if (p.getOffset() < offset) {
-				childIdx= NodePosition.indexOf(children, offset);
+			if (p.getOffset() < beginOffset) {
+				childIdx= NodePosition.indexOf(children, beginOffset);
 				if (childIdx < 0) {
 					childIdx= -(childIdx + 1);
 				}
@@ -593,14 +593,14 @@ public class TreePartitioner implements IDocumentPartitioner,
 				if (child.getOffset() > endOffset) {
 					break;
 				}
-				if (offset < child.getOffset()) {
-					partitions.add(new TreePartition(offset, child.getOffset() - offset, p));
+				if (beginOffset < child.getOffset()) {
+					partitions.add(new TreePartition(beginOffset, child.getOffset(), p));
 				}
-				offset= addPartition(partitions, child, offset, endOffset);
+				beginOffset= addPartition(partitions, child, beginOffset, endOffset);
 			}
 		}
-		if (offset < endOffset) {
-			partitions.add(new TreePartition(offset, endOffset - offset, p));
+		if (beginOffset < endOffset) {
+			partitions.add(new TreePartition(beginOffset, endOffset, p));
 		}
 		return endOffset;
 	}
@@ -745,20 +745,20 @@ public class TreePartitioner implements IDocumentPartitioner,
 	 * 
 	 * @param partitions the list of partitions
 	 * @param p the position to add
-	 * @param offset the min offset
+	 * @param beginOffset the min offset
 	 * @param endOffset the max offset
 	 * @return the end offset of the last added partition
 	 */
 	private int addPartitionIncludeZeroLength(final List<TreePartition> partitions,
-			final NodePosition p, int offset, int endOffset) {
-		offset= (Math.max(offset, p.getOffset()));
+			final NodePosition p, int beginOffset, int endOffset) {
+		beginOffset= (Math.max(beginOffset, p.getOffset()));
 		endOffset= (Math.min(endOffset, p.getEndOffset()));
 		final List<NodePosition> children= p.children;
 		int childIdx= 0;
 		final int childCount= children.size();
 		if (childCount > 0) {
-			if (p.getOffset() < offset) {
-				childIdx= NodePosition.indexOf(children, offset);
+			if (p.getOffset() < beginOffset) {
+				childIdx= NodePosition.indexOf(children, beginOffset);
 				if (childIdx < 0) {
 					childIdx= -(childIdx + 1);
 				}
@@ -768,15 +768,15 @@ public class TreePartitioner implements IDocumentPartitioner,
 				if (child.getOffset() > endOffset) {
 					break;
 				}
-				if (offset <= child.getOffset()) {
-					partitions.add(new TreePartition(offset, child.getOffset() - offset, p));
+				if (beginOffset <= child.getOffset()) {
+					partitions.add(new TreePartition(beginOffset, child.getOffset(), p));
 				}
-				offset= addPartitionIncludeZeroLength(partitions, child, offset, endOffset);
+				beginOffset= addPartitionIncludeZeroLength(partitions, child, beginOffset, endOffset);
 			}
 		}
-		if (offset < endOffset || (offset == endOffset
-				&& (--childIdx < 0 || offset == children.get(childIdx).getEndOffset()) )) {
-			partitions.add(new TreePartition(offset, endOffset - offset, p));
+		if (beginOffset < endOffset || (beginOffset == endOffset
+				&& (--childIdx < 0 || beginOffset == children.get(childIdx).getEndOffset()) )) {
+			partitions.add(new TreePartition(beginOffset, endOffset, p));
 		}
 		return endOffset;
 	}

@@ -11,6 +11,8 @@
 
 package de.walware.ecommons.text.core;
 
+import java.util.IdentityHashMap;
+
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.BadPositionCategoryException;
 import org.eclipse.jface.text.DocumentPartitioningChangedEvent;
@@ -33,6 +35,8 @@ public class DocumentEnhancer {
 		
 		private final CopyOnWriteIdentityListSet<IDocumentPartitioningListenerExtension2> partitioningListeners= new CopyOnWriteIdentityListSet<>();
 		
+		private IdentityHashMap<String, Object> data;
+		
 		
 		@Override
 		public void addPrePartitioningListener(final IDocumentPartitioningListenerExtension2 listener) {
@@ -54,6 +58,20 @@ public class DocumentEnhancer {
 			for (final IDocumentPartitioningListenerExtension2 listener : this.partitioningListeners) {
 				listener.documentPartitioningChanged(event);
 			}
+		}
+		
+		
+		@Override
+		public Object getData(final String key) {
+			return (this.data != null) ? this.data.get(key) : null;
+		}
+		
+		@Override
+		public void setData(final String key, final Object value) {
+			if (this.data == null) {
+				this.data= new IdentityHashMap<>();
+			}
+			this.data.put(key, value);
 		}
 		
 	}

@@ -20,4 +20,7 @@ public interface IDocumentEnhancement {
 	void addPrePartitioningListener(IDocumentPartitioningListenerExtension2 listener);
 	void removePrePartitioningListener(IDocumentPartitioningListenerExtension2 listener);
 	
+	Object getData(String key);
+	void setData(String key, Object value);
+	
 }

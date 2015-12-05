@@ -16,7 +16,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Set;
 
 
 /**
@@ -54,8 +53,8 @@ public final class CopyOnWriteList<E> extends AbstractList<E> implements List<E>
 		this.list= ImCollections.newList();
 	}
 	
-	public CopyOnWriteList(final Set<E> initialSet) {
-		this.list= ImCollections.toIdentityList(initialSet);
+	public CopyOnWriteList(final List<E> initialList) {
+		this.list= ImCollections.toList(initialList);
 	}
 	
 	
@@ -226,7 +225,7 @@ public final class CopyOnWriteList<E> extends AbstractList<E> implements List<E>
 	}
 	
 	/**
-	 * Returns a current snapshot of the set.
+	 * Returns a current snapshot of the list.
 	 * 
 	 * @return
 	 */

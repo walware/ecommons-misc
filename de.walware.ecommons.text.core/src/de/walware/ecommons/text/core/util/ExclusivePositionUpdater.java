@@ -18,16 +18,13 @@ import org.eclipse.jface.text.Position;
 
 
 /**
- * A position updater that never deletes a position.
+ * A position updater that takes any changes not completely in
+ * <code>(p.offset, p.offset + p.length)</code> of a {@link Position position} <code>p</code> to not
+ * belong to the position.
  * 
- * If the region containing the position is deleted, the position is moved to the beginning/end
- * (falling together) of the change.  If the region containing the position is replaced, the
- * position is placed at the same location inside the replacement text, but always inside the
- * replacement text.
- * 
- * @since de.walware.ecommons.text 1.0
+ * @since de.walware.ecommons.text 1.1
  */
-public class NonDeletingPositionUpdater implements IPositionUpdater {
+public class ExclusivePositionUpdater implements IPositionUpdater {
 	
 	
 	/** The position category. */
@@ -39,7 +36,7 @@ public class NonDeletingPositionUpdater implements IPositionUpdater {
 	 *
 	 * @param category the new category.
 	 */
-	public NonDeletingPositionUpdater(final String category) {
+	public ExclusivePositionUpdater(final String category) {
 		if (category == null) {
 			throw new NullPointerException("category"); //$NON-NLS-1$
 		}
@@ -77,11 +74,11 @@ public class NonDeletingPositionUpdater implements IPositionUpdater {
 				final int offset= position.getOffset();
 				final int endOffset= offset + position.getLength();
 				
-				if (offset > eventOldEndOffset) {
-					// position comes way after change - shift
+				if (offset >= eventOldEndOffset) {
+					// position comes after change - shift
 					position.setOffset(offset + eventNewLength - eventLength);
 				}
-				else if (endOffset < eventOffset) {
+				else if (endOffset <= eventOffset) {
 					// position comes way before change - leave alone
 				}
 				else if (offset <= eventOffset && endOffset >= eventOldEndOffset) {
@@ -89,22 +86,18 @@ public class NonDeletingPositionUpdater implements IPositionUpdater {
 					position.setLength(position.getLength() + eventNewLength - eventLength);
 				}
 				else if (offset < eventOffset) {
-					// event extends over end of position - include change at end
-					position.setLength(eventOffset + eventNewLength - offset);
+					// event extends over end of position - cut change at end
+					position.setLength(eventOffset - offset);
 				}
 				else if (endOffset > eventOldEndOffset) {
-					// event extends from before position into it - include change at begin
-					position.setOffset(eventOffset);
-					position.setLength(endOffset - eventOldEndOffset + eventNewLength);
+					// event extends from before position into it - cut change at begin
+					final int newOffset= eventOffset + eventNewLength;
+					position.setOffset(newOffset);
+					position.setLength(endOffset - eventOldEndOffset);
 				}
 				else {
-					// event comprises the position - keep it at the same
-					// position, but always inside the replacement text
-					final int eventNewEndOffset= eventOffset + eventNewLength;
-					final int newOffset= Math.min(offset, eventNewEndOffset);
-					final int newEndOffset= Math.min(endOffset, eventNewEndOffset);
-					position.setOffset(newOffset);
-					position.setLength(newEndOffset - newOffset);
+					// event consumes the position - delete it
+					position.delete();
 				}
 			}
 		}

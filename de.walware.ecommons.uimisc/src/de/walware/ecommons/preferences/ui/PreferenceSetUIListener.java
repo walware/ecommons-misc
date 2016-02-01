@@ -73,10 +73,10 @@ public abstract class PreferenceSetUIListener implements IPreferenceSetService.I
 	
 	@Override
 	public void preferenceChanged(final IChangeEvent event) {
-		UIAccess.getDisplay().asyncExec(new Runnable() {
+		UIAccess.getDisplay().syncExec(new Runnable() {
 			@Override
 			public void run() {
-				if (UIAccess.isOkToUse(control)) {
+				if (UIAccess.isOkToUse(PreferenceSetUIListener.this.control)) {
 					handlePreferenceChanged(event);
 				}
 			}

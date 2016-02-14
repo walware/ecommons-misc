@@ -14,6 +14,8 @@ package de.walware.ecommons.ui.content;
 import java.util.Collection;
 import java.util.Collections;
 
+import de.walware.jcommons.collections.ImCollections;
+
 
 public class SetElementFilter implements IElementFilter {
 	
@@ -59,11 +61,11 @@ public class SetElementFilter implements IElementFilter {
 	}
 	
 	
-	public synchronized boolean setSet(Collection<?> set) {
+	public synchronized boolean setSet(/*Im*/Collection<?> set) {
 		if (set == null || set.isEmpty()) {
-			set= Collections.EMPTY_LIST;
+			set= ImCollections.emptySet();
 		}
-		this.changed |= !this.set.equals(set);
+		this.changed|= !this.set.equals(set);
 		this.set= set;
 		return this.changed;
 	}

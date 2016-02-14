@@ -23,14 +23,14 @@ import de.walware.jcommons.collections.ImCollections;
 public class ObservableSetBinding implements ISetChangeListener {
 	
 	
-	private final TableFilterController fController;
+	private final TableFilterController controller;
 	
-	private final SetElementFilter fFilter;
+	private final SetElementFilter filter;
 	
 	
 	public ObservableSetBinding(final TableFilterController controller, final IObservableSet set, final SetElementFilter filter) {
-		fController = controller;
-		fFilter = filter;
+		this.controller= controller;
+		this.filter= filter;
 		set.addSetChangeListener(this);
 	}
 	
@@ -40,21 +40,22 @@ public class ObservableSetBinding implements ISetChangeListener {
 	}
 	
 	protected Collection<?> createFilterSet(final Collection<?> set) {
-		return ImCollections.newList(set);
+		return ImCollections.toList(set);
 	}
 	
 	@Override
 	public void handleSetChange(final SetChangeEvent event) {
-		final IObservableSet set = event.getObservableSet();
-		Collection<?> copy;
-		if (set.isEmpty() || ((copy = getAll()) != null && set.containsAll(copy))) {
-			copy = null;
+		final IObservableSet set= event.getObservableSet();
+		final Collection<?> copy;
+		final Collection<?> all;
+		if (set.isEmpty() || ((all= getAll()) != null && set.containsAll(all))) {
+			copy= null;
 		}
 		else {
-			copy = createFilterSet(set);
+			copy= createFilterSet(set);
 		}
-		if (fFilter.setSet(copy)) {
-			fController.refresh(true);
+		if (this.filter.setSet(copy)) {
+			this.controller.refresh(true);
 		}
 	}
 	

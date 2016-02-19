@@ -64,6 +64,9 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeColumn;
 import org.eclipse.swt.widgets.TreeItem;
 
+import de.walware.jcommons.collections.ImCollections;
+import de.walware.jcommons.collections.ImList;
+
 import de.walware.ecommons.ui.components.SearchText;
 
 
@@ -74,26 +77,27 @@ public class ViewerUtil {
 	
 	public static class Node {
 		
-		private final String fName;
-		private Node fParent;
-		private final Node[] fChildren;
+		private final String name;
+		
+		private Node parent;
+		private final Node[] children;
 		
 		public Node(final String name, final Node[] children) {
-			fName = name;
-			fChildren = children;
-			if (fChildren != null) {
-				for (final Node node : fChildren) {
-					node.fParent = this;
+			this.name= name;
+			this.children= children;
+			if (this.children != null) {
+				for (final Node node : this.children) {
+					node.parent= this;
 				}
 			}
 		}
 		
 		public String getName() {
-			return fName;
+			return this.name;
 		}
 		
 		public Node[] getChildren() {
-			return fChildren;
+			return this.children;
 		}
 		
 	}
@@ -108,17 +112,17 @@ public class ViewerUtil {
 		
 		@Override
 		public Object getParent(final Object element) {
-			return ((Node) element).fParent;
+			return ((Node) element).parent;
 		}
 		
 		@Override
 		public boolean hasChildren(final Object element) {
-			return ((Node) element).fChildren != null;
+			return ((Node) element).children != null;
 		}
 		
 		@Override
 		public Object[] getChildren(final Object parentElement) {
-			return ((Node) parentElement).fChildren;
+			return ((Node) parentElement).children;
 		}
 		
 		@Override
@@ -132,28 +136,28 @@ public class ViewerUtil {
 	}
 	
 	public static Point calculateTreeSizeHint(final Control treeControl, final Node[] rootNodes, final int rows) {
-		final Point pixels = new Point(0,0);
-		final PixelConverter tool = new PixelConverter(treeControl);
+		final Point pixels= new Point(0,0);
+		final PixelConverter tool= new PixelConverter(treeControl);
 		
-		float factor = tool.convertWidthInCharsToPixels(2);
-		final ScrollBar vBar = ((Scrollable) treeControl).getVerticalBar();
+		float factor= tool.convertWidthInCharsToPixels(2);
+		final ScrollBar vBar= ((Scrollable) treeControl).getVerticalBar();
 		if (vBar != null) {
-			factor = vBar.getSize().x * 1.1f; // scrollbars and tree indentation guess
+			factor= vBar.getSize().x * 1.1f; // scrollbars and tree indentation guess
 		}
-		pixels.x = measureNodes(tool, factor, rootNodes, 1) + ((int) factor);
-		pixels.y = tool.convertHeightInCharsToPixels(rows);
+		pixels.x= measureNodes(tool, factor, rootNodes, 1) + ((int) factor);
+		pixels.y= tool.convertHeightInCharsToPixels(rows);
 		
 		return pixels;
 	}
 	
 	/** recursive measure */
 	private static int measureNodes(final PixelConverter tool, final float factor, final Node[] nodes, final int deepth) {
-		int maxWidth = 0;
+		int maxWidth= 0;
 		for (final Node node : nodes) {
-			maxWidth = Math.max(maxWidth, tool.convertWidthInCharsToPixels(node.fName.length()) + (int) (deepth * factor));
-			final Node[] children = node.getChildren();
+			maxWidth= Math.max(maxWidth, tool.convertWidthInCharsToPixels(node.name.length()) + (int) (deepth * factor));
+			final Node[] children= node.getChildren();
 			if (children != null) {
-				maxWidth = Math.max(maxWidth, measureNodes(tool, factor * 0.95f, children, deepth+1));
+				maxWidth= Math.max(maxWidth, measureNodes(tool, factor * 0.95f, children, deepth+1));
 			}
 		}
 		return maxWidth;
@@ -164,9 +168,9 @@ public class ViewerUtil {
 		viewer.addDoubleClickListener(new IDoubleClickListener() {
 			@Override
 			public void doubleClick(final DoubleClickEvent event) {
-				final IStructuredSelection selection = (IStructuredSelection) event.getSelection();
+				final IStructuredSelection selection= (IStructuredSelection) event.getSelection();
 				if (selection != null && selection.size() == 1) {
-					final Object item = selection.getFirstElement();
+					final Object item= selection.getFirstElement();
 					if (viewer.getExpandedState(item)) {
 						viewer.collapseToLevel(item, TreeViewer.ALL_LEVELS);
 					} else {
@@ -178,7 +182,7 @@ public class ViewerUtil {
 	}
 	
 	public static void setDefaultVisibleItemCount(final ComboViewer viewer) {
-		final Control control = viewer.getControl();
+		final Control control= viewer.getControl();
 		if (control instanceof Combo) {
 			((Combo) control).setVisibleItemCount(25);
 		}
@@ -197,24 +201,24 @@ public class ViewerUtil {
 		public TableComposite(final Composite parent, final int tableStyle) {
 			super(parent, SWT.NONE);
 			
-			layout = new TableColumnLayout();
-			setLayout(layout);
-			table = new Table(this, tableStyle);
-			viewer = new TableViewer(table);
+			this.layout= new TableColumnLayout();
+			setLayout(this.layout);
+			this.table= new Table(this, tableStyle);
+			this.viewer= new TableViewer(this.table);
 		}
 		
 		
 		public TableViewerColumn addColumn(final String title, final int style, final ColumnLayoutData layoutData) {
-			final TableViewerColumn column = new TableViewerColumn(viewer, style);
+			final TableViewerColumn column= new TableViewerColumn(this.viewer, style);
 			if (title != null) {
 				column.getColumn().setText(title);
 			}
-			layout.setColumnData(column.getColumn(), layoutData);
+			this.layout.setColumnData(column.getColumn(), layoutData);
 			return column;
 		}
 		
 		public ViewerColumn getViewerColumn(final int index) {
-			final TableColumn column = table.getColumn(index);
+			final TableColumn column= this.table.getColumn(index);
 			if (column == null) {
 				return null;
 			}
@@ -232,22 +236,22 @@ public class ViewerUtil {
 		public CheckboxTableComposite(final Composite parent, final int tableStyle) {
 			super(parent, SWT.NONE);
 			
-			layout = new TableColumnLayout();
-			setLayout(layout);
-			viewer = CheckboxTableViewer.newCheckList(this, tableStyle);
-			table = viewer.getTable();
+			this.layout= new TableColumnLayout();
+			setLayout(this.layout);
+			this.viewer= CheckboxTableViewer.newCheckList(this, tableStyle);
+			this.table= this.viewer.getTable();
 		}
 		
 		
 		public TableViewerColumn addColumn(final String title, final int style, final ColumnLayoutData layoutData) {
-			final TableViewerColumn column = new TableViewerColumn(viewer, style);
+			final TableViewerColumn column= new TableViewerColumn(this.viewer, style);
 			column.getColumn().setText(title);
-			layout.setColumnData(column.getColumn(), layoutData);
+			this.layout.setColumnData(column.getColumn(), layoutData);
 			return column;
 		}
 		
 		public ViewerColumn getViewerColumn(final int index) {
-			final TableColumn column = table.getColumn(index);
+			final TableColumn column= this.table.getColumn(index);
 			if (column == null) {
 				return null;
 			}
@@ -265,28 +269,28 @@ public class ViewerUtil {
 		public TreeComposite(final Composite parent, final int treeStyle) {
 			super(parent, SWT.NONE);
 			
-			layout = new TreeColumnLayout();
-			setLayout(layout);
-			tree = new Tree(this, treeStyle);
-			viewer = new TreeViewer(tree);
+			this.layout= new TreeColumnLayout();
+			setLayout(this.layout);
+			this.tree= new Tree(this, treeStyle);
+			this.viewer= new TreeViewer(this.tree);
 		}
 		
 		
 		public TreeViewerColumn addColumn(final String title, final int style, final ColumnLayoutData layoutData) {
-			final TreeViewerColumn column = new TreeViewerColumn(viewer, style);
+			final TreeViewerColumn column= new TreeViewerColumn(this.viewer, style);
 			column.getColumn().setText(title);
-			layout.setColumnData(column.getColumn(), layoutData);
+			this.layout.setColumnData(column.getColumn(), layoutData);
 			return column;
 		}
 		
 		public TreeViewerColumn addColumn(final int style, final ColumnLayoutData layoutData) {
-			final TreeViewerColumn column = new TreeViewerColumn(viewer, style);
-			layout.setColumnData(column.getColumn(), layoutData);
+			final TreeViewerColumn column= new TreeViewerColumn(this.viewer, style);
+			this.layout.setColumnData(column.getColumn(), layoutData);
 			return column;
 		}
 		
 		public TreeViewerColumn getViewerColumn(final int index) {
-			final TreeColumn column = tree.getColumn(index);
+			final TreeColumn column= this.tree.getColumn(index);
 			if (column == null) {
 				return null;
 			}
@@ -296,10 +300,10 @@ public class ViewerUtil {
 	}
 	
 	public static void installDefaultEditBehaviour(final TableViewer tableViewer) {
-		final CellNavigationStrategy naviStrat = new CellNavigationStrategy() {
+		final CellNavigationStrategy naviStrat= new CellNavigationStrategy() {
 			@Override
 			public ViewerCell findSelectedCell(final ColumnViewer viewer, final ViewerCell currentSelectedCell, final Event event) {
-				final ViewerCell cell = super.findSelectedCell(viewer, currentSelectedCell, event);
+				final ViewerCell cell= super.findSelectedCell(viewer, currentSelectedCell, event);
 				if (cell != null ) {
 					tableViewer.getTable().showColumn(tableViewer.getTable().getColumn(cell.getColumnIndex()));
 				}
@@ -307,7 +311,7 @@ public class ViewerUtil {
 			}
 			
 		};
-		final TableViewerFocusCellManager focusCellManager = new TableViewerFocusCellManager(
+		final TableViewerFocusCellManager focusCellManager= new TableViewerFocusCellManager(
 				tableViewer, new FocusCellOwnerDrawHighlighter(tableViewer), naviStrat);
 		TableViewerEditor.create(tableViewer, focusCellManager, createActivationStrategy(tableViewer),
 				ColumnViewerEditor.TABBING_HORIZONTAL | ColumnViewerEditor.TABBING_VERTICAL
@@ -315,13 +319,13 @@ public class ViewerUtil {
 	}
 	
 	public static void installDefaultEditBehaviour2(final TableViewer tableViewer) {
-		final Listener listener = new Listener() {
+		final Listener listener= new Listener() {
 			@Override
 			public void handleEvent(final Event event) {
 				switch (event.type) {
 				case SWT.KeyDown:
 					if (event.keyCode == SWT.CR || event.keyCode == SWT.KEYPAD_CR || event.keyCode == SWT.F2) {
-						final IStructuredSelection selection = (IStructuredSelection) tableViewer.getSelection();
+						final IStructuredSelection selection= (IStructuredSelection) tableViewer.getSelection();
 						if (selection.size() >= 1) {
 							tableViewer.editElement(selection.getFirstElement(), 0);
 						}
@@ -334,10 +338,10 @@ public class ViewerUtil {
 	}
 	
 	public static void installDefaultEditBehaviour(final TreeViewer treeViewer) {
-		final CellNavigationStrategy naviStrat = new CellNavigationStrategy() {
+		final CellNavigationStrategy naviStrat= new CellNavigationStrategy() {
 			@Override
 			public ViewerCell findSelectedCell(final ColumnViewer viewer, final ViewerCell currentSelectedCell, final Event event) {
-				final ViewerCell cell = super.findSelectedCell(viewer, currentSelectedCell, event);
+				final ViewerCell cell= super.findSelectedCell(viewer, currentSelectedCell, event);
 				if (cell != null ) {
 					treeViewer.getTree().showColumn(treeViewer.getTree().getColumn(cell.getColumnIndex()));
 				}
@@ -345,7 +349,7 @@ public class ViewerUtil {
 			}
 			
 		};
-		final TreeViewerFocusCellManager focusCellManager = new TreeViewerFocusCellManager(
+		final TreeViewerFocusCellManager focusCellManager= new TreeViewerFocusCellManager(
 				treeViewer, new FocusCellOwnerDrawHighlighter(treeViewer), naviStrat);
 		TreeViewerEditor.create(treeViewer, focusCellManager, createActivationStrategy(treeViewer),
 				ColumnViewerEditor.TABBING_HORIZONTAL | ColumnViewerEditor.TABBING_VERTICAL
@@ -357,7 +361,7 @@ public class ViewerUtil {
 			@Override
 			public void keyTraversed(final TraverseEvent e) {
 				if (e.detail == SWT.TRAVERSE_RETURN && e.stateMask == SWT.NONE) {
-					e.doit = false;
+					e.doit= false;
 				}
 			}
 		});
@@ -379,7 +383,7 @@ public class ViewerUtil {
 	
 	public static void installSearchTextNavigation(final TableViewer viewer,
 			final SearchText searchText, final boolean back) {
-		final Table table = viewer.getTable();
+		final Table table= viewer.getTable();
 		searchText.addListener(new SearchText.Listener() {
 			@Override
 			public void textChanged(final boolean user) {
@@ -422,7 +426,7 @@ public class ViewerUtil {
 	
 	public static ISelectionProvider getSelectionProvider(final Control control) {
 		if (control != null) {
-			final Object data = control.getData(Policy.JFACE + ".selectionProvider"); //$NON-NLS-1$
+			final Object data= control.getData(Policy.JFACE + ".selectionProvider"); //$NON-NLS-1$
 			if (data instanceof ISelectionProvider) {
 				return (ISelectionProvider) data;
 			}
@@ -435,10 +439,10 @@ public class ViewerUtil {
 		viewer.getControl().getDisplay().asyncExec(new Runnable() {
 			@Override
 			public void run() {
-				final ISelection selection = viewer.getSelection();
+				final ISelection selection= viewer.getSelection();
 				if (selection.isEmpty()) {
 					if (viewer.getTable().getItemCount() > 0) {
-						final TableItem item = viewer.getTable().getItem(0);
+						final TableItem item= viewer.getTable().getItem(0);
 						viewer.setSelection(new StructuredSelection(item.getData()));
 					}
 					else {
@@ -453,10 +457,10 @@ public class ViewerUtil {
 		viewer.getControl().getDisplay().asyncExec(new Runnable() {
 			@Override
 			public void run() {
-				final ISelection selection = viewer.getSelection();
+				final ISelection selection= viewer.getSelection();
 				if (selection.isEmpty()) {
 					if (viewer.getTree().getItemCount() > 0) {
-						final TreeItem item = viewer.getTree().getItem(0);
+						final TreeItem item= viewer.getTree().getItem(0);
 						viewer.setSelection(new TreeSelection(new TreePath(
 								new Object[] { item.getData() } )));
 						viewer.setExpandedState(item.getData(), true);
@@ -467,6 +471,22 @@ public class ViewerUtil {
 				}
 			}
 		});
+	}
+	
+	public static ImList<Object> toList(final TreePath path) {
+		final int n= path.getSegmentCount();
+		switch (n) {
+		case 0:
+			return ImCollections.emptyList();
+		case 1:
+			return ImCollections.newList(path.getSegment(0));
+		default:
+			final Object[] array= new Object[n];
+			for (int i= 0; i < n; i++) {
+				array[i]= path.getSegment(i);
+			}
+			return ImCollections.newList(array);
+		}
 	}
 	
 	/**

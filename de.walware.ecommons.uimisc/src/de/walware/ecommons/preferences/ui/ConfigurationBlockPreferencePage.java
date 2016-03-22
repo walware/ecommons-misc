@@ -95,6 +95,7 @@ public abstract class ConfigurationBlockPreferencePage extends PreferencePage
 		final GridLayout layout= LayoutUtil.createCompositeGrid(1);
 		layout.marginRight= LayoutUtil.defaultHSpacing();
 		this.blockControl.setLayout(layout);
+		this.blockControl.setBackgroundMode(SWT.INHERIT_FORCE);
 		this.block.createContents(this.blockControl, getWorkbenchContainer(), getPreferenceStore());
 		
 		applyDialogFont(this.blockControl);

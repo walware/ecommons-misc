@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-SymbolicName: de.walware.ecommons.databinding.core;singleton:=true
-Bundle-Version: 1.0.0.qualifier
+Bundle-Version: 1.0.0.b201604071800
 Bundle-Vendor: WalWare.de
 Bundle-Name: ECommons Databinding - Core
 Bundle-Activator: de.walware.ecommons.databinding.internal.core.ECommonsDatabindingCorePlugin

@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-SymbolicName: de.walware.ecommons.text.core-tests
-Bundle-Version: 1.0.0.qualifier
+Bundle-Version: 1.0.0.b201604071800
 Fragment-Host: de.walware.ecommons.text.core
 Bundle-Vendor: WalWare.de
 Bundle-Name: ECommons Text - Core - Tests

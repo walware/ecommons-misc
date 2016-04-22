@@ -239,45 +239,45 @@ public class LayoutUtil {
 	}
 	
 	
-	public static int hintWidth(final Table table, final int numChars) {
-		return hintWidth(table, JFaceResources.DIALOG_FONT, false, numChars);
-	}
-	
 	public static int hintWidth(final Table table, final String fontName,
 			final boolean icon, final int numChars) {
 		if (fontName != null) {
 			table.setFont(JFaceResources.getFontRegistry().get(fontName));
 		}
-		final PixelConverter converter = new PixelConverter(table);
-		int width = converter.convertWidthInCharsToPixels(numChars);
-		{	final ScrollBar scrollBar = table.getVerticalBar();
+		final PixelConverter converter= new PixelConverter(table);
+		int width= converter.convertWidthInCharsToPixels(numChars);
+		{	final ScrollBar scrollBar= table.getVerticalBar();
 			if (scrollBar != null) {
-				width += scrollBar.getSize().x;
+				width+= scrollBar.getSize().x;
 			}
 		}
 		if ((table.getStyle() & SWT.CHECK) == SWT.CHECK) {
-			width += 16 + converter.convertHorizontalDLUsToPixels(4) +  converter.convertWidthInCharsToPixels(1);
+			width+= 16 + converter.convertHorizontalDLUsToPixels(4) +  converter.convertWidthInCharsToPixels(1);
 		}
 		if (icon) {
-			width += 16 + converter.convertHorizontalDLUsToPixels(4);
+			width+= 16 + converter.convertHorizontalDLUsToPixels(4);
 		}
 		return width;
 	}
 	
+	public static int hintWidth(final Table table, final int numChars) {
+		return hintWidth(table, JFaceResources.DIALOG_FONT, false, numChars);
+	}
+	
 	public static int hintWidth(final Table table, final Collection<String> items) {
-		int max = 0;
+		int max= 0;
 		for (final String s : items) {
-			max = Math.max(max, s.length());
+			max= Math.max(max, s.length());
 		}
 		return hintWidth(table, max);
 	}
 	
 	public static int hintWidth(final Table table, final Object[] input, final ILabelProvider labelProvider) {
-		int max = 0;
+		int max= 0;
 		for (final Object o : input) {
-			final String s = labelProvider.getText(o);
+			final String s= labelProvider.getText(o);
 			if (s != null) {
-				max = Math.max(max, s.length());
+				max= Math.max(max, s.length());
 			}
 		}
 		return hintWidth(table, max);
@@ -290,16 +290,47 @@ public class LayoutUtil {
 		return width;
 	}
 	
+	
+	public static int hintWidth(final Tree tree, final String fontName,
+			final boolean icon, final int numChars) {
+		if (fontName != null) {
+			tree.setFont(JFaceResources.getFontRegistry().get(fontName));
+		}
+		final PixelConverter converter= new PixelConverter(tree);
+		int width= converter.convertWidthInCharsToPixels(numChars);
+		{	final ScrollBar scrollBar= tree.getVerticalBar();
+			if (scrollBar != null) {
+				width+= scrollBar.getSize().x;
+			}
+		}
+		if ((tree.getStyle() & SWT.CHECK) == SWT.CHECK) {
+			width+= 16 + converter.convertHorizontalDLUsToPixels(4) +  converter.convertWidthInCharsToPixels(1);
+		}
+		if (icon) {
+			width+= 16 + converter.convertHorizontalDLUsToPixels(4);
+		}
+		return width;
+	}
+	
+	public static int hintWidth(final Tree tree, final int numChars) {
+		return hintWidth(tree, JFaceResources.DIALOG_FONT, false, numChars);
+	}
+	
+	public static int hintWidth(final Tree tree, final Collection<String> items) {
+		int max= 0;
+		for (final String s : items) {
+			max= Math.max(max, s.length());
+		}
+		return hintWidth(tree, max);
+	}
+	
+	
 	public static int hintHeight(final List control, final int rows) {
 		control.setFont(JFaceResources.getFontRegistry().get(JFaceResources.DIALOG_FONT));
 		return control.getItemHeight() * rows;
 	}
 	
-	public static int hintHeight(final Tree control, final int rows) {
-		return hintHeight(control, rows, true);
-	}
-	
-	public static int hintHeight(final Tree control, final int rows, final boolean withScrollbar) {
+	public static int hintHeight(final Table control, final int rows, final boolean withScrollbar) {
 		control.setFont(JFaceResources.getFontRegistry().get(JFaceResources.DIALOG_FONT));
 		
 		int height = control.getHeaderHeight();
@@ -322,7 +353,8 @@ public class LayoutUtil {
 		return hintHeight(control, rows, true);
 	}
 	
-	public static int hintHeight(final Table control, final int rows, final boolean withScrollbar) {
+	
+	public static int hintHeight(final Tree control, final int rows, final boolean withScrollbar) {
 		control.setFont(JFaceResources.getFontRegistry().get(JFaceResources.DIALOG_FONT));
 		
 		int height = control.getHeaderHeight();
@@ -340,6 +372,11 @@ public class LayoutUtil {
 		
 		return height;
 	}
+	
+	public static int hintHeight(final Tree control, final int rows) {
+		return hintHeight(control, rows, true);
+	}
+	
 	
 	public static int hintHeight(final Label control, final int lines) {
 		final PixelConverter converter = new PixelConverter(control);

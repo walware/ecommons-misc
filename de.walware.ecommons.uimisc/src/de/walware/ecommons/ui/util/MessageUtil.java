@@ -20,9 +20,6 @@ import org.eclipse.osgi.util.TextProcessor;
 import org.eclipse.swt.SWT;
 
 
-/**
- * 
- */
 public class MessageUtil {
 	
 	
@@ -87,8 +84,26 @@ public class MessageUtil {
 		return escaped.toString();
 	}
 	
+	private static final String URL_DELIMITERS= TextProcessor.getDefaultDelimiters() + ":@?-"; //$NON-NLS-1$
+	
 	public static String processURLPart(final String url) {
-		return TextProcessor.process(url, ":@?-"); //$NON-NLS-1$
+		return TextProcessor.process(url, URL_DELIMITERS);
+	}
+	
+	public static String processPath(final String path) {
+		return TextProcessor.process(path);
+	}
+	
+	private static final String FILE_PATTERN_DELIMITERS= TextProcessor.getDefaultDelimiters() + "*.?"; //$NON-NLS-1$
+	
+	/**
+	 * Returns the label for a file pattern like '*.java'
+	 *
+	 * @param name the pattern
+	 * @return the label of the pattern.
+	 */
+	public static String processPathPattern(final String name) {
+		return TextProcessor.process(name, FILE_PATTERN_DELIMITERS);
 	}
 	
 	

@@ -9,7 +9,7 @@
  #     Stephan Wahlbrink - initial API and implementation
  #=============================================================================*/
 
-package de.walware.ecommons.ui.util;
+package de.walware.ecommons.ui.viewers;
 
 import java.util.Arrays;
 import java.util.Comparator;
@@ -24,22 +24,22 @@ import org.eclipse.jface.viewers.ViewerComparator;
 public class ComparatorViewerComparator extends ViewerComparator {
 	
 	
-	private final Comparator fComparator;
+	private final Comparator comparator;
 	
 	
 	public ComparatorViewerComparator(final Comparator comparator) {
-		fComparator = comparator;
+		this.comparator= comparator;
 	}
 	
 	
 	@Override
 	public int compare(final Viewer viewer, final Object e1, final Object e2) {
-		return fComparator.compare(e1, e2);
+		return this.comparator.compare(e1, e2);
 	}
 	
 	@Override
 	public void sort(final Viewer viewer, final Object[] elements) {
-		Arrays.sort(elements, fComparator);
+		Arrays.sort(elements, this.comparator);
 	}
 	
 }

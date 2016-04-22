@@ -11,7 +11,10 @@
 
 package de.walware.ecommons.ui;
 
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.resource.ImageRegistry;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.swt.graphics.Point;
 
 import de.walware.ecommons.ui.internal.UIMiscellanyPlugin;
 
@@ -54,6 +57,12 @@ public class SharedUIResources {
 	public static final String OVR_DEFAULT_MARKER_IMAGE_ID = UIMiscellanyPlugin.PLUGIN_ID + "/image/ovr/default_marker"; //$NON-NLS-1$
 	public static final String OVR_GREEN_LIGHT_IMAGE_ID = UIMiscellanyPlugin.PLUGIN_ID + "/image/ovr/light-green"; //$NON-NLS-1$
 	public static final String OVR_YELLOW_LIGHT_IMAGE_ID = UIMiscellanyPlugin.PLUGIN_ID + "/image/ovr/light-yellow"; //$NON-NLS-1$
+	
+	public static final String OVR_INFO_IMAGE_ID= UIMiscellanyPlugin.PLUGIN_ID + "/image/ovr/info"; //$NON-NLS-1$
+	public static final String OVR_WARNING_IMAGE_ID= UIMiscellanyPlugin.PLUGIN_ID + "/image/ovr/warning"; //$NON-NLS-1$
+	public static final String OVR_ERROR_IMAGE_ID= UIMiscellanyPlugin.PLUGIN_ID + "/image/ovr/error"; //$NON-NLS-1$
+	
+	public static final String OVR_DEPRECATED_IMAGE_ID= UIMiscellanyPlugin.PLUGIN_ID + "/image/ovr/deprecated"; //$NON-NLS-1$
 	
 	public static final String LOCTOOL_FILTER_IMAGE_ID = UIMiscellanyPlugin.PLUGIN_ID + "/image/loctool/filter_view"; //$NON-NLS-1$
 	public static final String LOCTOOLD_FILTER_IMAGE_ID = UIMiscellanyPlugin.PLUGIN_ID + "/image/loctoold/filter_view"; //$NON-NLS-1$
@@ -113,6 +122,32 @@ public class SharedUIResources {
 	 */
 	public static ImageRegistry getImages() {
 		return UIMiscellanyPlugin.getDefault().getImageRegistry();
+	}
+	
+	
+	public static final SharedUIResources INSTANCE= new SharedUIResources();
+	
+	private Point iconDefaultSize= new Point(16, 16);
+	
+	
+	private final ImageRegistry registry;
+	
+	
+	private SharedUIResources() {
+		this.registry= UIMiscellanyPlugin.getInstance().getImageRegistry();
+	}
+	
+	public ImageDescriptor getImageDescriptor(final String id) {
+		return this.registry.getDescriptor(id);
+	}
+	
+	public Image getImage(final String id) {
+		return this.registry.get(id);
+	}
+	
+	
+	public Point getIconDefaultSize() {
+		return this.iconDefaultSize;
 	}
 	
 }

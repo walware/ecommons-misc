@@ -171,6 +171,12 @@ public class UIMiscellanyPlugin extends AbstractUIPlugin {
 		util.register(SharedUIResources.OVR_GREEN_LIGHT_IMAGE_ID, ImageRegistryUtil.T_OVR, "light-green.png"); //$NON-NLS-1$
 		util.register(SharedUIResources.OVR_YELLOW_LIGHT_IMAGE_ID, ImageRegistryUtil.T_OVR, "light-yellow.png"); //$NON-NLS-1$
 		
+		util.register(SharedUIResources.OVR_INFO_IMAGE_ID, ImageRegistryUtil.T_OVR, "info.png");
+		util.register(SharedUIResources.OVR_WARNING_IMAGE_ID, ImageRegistryUtil.T_OVR, "warning.png");
+		util.register(SharedUIResources.OVR_ERROR_IMAGE_ID, ImageRegistryUtil.T_OVR, "error.png");
+		
+		util.register(SharedUIResources.OVR_DEPRECATED_IMAGE_ID, ImageRegistryUtil.T_OVR, "deprecated.png");
+		
 		util.register(SharedUIResources.LOCTOOL_FILTER_IMAGE_ID, ImageRegistryUtil.T_LOCTOOL, "filter_view.gif"); //$NON-NLS-1$
 		util.register(SharedUIResources.LOCTOOLD_FILTER_IMAGE_ID, ImageRegistryUtil.T_LOCTOOL_D, "filter_view.gif"); //$NON-NLS-1$
 		util.register(SharedUIResources.LOCTOOL_DISABLE_FILTER_IMAGE_ID, ImageRegistryUtil.T_LOCTOOL, "disable-filter.png"); //$NON-NLS-1$

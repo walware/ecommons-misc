@@ -11,7 +11,9 @@
 
 package de.walware.jcommons.lang;
 
+import java.util.Collection;
 import java.util.Formatter;
+import java.util.List;
 import java.util.Locale;
 
 public class ObjectUtils {
@@ -20,8 +22,13 @@ public class ObjectUtils {
 	public static class ToStringBuilder {
 		
 		
-		private static final String PROP_PREFIX= "\n  "; //$NON-NLS-1$
+		private static final String INDENT= "  "; //$NON-NLS-1$
+		private static final String CONT_INDENT= INDENT + INDENT;
+		
+		private static final String PROP_PREFIX= "\n" + INDENT; //$NON-NLS-1$
 		private static final String PROP_ASSIGN= "= "; //$NON-NLS-1$
+		
+		private static final Object NULL= "<null>"; //$NON-NLS-1$
 		
 		
 		private final StringBuilder sb;
@@ -58,8 +65,12 @@ public class ObjectUtils {
 			this.sb.append(s, begin, end);
 		}
 		
+		public final void append(final char c) {
+			this.sb.append(c);
+		}
 		
-		private void appendValueLines(final String s) {
+		
+		private void appendLines(final String s, final String contPrefix) {
 			int start= 0;
 			int end= s.indexOf('\n', start);
 			
@@ -76,7 +87,7 @@ public class ObjectUtils {
 			}
 			start= end + 1;
 			while ((end= s.indexOf('\n', start)) >= 0) {
-				append(PROP_PREFIX + '\t');
+				append(contPrefix);
 				if (end > 0 && s.charAt(end - 1) == '\r') {
 					append(s, start, end - 1);
 				}
@@ -86,7 +97,7 @@ public class ObjectUtils {
 				start= end + 1;
 			}
 			if (start < s.length()) {
-				append(PROP_PREFIX + '\t');
+				append(contPrefix);
 				append(s, start, s.length());
 			}
 		}
@@ -104,20 +115,52 @@ public class ObjectUtils {
 			addProp(name);
 			
 			if (value == null) {
-				this.sb.append("<null>");
+				this.sb.append(NULL);
 				return;
 			}
-			appendValueLines(value);
+			appendLines(value, PROP_PREFIX + CONT_INDENT);
 		}
 		
 		public void addProp(final String name, final Object value) {
 			addProp(name);
 			
 			if (value == null) {
-				this.sb.append("<null>");
+				this.sb.append(NULL);
 				return;
 			}
-			appendValueLines(value.toString());
+			appendLines(value.toString(), PROP_PREFIX + CONT_INDENT);
+		}
+		
+		public void addProp(final String name, final Collection<?> value) {
+			addProp(name);
+			
+			if (value == null) {
+				this.sb.append(NULL);
+				return;
+			}
+			if (value instanceof List) {
+				this.sb.append('[');
+			}
+			else {
+				this.sb.append('{');
+			}
+			if (!value.isEmpty()) {
+				for (final Object e : value) {
+					this.sb.append(PROP_PREFIX + INDENT);
+					if (e == null) {
+						this.sb.append(NULL);
+						continue;
+					}
+					appendLines(e.toString(), PROP_PREFIX + INDENT + CONT_INDENT); 
+				}
+				this.sb.append(PROP_PREFIX);
+			}
+			if (value instanceof List) {
+				this.sb.append(']');
+			}
+			else {
+				this.sb.append('}');
+			}
 		}
 		
 		public void addProp(final String name, final String valueFormat, final Object... valueArgs) {
@@ -139,5 +182,8 @@ public class ObjectUtils {
 		}
 		
 	}
+	
+	
+	private ObjectUtils() {}
 	
 }

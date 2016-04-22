@@ -43,11 +43,11 @@ import de.walware.jcommons.collections.ImSet;
 
 import de.walware.ecommons.IStatusChangeListener;
 import de.walware.ecommons.databinding.jface.DataBindingSupport;
-import de.walware.ecommons.io.BuildUtil;
 import de.walware.ecommons.preferences.SettingsChangeNotifier;
 import de.walware.ecommons.preferences.core.IPreferenceAccess;
 import de.walware.ecommons.preferences.core.IPreferenceSetService;
 import de.walware.ecommons.preferences.core.Preference;
+import de.walware.ecommons.resources.core.BuildUtils;
 
 
 /**
@@ -189,12 +189,12 @@ public abstract class ManagedConfigurationBlock extends ConfigurationBlock
 					return false;
 				}
 				if (doBuild) {
-					BuildUtil.getBuildJob(getProject()).schedule();
+					BuildUtils.getBuildJob(getProject()).schedule();
 				}
 			}
 			else {
 				if (doBuild) {
-					getContainer().registerUpdateJob(BuildUtil.getBuildJob(getProject()));
+					getContainer().registerUpdateJob(BuildUtils.getBuildJob(getProject()));
 				}
 			}
 			final Set<String> groupIds= new HashSet<>();

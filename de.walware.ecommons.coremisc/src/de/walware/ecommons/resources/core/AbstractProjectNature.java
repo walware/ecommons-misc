@@ -9,7 +9,7 @@
  #     Stephan Wahlbrink - initial API and implementation
  #=============================================================================*/
 
-package de.walware.ecommons.resources;
+package de.walware.ecommons.resources.core;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectNature;

@@ -9,13 +9,13 @@
  #     Stephan Wahlbrink - initial API and implementation
  #=============================================================================*/
 
-package de.walware.ecommons.resources;
+package de.walware.ecommons.resources.core;
 
 import org.eclipse.core.resources.ICommand;
 import org.eclipse.core.resources.IProjectDescription;
 
 
-public class ProjectUtil {
+public class ProjectUtils {
 	
 	
 	private static int indexOf(final String[] ids, final String id) {
@@ -131,7 +131,6 @@ public class ProjectUtil {
 	}
 	
 	
-	private ProjectUtil() {
-	}
+	private ProjectUtils() {}
 	
 }

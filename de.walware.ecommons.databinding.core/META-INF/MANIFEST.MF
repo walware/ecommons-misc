@@ -7,7 +7,7 @@ Bundle-Name: ECommons Databinding - Core
 Bundle-Activator: de.walware.ecommons.databinding.internal.core.ECommonsDatabindingCorePlugin
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
-Require-Bundle: org.eclipse.core.runtime;bundle-version="3.8.0",
+Require-Bundle: org.eclipse.core.runtime;bundle-version="3.10.0",
  org.eclipse.core.databinding;visibility:=reexport
 Import-Package: com.ibm.icu.text;version="4.4.2.2",
  de.walware.jcommons.collections;version="1.0"

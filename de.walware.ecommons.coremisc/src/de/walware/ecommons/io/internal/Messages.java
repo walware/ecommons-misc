@@ -20,6 +20,9 @@ public class Messages {
 	public static String CoreUtility_Build_Job_title;
 	public static String CoreUtility_Build_AllTask_name;
 	public static String CoreUtility_Build_ProjectTask_name;
+	public static String CoreUtility_Clean_Job_title;
+	public static String CoreUtility_Clean_AllTask_name;
+	public static String CoreUtility_Clean_ProjectTask_name;
 	
 	public static String Resource_error_NoInput_message;
 	public static String Resource_error_NoInput_message_0;

@@ -15,12 +15,15 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IVariable;
+import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.jdt.annotation.NonNullByDefault;
 
 import de.walware.ecommons.models.core.util.ElementPartitionFactory;
 
 import de.walware.ecommons.debug.core.ECommonsDebugCore;
 
 
+@NonNullByDefault
 public class VariablePartitionFactory<T extends IIndexedValue>
 		extends ElementPartitionFactory<IVariable, T> {
 	
@@ -46,7 +49,8 @@ public class VariablePartitionFactory<T extends IIndexedValue>
 	}
 	
 	
-	public IVariable[] getVariables(final T value) throws DebugException {
+	@SuppressWarnings("null")
+	public @NonNull IVariable[] getVariables(final T value) throws DebugException {
 		try {
 			return getElements(value, value.getSize());
 		}
@@ -59,12 +63,12 @@ public class VariablePartitionFactory<T extends IIndexedValue>
 	}
 	
 	@Override
-	protected IVariable createPartition(final T value, final PartitionHandle partition) {
+	protected @NonNull IVariable createPartition(final T value, final PartitionHandle partition) {
 		return new VariablePartition<>(value, partition);
 	}
 	
 	@Override
-	protected IVariable[] getChildren(final T value, final long start, final int length) {
+	protected @NonNull IVariable[] getChildren(final T value, final long start, final int length) {
 		return value.getVariables(start, length);
 	}
 	

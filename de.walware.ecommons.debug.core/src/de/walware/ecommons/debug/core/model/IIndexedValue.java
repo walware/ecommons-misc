@@ -14,6 +14,7 @@ package de.walware.ecommons.debug.core.model;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.core.model.IVariable;
+import org.eclipse.jdt.annotation.NonNull;
 
 
 /**
@@ -26,6 +27,6 @@ public interface IIndexedValue extends IValue {
 	
 	long getSize() throws DebugException;
 	
-	IVariable[] getVariables(long offset, int length);
+	@NonNull IVariable @NonNull [] getVariables(long offset, int length);
 	
 }

@@ -9,5 +9,11 @@
 			<unit id="org.eclipse.platform.feature.group"
 					version="4.4.2.v20150204-1700"/>
 		</location>
+		<location includeAllPlatforms="false" includeMode="planner" includeConfigurePhase="false" includeSource="false"
+				type="InstallableUnit">
+			<repository location="http://download.eclipse.org/eclipse/updates/4.5"/>
+			<unit id="org.eclipse.jdt.annotation"
+					version="2.0.100.v20150311-1658"/>
+		</location>
 	</locations>
 </target>

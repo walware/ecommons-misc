@@ -11,6 +11,8 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: org.eclipse.core.runtime;bundle-version="3.10",
  org.eclipse.debug.core;visibility:=reexport,
  org.eclipse.core.filesystem,
+ org.eclipse.core.variables,
+ org.eclipse.jdt.annotation;bundle-version="[2.0.0,3.0.0)";resolution:=optional
 Import-Package: com.ibm.icu.text;version="52.1",
  de.walware.ecommons,
  de.walware.ecommons.models.core.util,

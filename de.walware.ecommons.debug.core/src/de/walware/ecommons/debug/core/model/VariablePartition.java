@@ -15,11 +15,15 @@ import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.DebugElement;
 import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.core.model.IVariable;
+import org.eclipse.jdt.annotation.NonNull;
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 
 
 /**
  * Supports long collections and avoids widows.
  */
+@NonNullByDefault
 public class VariablePartition<T extends IIndexedValue> extends DebugElement implements IIndexedVariablePartition, IValue {
 	
 	
@@ -30,8 +34,8 @@ public class VariablePartition<T extends IIndexedValue> extends DebugElement imp
 	
 	public VariablePartition(final T value, final VariablePartitionFactory<T>.PartitionHandle partition) {
 		super(value.getDebugTarget());
-		this.value = value;
-		this.partition = partition;
+		this.value= value;
+		this.partition= partition;
 	}
 	
 	
@@ -55,27 +59,27 @@ public class VariablePartition<T extends IIndexedValue> extends DebugElement imp
 		return 0;
 	}
 	
-	protected String getNameIndexLabel(final long idx) {
+	protected @Nullable String getNameIndexLabel(final long idx) {
 		return null;
 	}
 	
 	
 	@Override
 	public String getName() throws DebugException {
-		final StringBuilder sb = new StringBuilder();
-		{	final long startIndex = getPartitionStart() + getNameIndexBase();
+		final StringBuilder sb= new StringBuilder();
+		{	final long startIndex= getPartitionStart() + getNameIndexBase();
 			sb.append('[');
 			sb.append(startIndex);
 			sb.append(" ... "); //$NON-NLS-1$
 			sb.append(startIndex + (getPartitionLength() - 1));
 			sb.append(']');
 		}
-		{	String label = getNameIndexLabel(getPartitionStart());
+		{	String label= getNameIndexLabel(getPartitionStart());
 			if (label != null) {
 				sb.append("  "); //$NON-NLS-1$
 				sb.append(label);
 				sb.append(" ... "); //$NON-NLS-1$
-				label = getNameIndexLabel(getPartitionStart() + (getPartitionLength() - 1));
+				label= getNameIndexLabel(getPartitionStart() + (getPartitionLength() - 1));
 				if (label != null) {
 					sb.append(label);
 				}
@@ -115,7 +119,7 @@ public class VariablePartition<T extends IIndexedValue> extends DebugElement imp
 	}
 	
 	@Override
-	public IVariable[] getVariables() throws DebugException {
+	public @NonNull IVariable[] getVariables() throws DebugException {
 		try {
 			return this.partition.getElements(this.value);
 		}
@@ -160,20 +164,20 @@ public class VariablePartition<T extends IIndexedValue> extends DebugElement imp
 	}
 	
 	@Override
-	public boolean equals(final Object obj) {
+	public boolean equals(final @Nullable Object obj) {
 		if (this == obj) {
 			return true;
 		}
 		if (!(obj instanceof VariablePartition)) {
 			return false;
 		}
-		final VariablePartition<?> other = (VariablePartition<?>) obj;
+		final VariablePartition<@NonNull ?> other= (VariablePartition<@NonNull ?>) obj;
 		return (this.value.equals(other.value) && this.partition.equals(other.partition));
 	}
 	
 	@Override
-	public Object getAdapter(final Class required) {
-//		final Object adapter = fValue.getAdapter(required);
+	public @Nullable Object getAdapter(final Class required) {
+//		final Object adapter= fValue.getAdapter(required);
 //		if (adapter != null) {
 //			return adapter;
 //		}

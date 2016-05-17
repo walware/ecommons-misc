@@ -15,6 +15,7 @@ import java.util.ArrayList;
 
 import org.eclipse.core.databinding.Binding;
 import org.eclipse.core.databinding.DataBindingContext;
+import org.eclipse.core.databinding.observable.IChangeListener;
 import org.eclipse.core.databinding.observable.IObservable;
 import org.eclipse.core.databinding.observable.ObservableTracker;
 import org.eclipse.core.databinding.observable.list.IListChangeListener;
@@ -30,13 +31,20 @@ public class DataBindingSubContext {
 	private final ArrayList<Binding> bindings;
 	private final ArrayList<IObservable> observables;
 	
+	private final IChangeListener listener;
+	
 	private boolean enabled= true;
 	
 	
-	public DataBindingSubContext(final DataBindingContext dbc) {
+	public DataBindingSubContext(final DataBindingContext dbc, final IChangeListener listener) {
 		this.dbc= dbc;
 		this.bindings= new ArrayList<>(8);
 		this.observables= new ArrayList<>(8);
+		this.listener= listener;
+	}
+	
+	public DataBindingSubContext(final DataBindingContext dbc) {
+		this(dbc, null);
 	}
 	
 	
@@ -45,21 +53,21 @@ public class DataBindingSubContext {
 	}
 	
 	public void run(final Runnable runnable) {
-		final IListChangeListener listener= new IListChangeListener() {
+		final IListChangeListener bindingsListener= new IListChangeListener() {
 			@Override
 			public void handleListChange(final ListChangeEvent event) {
 				for (final ListDiffEntry diff : event.diff.getDifferences()) {
 					if (diff.isAddition()) {
-						DataBindingSubContext.this.bindings.add((Binding) diff.getElement());
+						addBinding((Binding) diff.getElement());
 					}
 					else {
-						DataBindingSubContext.this.bindings.remove(diff.getElement());
+						removeBinding((Binding) diff.getElement());
 					}
 				}
 			}
 		};
 		
-		this.dbc.getBindings().addListChangeListener(listener);
+		this.dbc.getBindings().addListChangeListener(bindingsListener);
 		try {
 			final IObservable[] observables= ObservableTracker.runAndCollect(runnable);
 			this.observables.ensureCapacity(this.observables.size() + observables.length);
@@ -68,7 +76,21 @@ public class DataBindingSubContext {
 			}
 		}
 		finally {
-			this.dbc.getBindings().removeListChangeListener(listener);
+			this.dbc.getBindings().removeListChangeListener(bindingsListener);
+		}
+	}
+	
+	protected void addBinding(final Binding binding) {
+		this.bindings.add(binding);
+		if (this.listener != null) {
+			binding.getTarget().addChangeListener(this.listener);
+		}
+	}
+	
+	protected void removeBinding(final Binding binding) {
+		this.bindings.add(binding);
+		if (this.listener != null) {
+			binding.getTarget().addChangeListener(this.listener);
 		}
 	}
 	

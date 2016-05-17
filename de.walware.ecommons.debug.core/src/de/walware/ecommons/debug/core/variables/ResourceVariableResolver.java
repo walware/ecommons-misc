@@ -200,11 +200,17 @@ public class ResourceVariableResolver implements IDynamicVariableResolver {
 		if (resource != null) {
 			resource= toVariableResource(variable, resourceType, resource);
 		}
-		if (resource == null || (requireExists(variable, argument) && !resource.exists())) {
+		if (resource == null) {
 			throw new CoreException(new Status(IStatus.ERROR, ECommonsDebugCore.PLUGIN_ID,
 					NLS.bind(Messages.ResourceVariable_error_Resource_NonExisting_message, 
 							variable.getName(), argument )));
 		}
+		if (requireExists(variable, argument) && !resource.exists()) {
+			throw new CoreException(new Status(IStatus.ERROR, ECommonsDebugCore.PLUGIN_ID,
+					NLS.bind(Messages.ResourceVariable_error_Resource_NonExisting_message, 
+							variable.getName(), resource.getFullPath().toString() )));
+		}
+		
 		return resource;
 	}
 	
@@ -258,12 +264,17 @@ public class ResourceVariableResolver implements IDynamicVariableResolver {
 	
 	protected String toEncValue(final IDynamicVariable variable, final IResource resource)
 			throws CoreException {
+		String charset;
 		if (resource instanceof IFile) {
-			return ((IFile) resource).getCharset(true);
+			charset= ((IFile) resource).getCharset(true);
 		}
 		else { // (resource instanceof IContainer)
-			return ((IContainer) resource).getDefaultCharset(true);
+			charset= ((IContainer) resource).getDefaultCharset(true);
 		}
+		if (charset != null && charset.startsWith("utf")) { //$NON-NLS-1$
+			charset= charset.toUpperCase();
+		}
+		return charset;
 	}
 	
 	protected String toNameBaseValue(final IDynamicVariable variable, final IPath path) {

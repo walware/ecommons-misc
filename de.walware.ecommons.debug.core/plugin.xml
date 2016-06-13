@@ -48,4 +48,15 @@
       </variable>
    </extension>
    
+   <extension
+         point="org.eclipse.core.expressions.propertyTesters">
+      <propertyTester
+            id="de.walware.ecommons.debug.propertyTesters.DebugElement"
+            namespace="de.walware.ecommons.debug"
+            properties="equalsModelIdentifier"
+            type="org.eclipse.core.runtime.IAdaptable"
+            class="de.walware.ecommons.debug.internal.core.DebugElementPropertyTester">
+      </propertyTester>
+   </extension>
+   
 </plugin>

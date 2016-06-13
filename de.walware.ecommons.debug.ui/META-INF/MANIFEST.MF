@@ -20,4 +20,5 @@ Import-Package: com.ibm.icu.text;version="52.1",
  de.walware.ecommons.databinding;version="0.10.0",
  de.walware.ecommons.variables.core,
  de.walware.jcommons.collections;version="1.0"
-Export-Package: de.walware.ecommons.debug.ui.config
+Export-Package: de.walware.ecommons.debug.ui,
+ de.walware.ecommons.debug.ui.config

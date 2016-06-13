@@ -65,7 +65,7 @@ public class VariablePartition<T extends IIndexedValue> extends DebugElement imp
 	
 	
 	@Override
-	public String getName() throws DebugException {
+	public String getName() {
 		final StringBuilder sb= new StringBuilder();
 		{	final long startIndex= getPartitionStart() + getNameIndexBase();
 			sb.append('[');

@@ -1,5 +1,5 @@
 /*=============================================================================#
- # Copyright (c) 2015-2016 Stephan Wahlbrink (WalWare.de) and others.
+ # Copyright (c) 2016 Stephan Wahlbrink (WalWare.de) and others.
  # All rights reserved. This program and the accompanying materials
  # are made available under the terms of the Eclipse Public License v1.0
  # which accompanies this distribution, and is available at
@@ -9,17 +9,15 @@
  #     Stephan Wahlbrink - initial API and implementation
  #=============================================================================*/
 
-package de.walware.ecommons.debug.ui;
+package de.walware.ecommons.debug.core.eval;
+
+import org.eclipse.jdt.annotation.NonNullByDefault;
 
 
-public final class ECommonsDebugUI {
+@NonNullByDefault
+public interface IEvaluationListener {
 	
 	
-	public static final String PLUGIN_ID= "de.walware.ecommons.debug.ui"; //$NON-NLS-1$
-	
-	
-	public static final String WATCH_COMMAND_ID= "org.eclipse.jdt.debug.ui.commands.Watch"; //$NON-NLS-1$
-	
-	public static final String INSPECT_COMMAND_ID= "org.eclipse.jdt.debug.ui.commands.Inspect"; //$NON-NLS-1$
+	void evaluationFinished(IEvaluationResult result);
 	
 }

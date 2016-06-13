@@ -184,6 +184,19 @@ public final class CopyOnWriteIdentityListSet<E> extends AbstractSet<E> implemen
 		return this.list;
 	}
 	
+	/**
+	 * Returns a current snapshot of the list and clears the list.
+	 * 
+	 * @return
+	 */
+	public synchronized ImIdentityList<E> clearToList() {
+		final ImIdentityList<E> list= this.list;
+		if (!list.isEmpty()) {
+			this.list= ImCollections.newIdentityList();
+		}
+		return list;
+	}
+	
 	
 	@Override
 	public boolean equals(final Object obj) {

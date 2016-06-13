@@ -194,6 +194,19 @@ public final class CopyOnWriteListSet<E> extends AbstractSet<E> implements Set<E
 		return this.list;
 	}
 	
+	/**
+	 * Returns a current snapshot of the list and clears the list.
+	 * 
+	 * @return
+	 */
+	public synchronized ImList<E> clearToList() {
+		final ImList<E> list= this.list;
+		if (!list.isEmpty()) {
+			this.list= ImCollections.newList();
+		}
+		return list;
+	}
+	
 	
 	@Override
 	public boolean equals(final Object obj) {

@@ -233,6 +233,19 @@ public final class CopyOnWriteList<E> extends AbstractList<E> implements List<E>
 		return this.list;
 	}
 	
+	/**
+	 * Returns a current snapshot of the list and clears the list.
+	 * 
+	 * @return
+	 */
+	public synchronized ImList<E> clearToList() {
+		final ImList<E> list= this.list;
+		if (!list.isEmpty()) {
+			this.list= ImCollections.newList();
+		}
+		return list;
+	}
+	
 	
 	@Override
 	public int hashCode() {

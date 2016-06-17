@@ -13,10 +13,16 @@ package de.walware.ecommons.debug.internal.ui;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Plugin;
+import org.eclipse.jface.resource.ImageRegistry;
+import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
+import de.walware.ecommons.ui.util.ImageRegistryUtil;
 
-public class ECommonsDebugUIPlugin extends Plugin {
+import de.walware.ecommons.debug.ui.ECommonsDebugUIResources;
+
+
+public class ECommonsDebugUIPlugin extends AbstractUIPlugin {
 	
 	
 	/** The shared instance */
@@ -70,6 +76,26 @@ public class ECommonsDebugUIPlugin extends Plugin {
 		if (!this.started) {
 			throw new IllegalStateException("Plug-in is not started.");
 		}
+	}
+	
+	@Override
+	protected void initializeImageRegistry(final ImageRegistry reg) {
+		final ImageRegistryUtil util= new ImageRegistryUtil(this);
+		
+		util.register(ECommonsDebugUIResources.OBJ_VARIABLE_PARTITION, ImageRegistryUtil.T_OBJ, "variable_partition.png"); //$NON-NLS-1$
+		util.register(ECommonsDebugUIResources.OBJ_VARIABLE_ITEM, ImageRegistryUtil.T_OBJ, "variable_item.png"); //$NON-NLS-1$
+		util.register(ECommonsDebugUIResources.OBJ_VARIABLE_DIM, ImageRegistryUtil.T_OBJ, "variable_dim.png"); //$NON-NLS-1$
+		
+		util.register(ECommonsDebugUIResources.OVR_BREAKPOINT_INSTALLED, ImageRegistryUtil.T_OVR, "installed.png"); //$NON-NLS-1$
+		util.register(ECommonsDebugUIResources.OVR_BREAKPOINT_INSTALLED_DISABLED, ImageRegistryUtil.T_OVR, "installed-disabled.png"); //$NON-NLS-1$
+		
+		util.register(ECommonsDebugUIResources.OVR_BREAKPOINT_CONDITIONAL, ImageRegistryUtil.T_OVR, "conditional.png"); //$NON-NLS-1$
+		util.register(ECommonsDebugUIResources.OVR_BREAKPOINT_CONDITIONAL_DISABLED, ImageRegistryUtil.T_OVR, "conditional-disabled.png"); //$NON-NLS-1$
+		
+		util.register(ECommonsDebugUIResources.OVR_METHOD_BREAKPOINT_ENTRY, ImageRegistryUtil.T_OVR, "entry.png"); //$NON-NLS-1$
+		util.register(ECommonsDebugUIResources.OVR_METHOD_BREAKPOINT_ENTRY_DISABLED, ImageRegistryUtil.T_OVR, "entry-disabled.png"); //$NON-NLS-1$
+		util.register(ECommonsDebugUIResources.OVR_METHOD_BREAKPOINT_EXIT, ImageRegistryUtil.T_OVR, "exit.png"); //$NON-NLS-1$
+		util.register(ECommonsDebugUIResources.OVR_METHOD_BREAKPOINT_EXIT_DISABLED, ImageRegistryUtil.T_OVR, "exit-disabled.png"); //$NON-NLS-1$
 	}
 	
 }

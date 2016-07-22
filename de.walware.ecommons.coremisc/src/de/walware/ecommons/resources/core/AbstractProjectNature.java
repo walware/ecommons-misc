@@ -113,7 +113,7 @@ public class AbstractProjectNature extends PreferenceAccessWrapper implements IP
 	}
 	
 	
-	protected final IScopeContext getProjectContext() {
+	public final IScopeContext getProjectContext() {
 		return getPreferenceContexts().get(0);
 	}
 	

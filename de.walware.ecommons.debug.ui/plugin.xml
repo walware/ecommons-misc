@@ -18,6 +18,10 @@
    <extension
          point="org.eclipse.ui.commandImages">
       <image
+            commandId="org.eclipse.debug.ui.commands.ToggleBreakpoint"
+            icon="icons/tool_16/breakpoint.png"/>
+      
+      <image
             commandId="org.eclipse.jdt.debug.ui.commands.Watch"
             icon="platform:/plugin/org.eclipse.debug.ui/icons/full/etool16/watch_exp.png"
             disabledIcon="platform:/plugin/org.eclipse.debug.ui/icons/full/dtool16/watch_exp.png"/>

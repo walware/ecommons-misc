@@ -314,7 +314,7 @@ public class IntValue2Double2TextBinding extends AbstractObservableValue
 	
 	@Override
 	protected void doSetValue(final Object value) {
-		setValue(((Double) value).doubleValue(), true);
+		setValue((value != null) ? ((Double) value).doubleValue() : 0, true);
 	}
 	
 	@Override

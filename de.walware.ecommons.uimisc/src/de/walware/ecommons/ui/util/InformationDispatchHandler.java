@@ -56,7 +56,7 @@ public class InformationDispatchHandler extends AbstractHandler {
 	}
 	
 	public static final String getAffordanceString(final int mode) {
-		switch (mode) {
+		switch (mode & 0xff) {
 		case MODE_TOOLTIP:
 			return getTooltipAffordanceString();
 		case MODE_PROPOSAL_INFO:
